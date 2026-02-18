@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+bennys.db
+data/*.sqlite
+bennys_php.ini
+vendor/php/
+vendor/php.zip
