@@ -7,7 +7,6 @@ set "VENDOR_DIR=%APP_DIR%vendor"
 set "PHP_DIR=%VENDOR_DIR%\php"
 set "PYTHON_EXE=python"
 set "PHP_EXE=php"
-set "USER_PHP_EXE=C:\Users\death\Downloads\php-8.3.30-Win32-vs16-x64\php.exe"
 set "BENNYS_PHP_INI="
 
 if not exist "%VENDOR_DIR%" mkdir "%VENDOR_DIR%"
@@ -48,13 +47,6 @@ if errorlevel 1 (
 exit /b 0
 
 :resolve_php
-if exist "%USER_PHP_EXE%" (
-  echo [INFO] Hittade PHP enligt din lokala sokvag.
-  set "PHP_EXE=%USER_PHP_EXE%"
-  call :configure_php_ini
-  exit /b 0
-)
-
 where php >nul 2>nul
 if not errorlevel 1 (
   for /f "delims=" %%i in ('where php') do (
