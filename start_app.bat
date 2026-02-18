@@ -57,8 +57,9 @@ exit /b 0
 if exist "%XAMPP_PHP_EXE%" (
   echo [INFO] Hittade XAMPP PHP: %XAMPP_PHP_EXE%
   set "PHP_EXE=%XAMPP_PHP_EXE%"
-  if not exist "%PHP_EXE%" (
-    echo [FEL] XAMPP PHP-sokvagen finns inte: %XAMPP_PHP_EXE%
+  rem Viktigt: anvand !PHP_EXE! efter set inuti parentesblock.
+  if not exist "!PHP_EXE!" (
+    echo [FEL] XAMPP PHP-sokvagen finns inte: !PHP_EXE!
     exit /b 1
   )
   exit /b 0
