@@ -148,14 +148,16 @@ if not exist "%PHP_INI_CUSTOM%" (
 echo [INFO] Aktiverar pdo_sqlite/sqlite3 i bennys_php.ini...
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$ini='%PHP_INI_CUSTOM%'; $extDir='%PHP_BIN_DIR%ext';" ^
+  "$extDir=$extDir -replace '\\','/';" ^
   "$txt=Get-Content -Raw $ini;" ^
-  "$txt=$txt -replace ';?\s*extension_dir\s*=\s*\"?ext\"?','extension_dir = \"'+$extDir+'\"';" ^
+  "$txt=[regex]::Replace($txt,'(?mi)^\s*;?\s*extension_dir\s*=.*$','');" ^
+  "$txt=[regex]::Replace($txt,'(?mi)^\s*;?\s*extension\s*=\s*(php_)?pdo_sqlite(\.dll)?\s*$','');" ^
+  "$txt=[regex]::Replace($txt,'(?mi)^\s*;?\s*extension\s*=\s*(php_)?sqlite3(\.dll)?\s*$','');" ^
   "$txt=$txt -replace ';\s*extension\s*=\s*pdo_sqlite','extension=pdo_sqlite';" ^
   "$txt=$txt -replace ';\s*extension\s*=\s*sqlite3','extension=sqlite3';" ^
   "$txt=$txt -replace ';\s*extension\s*=\s*php_pdo_sqlite\.dll','extension=pdo_sqlite';" ^
   "$txt=$txt -replace ';\s*extension\s*=\s*php_sqlite3\.dll','extension=sqlite3';" ^
-  "if($txt -notmatch '(?m)^\s*extension\s*=\s*pdo_sqlite\s*$'){ $txt += \"`r`nextension=pdo_sqlite\" };" ^
-  "if($txt -notmatch '(?m)^\s*extension\s*=\s*sqlite3\s*$'){ $txt += \"`r`nextension=sqlite3\" };" ^
+  "$txt=$txt.TrimEnd()+\"`r`n`r`n; Benny's local overrides`r`nextension_dir=\"+$extDir+\"`r`nextension=pdo_sqlite`r`nextension=sqlite3`r`n\";" ^
   "Set-Content -Path $ini -Value $txt -Encoding ASCII"
 
 set "BENNYS_PHP_INI=%PHP_INI_CUSTOM%"
