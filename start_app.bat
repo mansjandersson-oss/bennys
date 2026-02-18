@@ -28,6 +28,8 @@ if errorlevel 1 goto :fail
 
 echo [OK] Python, PHP och SQLite-drivrutiner ar tillgangliga.
 set "BENNYS_PHP_EXE=%PHP_EXE%"
+set "PHP_INI_SCAN_DIR="
+set "BENNYS_PHP_SCAN_DIR="
 echo [INFO] Startar lokal app...
 python local_app.py
 if errorlevel 1 goto :fail
@@ -169,17 +171,20 @@ if "%BENNYS_PHP_INI%"=="" (
   exit /b 1
 )
 
-"%PHP_EXE%" -c "%BENNYS_PHP_INI%" -m | findstr /I /R "^pdo_sqlite$" >nul
+set "PHP_INI_SCAN_DIR="
+"%PHP_EXE%" -n -c "%BENNYS_PHP_INI%" -m | findstr /I /R "^pdo_sqlite$" >nul
 if errorlevel 1 (
   echo [FEL] pdo_sqlite kunde inte laddas med %BENNYS_PHP_INI%
   echo Kontrollera att filen %PHP_BIN_DIR%ext\php_pdo_sqlite.dll finns.
+  "%PHP_EXE%" -n -c "%BENNYS_PHP_INI%" --ini
   exit /b 1
 )
 
-"%PHP_EXE%" -c "%BENNYS_PHP_INI%" -m | findstr /I /R "^sqlite3$" >nul
+"%PHP_EXE%" -n -c "%BENNYS_PHP_INI%" -m | findstr /I /R "^sqlite3$" >nul
 if errorlevel 1 (
   echo [FEL] sqlite3 kunde inte laddas med %BENNYS_PHP_INI%
   echo Kontrollera att filen %PHP_BIN_DIR%ext\php_sqlite3.dll finns.
+  "%PHP_EXE%" -n -c "%BENNYS_PHP_INI%" --ini
   exit /b 1
 )
 

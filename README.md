@@ -30,6 +30,7 @@ Detta använder `local_app.py` som:
 > Windows-startscriptet prioriterar XAMPP PHP (`C:\xampp\php\php.exe`) om den finns, annars `winget` och till sist portable PHP-fallback.
 > Om `winget` saknas behover du installera Python/PHP manuellt.
 > Vid start skapas `bennys_php.ini` i projektmappen med aktiverade `pdo_sqlite` och `sqlite3`.
+> Startscriptet nollstaller ocksa `PHP_INI_SCAN_DIR` for att undvika att andra ini-filer skriver over extension-inställningar.
 > Scriptet verifierar dessutom att båda extensions verkligen laddas innan appen startas.
 
 ## Upload till InfinityFree (steg för steg)
