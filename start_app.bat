@@ -20,7 +20,13 @@ if errorlevel 1 goto :fail
 call :resolve_php
 if errorlevel 1 goto :fail
 
+call 
+:configute_php_ini
+rem Backward compatibility for older typo in some local copies.
 call :configure_php_ini
+exit /b %errorlevel%
+
+:configure_php_ini
 if errorlevel 1 goto :fail
 
 call :verify_sqlite_driver
@@ -117,6 +123,12 @@ if not exist "%PHP_EXE%" (
   exit /b 1
 )
 exit /b 0
+
+
+:configute_php_ini
+rem Backward compatibility for older typo in some local copies.
+call :configure_php_ini
+exit /b %errorlevel%
 
 :configure_php_ini
 for %%I in ("%PHP_EXE%") do set "PHP_BIN_DIR=%%~dpI"
