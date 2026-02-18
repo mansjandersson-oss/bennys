@@ -1,51 +1,45 @@
 # Benny's Motorworks Dashboard
 
-En GTA RP-inspirerad dashboard där inloggade mekaniker kan skapa kvitton och kopiera arbetsorder.
+En GTA RP-inspirerad dashboard där inloggade mekaniker kan skapa kvitton, och admins kan se statistik + hantera användare.
 
-## Varför denna version är lätt att hosta
+## InfinityFree-anpassad version
 
-Den här versionen är byggd i **ren PHP + SQLite** (ingen build, inga npm-paket, inga Python-servrar krävs).
-Du laddar bara upp filerna till webbhotellet och öppnar sidan.
+Den här versionen är byggd för att fungera som en vanlig **PHP-sida på InfinityFree**:
+- `index.php` = all backendlogik
+- `index2.html` = layout/template
 
-## Krav på hosting
+## Krav
 
 - PHP 8+
 - PDO SQLite aktiverat
 - Skrivrättigheter i mappen `data/`
 
-## Snabbstart lokalt
+## Upload till InfinityFree (steg för steg)
 
-```bash
-php -S 0.0.0.0:8000
-```
-
-Öppna: `http://localhost:8000` (första sidan är inloggning med personnummer + lösenord)
-
-## Deploy (uppladdning till hosting)
-
-1. Ladda upp exakt dessa två webb-filer till din webbroot (`public_html`, `www`, etc):
+1. Logga in i InfinityFree Control Panel.
+2. Öppna **File Manager**.
+3. Gå till mappen `htdocs/` för din domän.
+4. Ladda upp exakt dessa filer:
    - `index.php`
    - `index2.html`
-2. Ladda även upp mappen `data/` (behövs för SQLite-databasen).
-3. Säkerställ att `data/` är skrivbar av webbservern.
-4. Öppna din domän.
-5. Klart — databasen skapas automatiskt första gången sidan öppnas.
+5. Ladda upp mappen `data/` (tom mapp går bra).
+6. Sätt skrivrättigheter så `data/` är skrivbar.
+7. Öppna din domän – sidan startar på inloggning direkt.
 
-## Demo-inloggningar
+> Databasen (`bennys.sqlite`) skapas automatiskt i `data/` första gången sidan används.
 
-- `19900101-1234 / motor123`
-- `19920202-5678 / garage123`
-- `19950505-9012 / bennys123`
+## Demo-konton
+
+- **Admin**: `19900101-1234 / motor123`
+- **Mekaniker**: `19920202-5678 / garage123`
+- **Mekaniker**: `19950505-9012 / bennys123`
 
 ## Funktioner
 
-- Inloggning/session
-- Skapa kvitto med validering:
-  - Mekaniker = inloggad användare
-  - Typ av arbete: Reperation / Styling / Prestanda
-  - Antal delar krävs för Styling/Prestanda
-  - Kund krävs
-  - Regplåt måste vara `XXX-000`
-- Kvitton sparas i SQLite
-- Arbetsorder som kan kopieras i format:
-  - `Benny's Arbetsorder - 00000`
+- Inloggning med personnummer + lösenord
+- Kvittoflöde med validering
+- Arbetsorder med dynamiskt löpnummer
+- **Adminpanel**
+  - Statistik med filter (datum, arbetstyp, mekaniker)
+  - Skapa ny användare
+  - Redigera användare (lösenord + roll)
