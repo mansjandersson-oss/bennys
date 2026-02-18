@@ -27,7 +27,7 @@ Detta använder `local_app.py` som:
 2. öppnar sidan i din webbläsare automatiskt
 3. kör tills du stänger med `Ctrl+C`
 
-> Windows-startscriptet forsoker forst installera via `winget` och fallbackar till portable PHP-nedladdning.
+> Windows-startscriptet prioriterar XAMPP PHP (`C:\xampp\php\php.exe`) om den finns, annars `winget` och till sist portable PHP-fallback.
 > Om `winget` saknas behover du installera Python/PHP manuellt.
 > Vid start skapas `bennys_php.ini` i projektmappen med aktiverade `pdo_sqlite` och `sqlite3`.
 > Scriptet verifierar dessutom att båda extensions verkligen laddas innan appen startas.

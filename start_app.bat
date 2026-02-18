@@ -8,6 +8,7 @@ set "PHP_DIR=%VENDOR_DIR%\php"
 set "PYTHON_EXE=python"
 set "PHP_EXE=php"
 set "BENNYS_PHP_INI="
+set "XAMPP_PHP_EXE=C:\xampp\php\php.exe"
 
 if not exist "%VENDOR_DIR%" mkdir "%VENDOR_DIR%"
 
@@ -53,6 +54,16 @@ if errorlevel 1 (
 exit /b 0
 
 :resolve_php
+if exist "%XAMPP_PHP_EXE%" (
+  echo [INFO] Hittade XAMPP PHP: %XAMPP_PHP_EXE%
+  set "PHP_EXE=%XAMPP_PHP_EXE%"
+  if not exist "%PHP_EXE%" (
+    echo [FEL] XAMPP PHP-sokvagen finns inte: %XAMPP_PHP_EXE%
+    exit /b 1
+  )
+  exit /b 0
+)
+
 where php >nul 2>nul
 if not errorlevel 1 (
   for /f "delims=" %%i in ('where php') do (
