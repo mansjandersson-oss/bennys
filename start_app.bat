@@ -20,13 +20,7 @@ if errorlevel 1 goto :fail
 call :resolve_php
 if errorlevel 1 goto :fail
 
-call 
-:configute_php_ini
-rem Backward compatibility for older typo in some local copies.
 call :configure_php_ini
-exit /b %errorlevel%
-
-:configure_php_ini
 if errorlevel 1 goto :fail
 
 call :verify_sqlite_driver
@@ -63,7 +57,6 @@ exit /b 0
 if exist "%XAMPP_PHP_EXE%" (
   echo [INFO] Hittade XAMPP PHP: %XAMPP_PHP_EXE%
   set "PHP_EXE=%XAMPP_PHP_EXE%"
-  rem Viktigt: anvand !PHP_EXE! efter set inuti parentesblock.
   if not exist "!PHP_EXE!" (
     echo [FEL] XAMPP PHP-sokvagen finns inte: !PHP_EXE!
     exit /b 1
@@ -123,12 +116,6 @@ if not exist "%PHP_EXE%" (
   exit /b 1
 )
 exit /b 0
-
-
-:configute_php_ini
-rem Backward compatibility for older typo in some local copies.
-call :configure_php_ini
-exit /b %errorlevel%
 
 :configure_php_ini
 for %%I in ("%PHP_EXE%") do set "PHP_BIN_DIR=%%~dpI"
@@ -195,6 +182,21 @@ if errorlevel 1 (
 )
 
 exit /b 0
+
+:configute_php_ini
+rem Backward compatibility for older typo in some local copies.
+call :configure_php_ini
+exit /b %errorlevel%
+
+:ensrue_python
+rem Backward compatibility typo.
+call :ensure_python
+exit /b %errorlevel%
+
+:ensure_pyhton
+rem Backward compatibility typo.
+call :ensure_python
+exit /b %errorlevel%
 
 :fail
 echo.
