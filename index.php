@@ -30,6 +30,28 @@ function init_db(PDO $pdo): void
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )');
 
+    $pdo->exec('CREATE TABLE IF NOT EXISTS vehicle_registry (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        plate TEXT UNIQUE NOT NULL,
+        vehicle_type TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )');
+
+    $pdo->exec('CREATE TABLE IF NOT EXISTS customer_registry (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        customer_name TEXT UNIQUE NOT NULL,
+        phone TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )');
+
+    $pdo->exec('CREATE TABLE IF NOT EXISTS work_types (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        default_price REAL NOT NULL DEFAULT 0,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )');
+
     ensure_is_admin_column($pdo);
 
     $users = [
@@ -38,9 +60,19 @@ function init_db(PDO $pdo): void
         ['19950505-9012', 'bennys123', 0],
     ];
 
-    $stmt = $pdo->prepare('INSERT OR IGNORE INTO users (username, password, is_admin) VALUES (?, ?, ?)');
+    $userStmt = $pdo->prepare('INSERT OR IGNORE INTO users (username, password, is_admin) VALUES (?, ?, ?)');
     foreach ($users as $user) {
-        $stmt->execute($user);
+        $userStmt->execute($user);
+    }
+
+    $workTypes = [
+        ['Reperation', 0, 1],
+        ['Styling', 0, 1],
+        ['Prestanda', 0, 1],
+    ];
+    $workStmt = $pdo->prepare('INSERT OR IGNORE INTO work_types (name, default_price, is_active) VALUES (?, ?, ?)');
+    foreach ($workTypes as $workType) {
+        $workStmt->execute($workType);
     }
 }
 
@@ -84,6 +116,23 @@ function redirect(string $target): never
 {
     header('Location: ' . $target);
     exit;
+}
+
+function is_valid_phone(string $phone): bool
+{
+    return preg_match('/^[0-9+\- ]{6,20}$/', $phone) === 1;
+}
+
+function get_active_work_types(PDO $pdo): array
+{
+    $stmt = $pdo->query('SELECT id, name, default_price FROM work_types WHERE is_active = 1 ORDER BY name ASC');
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function get_all_work_types(PDO $pdo): array
+{
+    $stmt = $pdo->query('SELECT id, name, default_price, is_active FROM work_types ORDER BY id ASC');
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function render_page(string $title, string $body, ?string $username = null): void
@@ -139,7 +188,7 @@ function render_admin_page(PDO $pdo, array $messages = [], array $errors = []): 
         $where[] = 'date(created_at) <= date(?)';
         $params[] = $dateTo;
     }
-    if (in_array($workType, ['Reperation', 'Styling', 'Prestanda'], true)) {
+    if ($workType !== '') {
         $where[] = 'work_type = ?';
         $params[] = $workType;
     }
@@ -161,8 +210,10 @@ function render_admin_page(PDO $pdo, array $messages = [], array $errors = []): 
     $mechanicStmt = $pdo->query('SELECT DISTINCT mechanic FROM receipts ORDER BY mechanic ASC');
     $mechanics = $mechanicStmt->fetchAll(PDO::FETCH_COLUMN);
 
-    $usersStmt = $pdo->query('SELECT id, username, is_admin FROM users ORDER BY id ASC');
-    $users = $usersStmt->fetchAll(PDO::FETCH_ASSOC);
+    $users = $pdo->query('SELECT id, username, is_admin FROM users ORDER BY id ASC')->fetchAll(PDO::FETCH_ASSOC);
+    $vehicles = $pdo->query('SELECT id, plate, vehicle_type FROM vehicle_registry ORDER BY plate ASC')->fetchAll(PDO::FETCH_ASSOC);
+    $customers = $pdo->query('SELECT id, customer_name, phone FROM customer_registry ORDER BY customer_name ASC')->fetchAll(PDO::FETCH_ASSOC);
+    $workTypes = get_all_work_types($pdo);
 
     $messageHtml = '';
     foreach ($messages as $message) {
@@ -184,6 +235,12 @@ function render_admin_page(PDO $pdo, array $messages = [], array $errors = []): 
         foreach ($typeRows as $row) {
             $typeItems .= '<li>' . esc($row['work_type']) . ': <strong>' . esc((string) $row['total']) . '</strong></li>';
         }
+    }
+
+    $workTypeOptions = '<option value="">Alla</option>';
+    foreach ($workTypes as $workTypeRow) {
+        $selected = ($workType === $workTypeRow['name']) ? ' selected' : '';
+        $workTypeOptions .= '<option value="' . esc($workTypeRow['name']) . '"' . $selected . '>' . esc($workTypeRow['name']) . '</option>';
     }
 
     $mechanicOptions = '<option value="">Alla</option>';
@@ -213,13 +270,73 @@ function render_admin_page(PDO $pdo, array $messages = [], array $errors = []): 
         </tr>';
     }
 
-    $selectedRep = ($workType === 'Reperation') ? ' selected' : '';
-    $selectedSty = ($workType === 'Styling') ? ' selected' : '';
-    $selectedPre = ($workType === 'Prestanda') ? ' selected' : '';
+    $workTypeRows = '';
+    if (!$workTypes) {
+        $workTypeRows = '<tr><td colspan="5">Inga arbetstyper ännu.</td></tr>';
+    }
+    foreach ($workTypes as $wt) {
+        $statusBadge = ((int) $wt['is_active'] === 1) ? '<span class="badge">Aktiv</span>' : '<span class="badge badge-gray">Inaktiv</span>';
+        $workTypeRows .= '<tr>
+          <td>' . esc((string) $wt['id']) . '</td>
+          <td>' . esc($wt['name']) . '</td>
+          <td>' . esc(number_format((float) $wt['default_price'], 2, ',', ' ')) . ' SEK</td>
+          <td>' . $statusBadge . '</td>
+          <td>
+            <form method="post" action="?action=admin_update_work_type" class="inline-form">
+              <input type="hidden" name="work_type_id" value="' . esc((string) $wt['id']) . '" />
+              <input type="text" name="name" value="' . esc($wt['name']) . '" required />
+              <input type="number" min="0" step="0.01" name="default_price" value="' . esc((string) $wt['default_price']) . '" required />
+              <select name="is_active">
+                <option value="1"' . (((int) $wt['is_active'] === 1) ? ' selected' : '') . '>Aktiv</option>
+                <option value="0"' . (((int) $wt['is_active'] === 0) ? ' selected' : '') . '>Inaktiv</option>
+              </select>
+              <button type="submit">Spara</button>
+            </form>
+          </td>
+        </tr>';
+    }
+
+    $vehicleRows = '';
+    if (!$vehicles) {
+        $vehicleRows = '<tr><td colspan="4">Inga registrerade fordon ännu.</td></tr>';
+    }
+    foreach ($vehicles as $vehicle) {
+        $vehicleRows .= '<tr>
+          <td>' . esc((string) $vehicle['id']) . '</td>
+          <td>' . esc($vehicle['plate']) . '</td>
+          <td>' . esc($vehicle['vehicle_type']) . '</td>
+          <td>
+            <form method="post" action="?action=admin_update_vehicle" class="inline-form">
+              <input type="hidden" name="vehicle_id" value="' . esc((string) $vehicle['id']) . '" />
+              <input type="text" name="vehicle_type" placeholder="Ny fordonstyp" required />
+              <button type="submit">Uppdatera</button>
+            </form>
+          </td>
+        </tr>';
+    }
+
+    $customerRows = '';
+    if (!$customers) {
+        $customerRows = '<tr><td colspan="4">Inga kunder registrerade ännu.</td></tr>';
+    }
+    foreach ($customers as $customerRow) {
+        $customerRows .= '<tr>
+          <td>' . esc((string) $customerRow['id']) . '</td>
+          <td>' . esc($customerRow['customer_name']) . '</td>
+          <td>' . esc($customerRow['phone']) . '</td>
+          <td>
+            <form method="post" action="?action=admin_update_customer" class="inline-form">
+              <input type="hidden" name="customer_id" value="' . esc((string) $customerRow['id']) . '" />
+              <input type="text" name="phone" placeholder="Nytt telefonnummer" required />
+              <button type="submit">Uppdatera</button>
+            </form>
+          </td>
+        </tr>';
+    }
 
     $body = $messageHtml . $errorHtml . '<div class="card">
       <h1>Adminpanel</h1>
-      <p class="muted">Statistik, filter och användarhantering för Benny\'s Motorworks.</p>
+      <p class="muted">Statistik, kvittoinställningar och registerhantering för Benny\'s Motorworks.</p>
       <div class="buttons">
         <a class="btn btn-secondary" href="?action=receipts">Till kvitton</a>
       </div>
@@ -232,12 +349,7 @@ function render_admin_page(PDO $pdo, array $messages = [], array $errors = []): 
         <label>Från datum <input type="date" name="from" value="' . esc($dateFrom) . '" /></label>
         <label>Till datum <input type="date" name="to" value="' . esc($dateTo) . '" /></label>
         <label>Typ av arbete
-          <select name="work_type">
-            <option value="">Alla</option>
-            <option value="Reperation"' . $selectedRep . '>Reperation</option>
-            <option value="Styling"' . $selectedSty . '>Styling</option>
-            <option value="Prestanda"' . $selectedPre . '>Prestanda</option>
-          </select>
+          <select name="work_type">' . $workTypeOptions . '</select>
         </label>
         <label>Mekaniker
           <select name="mechanic">' . $mechanicOptions . '</select>
@@ -265,6 +377,32 @@ function render_admin_page(PDO $pdo, array $messages = [], array $errors = []): 
     </div>
 
     <div class="card">
+      <h2>Kvittodelen: Arbeten och standardpriser</h2>
+      <p class="muted">Här kan du lägga till nya arbeten och sätta grundpris. Dessa syns direkt i kvittoformuläret.</p>
+      <form method="post" action="?action=admin_create_work_type">
+        <label>Namn på arbete <input name="name" placeholder="Ex. Lackering / Bärgning" required /></label>
+        <label>Standardpris (SEK) <input type="number" min="0" step="0.01" name="default_price" value="0" required /></label>
+        <label>Status
+          <select name="is_active">
+            <option value="1">Aktiv</option>
+            <option value="0">Inaktiv</option>
+          </select>
+        </label>
+        <button type="submit">Lägg till arbete</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Befintliga arbeten</h2>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Namn</th><th>Standardpris</th><th>Status</th><th>Redigera</th></tr>
+        </thead>
+        <tbody>' . $workTypeRows . '</tbody>
+      </table>
+    </div>
+
+    <div class="card">
       <h2>Skapa ny användare</h2>
       <form method="post" action="?action=admin_create_user">
         <label>Personnummer <input name="personnummer" placeholder="ÅÅÅÅMMDD-XXXX" required /></label>
@@ -286,6 +424,44 @@ function render_admin_page(PDO $pdo, array $messages = [], array $errors = []): 
           <tr><th>ID</th><th>Personnummer</th><th>Roll</th><th>Ändra lösenord/roll</th></tr>
         </thead>
         <tbody>' . $usersRows . '</tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Fordonregister (nummerplåt + fordonstyp)</h2>
+      <form method="post" action="?action=admin_create_vehicle">
+        <label>Nummerplåt <input name="plate" placeholder="ABC-123" required /></label>
+        <label>Fordonstyp <input name="vehicle_type" placeholder="Ex. Sultan RS / Tow Truck" required /></label>
+        <button type="submit">Lägg till fordon</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Registrerade fordon</h2>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Nummerplåt</th><th>Fordon</th><th>Uppdatera fordon</th></tr>
+        </thead>
+        <tbody>' . $vehicleRows . '</tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Kundregister (namn + telefon)</h2>
+      <form method="post" action="?action=admin_create_customer">
+        <label>Kundnamn <input name="customer_name" placeholder="Namn" required /></label>
+        <label>Telefonnummer <input name="phone" placeholder="070-123 45 67" required /></label>
+        <button type="submit">Lägg till kund</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Registrerade kunder</h2>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Namn</th><th>Telefon</th><th>Uppdatera telefon</th></tr>
+        </thead>
+        <tbody>' . $customerRows . '</tbody>
       </table>
     </div>';
 
@@ -329,6 +505,68 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['is_admin'] = ((int) ($user['is_admin'] ?? 0) === 1) ? 1 : 0;
         redirect('?action=receipts');
     }
+}
+
+if ($action === 'admin_create_work_type' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!current_is_admin()) {
+        redirect('?action=receipts');
+    }
+
+    $name = trim($_POST['name'] ?? '');
+    $defaultPriceRaw = trim($_POST['default_price'] ?? '');
+    $isActive = ((int) ($_POST['is_active'] ?? 1) === 1) ? 1 : 0;
+
+    if ($name === '') {
+        $errors[] = 'Namn på arbete måste anges.';
+    }
+    if ($defaultPriceRaw === '' || !is_numeric($defaultPriceRaw) || (float) $defaultPriceRaw < 0) {
+        $errors[] = 'Standardpris måste vara 0 eller högre.';
+    }
+
+    if (!$errors) {
+        try {
+            $stmt = $pdo->prepare('INSERT INTO work_types (name, default_price, is_active) VALUES (?, ?, ?)');
+            $stmt->execute([$name, (float) $defaultPriceRaw, $isActive]);
+            $messages[] = 'Arbete tillagt: ' . $name;
+        } catch (Throwable $e) {
+            $errors[] = 'Kunde inte lägga till arbete. Namnet kan redan finnas.';
+        }
+    }
+
+    render_admin_page($pdo, $messages, $errors);
+}
+
+if ($action === 'admin_update_work_type' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!current_is_admin()) {
+        redirect('?action=receipts');
+    }
+
+    $workTypeId = (int) ($_POST['work_type_id'] ?? 0);
+    $name = trim($_POST['name'] ?? '');
+    $defaultPriceRaw = trim($_POST['default_price'] ?? '');
+    $isActive = ((int) ($_POST['is_active'] ?? 1) === 1) ? 1 : 0;
+
+    if ($workTypeId <= 0) {
+        $errors[] = 'Ogiltigt arbets-ID.';
+    }
+    if ($name === '') {
+        $errors[] = 'Namn på arbete måste anges.';
+    }
+    if ($defaultPriceRaw === '' || !is_numeric($defaultPriceRaw) || (float) $defaultPriceRaw < 0) {
+        $errors[] = 'Standardpris måste vara 0 eller högre.';
+    }
+
+    if (!$errors) {
+        try {
+            $stmt = $pdo->prepare('UPDATE work_types SET name = ?, default_price = ?, is_active = ? WHERE id = ?');
+            $stmt->execute([$name, (float) $defaultPriceRaw, $isActive, $workTypeId]);
+            $messages[] = 'Arbete uppdaterat.';
+        } catch (Throwable $e) {
+            $errors[] = 'Kunde inte uppdatera arbete. Namnet kan redan finnas.';
+        }
+    }
+
+    render_admin_page($pdo, $messages, $errors);
 }
 
 if ($action === 'admin_create_user' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -390,6 +628,110 @@ if ($action === 'admin_update_user' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     render_admin_page($pdo, $messages, $errors);
 }
 
+if ($action === 'admin_create_vehicle' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!current_is_admin()) {
+        redirect('?action=receipts');
+    }
+
+    $plate = strtoupper(trim($_POST['plate'] ?? ''));
+    $vehicleType = trim($_POST['vehicle_type'] ?? '');
+
+    if (!preg_match('/^[A-Z]{3}-\d{3}$/', $plate)) {
+        $errors[] = 'Nummerplåt måste vara i formatet XXX-000.';
+    }
+    if ($vehicleType === '') {
+        $errors[] = 'Fordonstyp måste anges.';
+    }
+
+    if (!$errors) {
+        try {
+            $stmt = $pdo->prepare('INSERT INTO vehicle_registry (plate, vehicle_type) VALUES (?, ?)');
+            $stmt->execute([$plate, $vehicleType]);
+            $messages[] = 'Fordon registrerat: ' . $plate;
+        } catch (Throwable $e) {
+            $errors[] = 'Kunde inte lägga till fordon. Nummerplåten kan redan finnas i registret.';
+        }
+    }
+
+    render_admin_page($pdo, $messages, $errors);
+}
+
+if ($action === 'admin_update_vehicle' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!current_is_admin()) {
+        redirect('?action=receipts');
+    }
+
+    $vehicleId = (int) ($_POST['vehicle_id'] ?? 0);
+    $vehicleType = trim($_POST['vehicle_type'] ?? '');
+
+    if ($vehicleId <= 0) {
+        $errors[] = 'Ogiltigt fordons-ID.';
+    }
+    if ($vehicleType === '') {
+        $errors[] = 'Fordonstyp måste anges.';
+    }
+
+    if (!$errors) {
+        $stmt = $pdo->prepare('UPDATE vehicle_registry SET vehicle_type = ? WHERE id = ?');
+        $stmt->execute([$vehicleType, $vehicleId]);
+        $messages[] = 'Fordon uppdaterat.';
+    }
+
+    render_admin_page($pdo, $messages, $errors);
+}
+
+if ($action === 'admin_create_customer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!current_is_admin()) {
+        redirect('?action=receipts');
+    }
+
+    $customerName = trim($_POST['customer_name'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+
+    if ($customerName === '') {
+        $errors[] = 'Kundnamn måste anges.';
+    }
+    if (!is_valid_phone($phone)) {
+        $errors[] = 'Telefonnummer är ogiltigt (använd siffror, +, -, mellanslag).';
+    }
+
+    if (!$errors) {
+        try {
+            $stmt = $pdo->prepare('INSERT INTO customer_registry (customer_name, phone) VALUES (?, ?)');
+            $stmt->execute([$customerName, $phone]);
+            $messages[] = 'Kund registrerad: ' . $customerName;
+        } catch (Throwable $e) {
+            $errors[] = 'Kunde inte lägga till kund. Namnet kan redan finnas i registret.';
+        }
+    }
+
+    render_admin_page($pdo, $messages, $errors);
+}
+
+if ($action === 'admin_update_customer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!current_is_admin()) {
+        redirect('?action=receipts');
+    }
+
+    $customerId = (int) ($_POST['customer_id'] ?? 0);
+    $phone = trim($_POST['phone'] ?? '');
+
+    if ($customerId <= 0) {
+        $errors[] = 'Ogiltigt kund-ID.';
+    }
+    if (!is_valid_phone($phone)) {
+        $errors[] = 'Telefonnummer är ogiltigt (använd siffror, +, -, mellanslag).';
+    }
+
+    if (!$errors) {
+        $stmt = $pdo->prepare('UPDATE customer_registry SET phone = ? WHERE id = ?');
+        $stmt->execute([$phone, $customerId]);
+        $messages[] = 'Kund uppdaterad.';
+    }
+
+    render_admin_page($pdo, $messages, $errors);
+}
+
 if ($action === 'create_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $workType = trim($_POST['work_type'] ?? '');
     $partsCountRaw = trim($_POST['parts_count'] ?? '');
@@ -397,7 +739,13 @@ if ($action === 'create_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $customer = trim($_POST['customer'] ?? '');
     $plate = strtoupper(trim($_POST['plate'] ?? ''));
 
-    if (!in_array($workType, ['Reperation', 'Styling', 'Prestanda'], true)) {
+    $activeWorkTypes = get_active_work_types($pdo);
+    $validWorkTypeMap = [];
+    foreach ($activeWorkTypes as $activeWorkType) {
+        $validWorkTypeMap[$activeWorkType['name']] = (float) $activeWorkType['default_price'];
+    }
+
+    if (!array_key_exists($workType, $validWorkTypeMap)) {
         $errors[] = 'Ogiltig typ av arbete.';
     }
 
@@ -426,6 +774,12 @@ if ($action === 'create_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Regplåt måste vara i formatet XXX-000.';
     }
 
+    if ($amountRaw === '') {
+        if (array_key_exists($workType, $validWorkTypeMap)) {
+            $amountRaw = (string) $validWorkTypeMap[$workType];
+        }
+    }
+
     if ($amountRaw === '' || !is_numeric($amountRaw) || (float) $amountRaw < 0) {
         $errors[] = 'Summa måste vara ett positivt tal.';
     }
@@ -443,27 +797,74 @@ if ($action === 'admin') {
 }
 
 if ($action === 'new_receipt') {
+    $vehicles = $pdo->query('SELECT plate FROM vehicle_registry ORDER BY plate ASC')->fetchAll(PDO::FETCH_COLUMN);
+    $customers = $pdo->query('SELECT customer_name FROM customer_registry ORDER BY customer_name ASC')->fetchAll(PDO::FETCH_COLUMN);
+    $activeWorkTypes = get_active_work_types($pdo);
+
+    $plateOptions = '';
+    foreach ($vehicles as $p) {
+        $plateOptions .= '<option value="' . esc((string) $p) . '"></option>';
+    }
+
+    $customerOptions = '';
+    foreach ($customers as $c) {
+        $customerOptions .= '<option value="' . esc((string) $c) . '"></option>';
+    }
+
+    $workTypeOptions = '';
+    $defaultPriceMap = [];
+    foreach ($activeWorkTypes as $wt) {
+        $name = (string) $wt['name'];
+        $price = (float) $wt['default_price'];
+        $defaultPriceMap[$name] = $price;
+        $priceDisplay = number_format($price, 2, ',', ' ');
+        $workTypeOptions .= '<option value="' . esc($name) . '">' . esc($name) . ' (' . esc($priceDisplay) . ' SEK)</option>';
+    }
+    $defaultPriceJson = esc(json_encode($defaultPriceMap) ?: '{}');
+
     $body = '<div class="card">
       <h1>Nytt kvitto</h1>
-      <form method="post" action="?action=create_receipt">
+      <form method="post" action="?action=create_receipt" id="receipt-form">
         <label>Mekaniker <input value="' . esc(current_user()) . '" disabled /></label>
         <label>Typ av arbete
-          <select name="work_type" required>
-            <option value="Reperation">Reperation</option>
-            <option value="Styling">Styling</option>
-            <option value="Prestanda">Prestanda</option>
+          <select name="work_type" id="work_type" required>
+            ' . $workTypeOptions . '
           </select>
         </label>
         <label>Antal delar (för Styling/Prestanda) <input type="number" min="0" name="parts_count" /></label>
-        <label>Summa (SEK) <input type="number" min="0" step="0.01" name="amount" required /></label>
-        <label>Kund <input name="customer" required /></label>
-        <label>Regplåt (XXX-000) <input name="plate" placeholder="ABC-123" required /></label>
+        <label>Summa (SEK) <input type="number" min="0" step="0.01" name="amount" id="amount" required /></label>
+        <label>Kund <input name="customer" list="customer-registry" required /></label>
+        <datalist id="customer-registry">' . $customerOptions . '</datalist>
+        <label>Regplåt (XXX-000) <input name="plate" list="vehicle-registry" placeholder="ABC-123" required /></label>
+        <datalist id="vehicle-registry">' . $plateOptions . '</datalist>
         <div class="buttons">
           <button type="submit">Skicka kvitto</button>
           <a class="btn btn-secondary" href="?action=receipts">Avbryt</a>
         </div>
       </form>
-    </div>';
+      <p class="muted">Tips: pris fylls automatiskt utifrån standardpris på vald arbetstyp (kan ändras manuellt).</p>
+    </div>
+    <script>
+      (function() {
+        const prices = JSON.parse(
+          decodeURIComponent(
+            encodeURIComponent("' . $defaultPriceJson . '")
+          )
+        );
+        const workType = document.getElementById("work_type");
+        const amount = document.getElementById("amount");
+        if (workType && amount) {
+          const setDefault = () => {
+            const selected = workType.value;
+            if (Object.prototype.hasOwnProperty.call(prices, selected)) {
+              amount.value = Number(prices[selected]).toFixed(2);
+            }
+          };
+          setDefault();
+          workType.addEventListener("change", setDefault);
+        }
+      })();
+    </script>';
 
     render_page('Nytt kvitto', $body, current_user());
     exit;

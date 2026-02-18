@@ -14,6 +14,22 @@ Den här versionen är byggd för att fungera som en vanlig **PHP-sida på Infin
 - PDO SQLite aktiverat
 - Skrivrättigheter i mappen `data/`
 
+
+## Kör som lokal app (enkel start)
+
+Du kan köra sidan som en "app" lokalt med ett klick:
+
+- **Windows:** dubbelklicka `start_app.bat` (kollar Python/PHP och forsoker installera/ladda ner vid behov)
+- **Mac/Linux:** kör `./start_app.sh`
+
+Detta använder `local_app.py` som:
+1. startar PHP-servern lokalt
+2. öppnar sidan i din webbläsare automatiskt
+3. kör tills du stänger med `Ctrl+C`
+
+> Windows-startscriptet forsoker forst installera via `winget` och fallbackar till portable PHP-nedladdning.
+> Om `winget` saknas behover du installera Python/PHP manuellt.
+
 ## Upload till InfinityFree (steg för steg)
 
 1. Logga in i InfinityFree Control Panel.
@@ -41,5 +57,7 @@ Den här versionen är byggd för att fungera som en vanlig **PHP-sida på Infin
 - Arbetsorder med dynamiskt löpnummer
 - **Adminpanel**
   - Statistik med filter (datum, arbetstyp, mekaniker)
-  - Skapa ny användare
-  - Redigera användare (lösenord + roll)
+  - Kvittoinställningar: skapa/redigera arbeten + standardpriser
+  - Skapa/redigera användare
+  - Fordonregister: nummerplåt + fordonstyp
+  - Kundregister: namn + telefonnummer
