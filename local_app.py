@@ -21,6 +21,7 @@ PORT = 8000
 def main() -> int:
     project_dir = Path(__file__).resolve().parent
     php_path = os.environ.get("BENNYS_PHP_EXE") or shutil.which("php")
+    php_ini_path = os.environ.get("BENNYS_PHP_INI")
 
     if php_path is None:
         print("[Fel] PHP hittades inte i PATH.")
@@ -31,9 +32,16 @@ def main() -> int:
     print(f"Projektmapp: {project_dir}")
     print(f"PHP: {php_path}")
     print(f"URL: http://{HOST}:{PORT}")
+    if php_ini_path:
+        print(f"PHP ini: {php_ini_path}")
+
+    php_cmd = [php_path]
+    if php_ini_path:
+        php_cmd.extend(["-c", php_ini_path])
+    php_cmd.extend(["-S", f"{HOST}:{PORT}"])
 
     process = subprocess.Popen(
-        [php_path, "-S", f"{HOST}:{PORT}"],
+        php_cmd,
         cwd=str(project_dir),
     )
 

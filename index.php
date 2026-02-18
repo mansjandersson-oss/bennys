@@ -8,6 +8,20 @@ if (!is_dir($dbDir)) {
     mkdir($dbDir, 0775, true);
 }
 $dbPath = $dbDir . '/bennys.sqlite';
+
+if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
+    http_response_code(500);
+    echo '<!doctype html><html lang="sv"><head><meta charset="utf-8" /><title>PDO SQLite saknas</title></head><body style="font-family:Arial,sans-serif;padding:20px;">';
+    echo '<h1>PHP saknar SQLite-drivrutin</h1>';
+    echo '<p>Appen kräver <strong>pdo_sqlite</strong> och <strong>sqlite3</strong>.</p>';
+    echo '<p>Om du kör Windows-startscriptet: kör <code>start_app.bat</code> igen så försöker den aktivera drivrutiner i php.ini automatiskt.</p>';
+    echo '<p>Om problemet kvarstår, öppna php.ini och kontrollera att dessa rader är aktiva:</p>';
+    echo '<pre>extension=pdo_sqlite
+extension=sqlite3</pre>';
+    echo '</body></html>';
+    exit;
+}
+
 $pdo = new PDO('sqlite:' . $dbPath);
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 

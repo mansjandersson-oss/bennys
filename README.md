@@ -30,6 +30,7 @@ Detta använder `local_app.py` som:
 > Windows-startscriptet forsoker forst installera via `winget` och fallbackar till portable PHP-nedladdning.
 - Scriptet prioriterar din lokala PHP-installation på `C:\Users\death\Downloads\php-8.3.30-Win32-vs16-x64\php.exe` om den finns.
 > Om `winget` saknas behover du installera Python/PHP manuellt.
+> Om du får felet `could not find driver` aktiverar scriptet automatiskt `pdo_sqlite` och `sqlite3` i din php.ini när du kör `start_app.bat`.
 
 ## Upload till InfinityFree (steg för steg)
 
