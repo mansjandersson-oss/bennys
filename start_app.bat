@@ -7,10 +7,18 @@ set "VENDOR_DIR=%APP_DIR%vendor"
 set "PHP_DIR=%VENDOR_DIR%\php"
 set "PYTHON_EXE=python"
 set "PHP_EXE=php"
+set "USER_PHP_EXE=C:\Users\death\Downloads\php-8.3.30-Win32-vs16-x64\php.exe"
 
 if not exist "%VENDOR_DIR%" mkdir "%VENDOR_DIR%"
 
 echo [Benny's Motorworks] Kontrollerar beroenden...
+
+
+if exist "%USER_PHP_EXE%" (
+  echo [INFO] Hittade PHP enligt din lokala sokvag.
+  set "PHP_EXE=%USER_PHP_EXE%"
+  goto :phpfound
+)
 
 where %PYTHON_EXE% >nul 2>nul
 if errorlevel 1 (

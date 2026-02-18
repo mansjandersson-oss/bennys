@@ -28,6 +28,7 @@ Detta använder `local_app.py` som:
 3. kör tills du stänger med `Ctrl+C`
 
 > Windows-startscriptet forsoker forst installera via `winget` och fallbackar till portable PHP-nedladdning.
+- Scriptet prioriterar din lokala PHP-installation på `C:\Users\death\Downloads\php-8.3.30-Win32-vs16-x64\php.exe` om den finns.
 > Om `winget` saknas behover du installera Python/PHP manuellt.
 
 ## Upload till InfinityFree (steg för steg)
