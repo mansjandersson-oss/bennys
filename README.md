@@ -29,7 +29,8 @@ Detta använder `local_app.py` som:
 
 > Windows-startscriptet forsoker forst installera via `winget` och fallbackar till portable PHP-nedladdning.
 > Om `winget` saknas behover du installera Python/PHP manuellt.
-> Om du får felet `could not find driver` aktiverar scriptet automatiskt `pdo_sqlite` och `sqlite3` i din php.ini när du kör `start_app.bat`.
+> Vid start skapas `bennys_php.ini` i projektmappen med aktiverade `pdo_sqlite` och `sqlite3`.
+> Scriptet verifierar dessutom att båda extensions verkligen laddas innan appen startas.
 
 ## Upload till InfinityFree (steg för steg)
 
