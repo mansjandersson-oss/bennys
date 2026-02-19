@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Benny's Motorworks</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background:#141414; color:#f5f5f5; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .card { background:#1f1f1f; border:1px solid #333; border-radius:12px; padding:16px; margin-bottom:16px; }
+    input, select, button { width:100%; padding:10px; margin-top:6px; margin-bottom:10px; border-radius:8px; border:1px solid #555; background:#111; color:#fff; }
+    button { background:#c42020; border:none; cursor:pointer; }
+    button.secondary { background:#444; }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .hidden { display:none; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th, td { border-bottom:1px solid #333; padding:8px; text-align:left; }
+    .top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .msg { color:#ff9; margin-bottom:10px; }
+    .toolbar { display:flex; gap:10px; margin-bottom:12px; }
+    .toolbar button { width:auto; padding:10px 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Benny's Motorworks</h1>
+      <button id="logoutBtn" class="secondary hidden" type="button">Logga ut</button>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <section id="loginView" class="card">
+      <h2>Inloggning</h2>
+      <label>Personnummer
+        <input id="personnummer" placeholder="19900101-1234" />
+      </label>
+      <label>Lösenord
+        <input id="password" type="password" />
+      </label>
+      <button id="loginBtn" type="button">Logga in</button>
+    </section>
+
+    <section id="appView" class="hidden">
+      <div class="toolbar">
+        <button id="tabReceipts" type="button">Kvitton</button>
+        <button id="tabCustomers" type="button" class="secondary">Kundregister</button>
+        <button id="tabVehicles" type="button" class="secondary">Fordonsdatabas</button>
+      </div>
+
+      <section id="receiptsSection">
+        <div class="card">
+          <h2>Nytt kvitto</h2>
+          <div class="row">
+            <label>Mekaniker
+              <input id="mechanic" disabled />
+            </label>
+            <label>Typ av arbete
+              <select id="workType">
+                <option>Reperation</option>
+                <option>Styling</option>
+                <option>Prestanda</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <label>Styling-delar
+              <input id="stylingParts" type="number" min="0" />
+            </label>
+            <label>Prestanda-delar
+              <input id="performanceParts" type="number" min="0" />
+            </label>
+          </div>
+          <div class="row">
+            <label>Summa (SEK)
+              <input id="amount" type="number" min="0" step="0.01" />
+            </label>
+            <label>Kund
+              <input id="customer" />
+            </label>
+          </div>
+          <div class="row">
+            <label>Regplåt
+              <input id="plate" placeholder="ABC-123" />
+            </label>
+          </div>
+          <button id="saveBtn" type="button">Spara kvitto</button>
+        </div>
+
+        <div class="card">
+          <h2>Alla kvitton</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th><th>Mekaniker</th><th>Arbete</th><th>Styling-delar</th><th>Prestanda-delar</th><th>Kund</th><th>Regplåt</th><th>Summa</th><th>Arbetsorder</th>
+              </tr>
+            </thead>
+            <tbody id="receiptBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="customersSection" class="hidden">
+        <div class="card">
+          <h2>Kundregister</h2>
+          <div class="row">
+            <label>Kundnamn
+              <input id="customerNameReg" />
+            </label>
+            <label>Telefonnummer
+              <input id="customerPhoneReg" />
+            </label>
+          </div>
+          <button id="saveCustomerBtn" type="button">Spara kund</button>
+        </div>
+        <div class="card">
+          <h2>Sparade kunder</h2>
+          <table>
+            <thead><tr><th>Namn</th><th>Telefon</th></tr></thead>
+            <tbody id="customerBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="vehiclesSection" class="hidden">
+        <div class="card">
+          <h2>Fordonsdatabas</h2>
+          <div class="row">
+            <label>Regplåt
+              <input id="vehiclePlateReg" placeholder="ABC-123" />
+            </label>
+            <label>Fordonets modell
+              <input id="vehicleModelReg" />
+            </label>
+          </div>
+          <button id="saveVehicleBtn" type="button">Spara fordon</button>
+        </div>
+        <div class="card">
+          <h2>Sparade fordon</h2>
+          <table>
+            <thead><tr><th>Regplåt</th><th>Modell</th></tr></thead>
+            <tbody id="vehicleBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </div>
+
+<script>
+const msg = document.getElementById('msg');
+const loginView = document.getElementById('loginView');
+const appView = document.getElementById('appView');
+const logoutBtn = document.getElementById('logoutBtn');
+const mechanicInput = document.getElementById('mechanic');
+
+const receiptsSection = document.getElementById('receiptsSection');
+const customersSection = document.getElementById('customersSection');
+const vehiclesSection = document.getElementById('vehiclesSection');
+
+function showMessage(text){ msg.textContent = text || ''; }
+
+async function api(action, method='GET', body=null){
+  const res = await fetch(`index.php?action=${action}`, {
+    method,
+    headers: {'Content-Type':'application/json'},
+    body: body ? JSON.stringify(body) : null
+  });
+  const data = await res.json().catch(()=>({ok:false,error:'Ogiltigt svar'}));
+  if(!res.ok || !data.ok) throw new Error(data.error || 'Fel');
+  return data;
+}
+
+function showSection(sectionName){
+  receiptsSection.classList.toggle('hidden', sectionName !== 'receipts');
+  customersSection.classList.toggle('hidden', sectionName !== 'customers');
+  vehiclesSection.classList.toggle('hidden', sectionName !== 'vehicles');
+}
+
+function renderReceipts(items){
+  const body = document.getElementById('receiptBody');
+  body.innerHTML = items.map(r => `
+    <tr>
+      <td>${r.id}</td>
+      <td>${r.mechanic}</td>
+      <td>${r.work_type}</td>
+      <td>${r.styling_parts === "" ? "-" : r.styling_parts}</td>
+      <td>${r.performance_parts === "" ? "-" : r.performance_parts}</td>
+      <td>${r.customer}</td>
+      <td>${r.plate}</td>
+      <td>${Number(r.amount).toFixed(2)}</td>
+      <td><button type="button" onclick="navigator.clipboard.writeText('${r.work_order.replace(/'/g, "\\'")}')">Kopiera</button></td>
+    </tr>
+  `).join('');
+}
+
+function renderCustomers(items){
+  const body = document.getElementById('customerBody');
+  body.innerHTML = items.map(c => `<tr><td>${c.customer_name}</td><td>${c.phone || '-'}</td></tr>`).join('');
+}
+
+function renderVehicles(items){
+  const body = document.getElementById('vehicleBody');
+  body.innerHTML = items.map(v => `<tr><td>${v.plate}</td><td>${v.vehicle_model}</td></tr>`).join('');
+}
+
+async function refresh(){
+  try {
+    const me = await api('api_me');
+    if (!me.user) {
+      loginView.classList.remove('hidden');
+      appView.classList.add('hidden');
+      logoutBtn.classList.add('hidden');
+      return;
+    }
+
+    mechanicInput.value = me.user;
+    loginView.classList.add('hidden');
+    appView.classList.remove('hidden');
+    logoutBtn.classList.remove('hidden');
+
+    const [receiptData, customerData, vehicleData] = await Promise.all([
+      api('api_receipts'),
+      api('api_customers'),
+      api('api_vehicles')
+    ]);
+
+    renderReceipts(receiptData.receipts || []);
+    renderCustomers(customerData.customers || []);
+    renderVehicles(vehicleData.vehicles || []);
+  } catch (e) {
+    showMessage(e.message);
+  }
+}
+
+document.getElementById('tabReceipts').onclick = () => showSection('receipts');
+document.getElementById('tabCustomers').onclick = () => showSection('customers');
+document.getElementById('tabVehicles').onclick = () => showSection('vehicles');
+
+document.getElementById('loginBtn').onclick = async () => {
+  try {
+    await api('api_login', 'POST', {
+      personnummer: document.getElementById('personnummer').value,
+      password: document.getElementById('password').value,
+    });
+    showMessage('Inloggad.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+};
+
+document.getElementById('saveBtn').onclick = async () => {
+  try {
+    await api('api_create_receipt', 'POST', {
+      work_type: document.getElementById('workType').value,
+      styling_parts: document.getElementById('stylingParts').value,
+      performance_parts: document.getElementById('performanceParts').value,
+      amount: document.getElementById('amount').value,
+      customer: document.getElementById('customer').value,
+      plate: document.getElementById('plate').value,
+    });
+    showMessage('Kvitto sparat.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+};
+
+document.getElementById('saveCustomerBtn').onclick = async () => {
+  try {
+    await api('api_create_customer', 'POST', {
+      customer_name: document.getElementById('customerNameReg').value,
+      phone: document.getElementById('customerPhoneReg').value,
+    });
+    showMessage('Kund sparad.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+};
+
+document.getElementById('saveVehicleBtn').onclick = async () => {
+  try {
+    await api('api_create_vehicle', 'POST', {
+      plate: document.getElementById('vehiclePlateReg').value,
+      vehicle_model: document.getElementById('vehicleModelReg').value,
+    });
+    showMessage('Fordon sparat.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+};
+
+logoutBtn.onclick = async () => {
+  await api('api_logout', 'POST');
+  await refresh();
+};
+
+refresh();
+</script>
+</body>
+</html>
