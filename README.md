@@ -33,6 +33,15 @@ Detta använder `local_app.py` som:
 > Startscriptet nollstaller ocksa `PHP_INI_SCAN_DIR` for att undvika att andra ini-filer skriver over extension-inställningar.
 > Scriptet verifierar dessutom att båda extensions verkligen laddas innan appen startas.
 
+### VS Code (PHP Server)
+Om du kör via VS Code och får att `index.php` inte hittas, starta servern från projektmappen med router:
+
+```bash
+php -S 127.0.0.1:8000 -t . router.php
+```
+
+Detta tvingar alla app-routes till `index.php` och löser vanliga problem med fel dokumentrot i VS Code.
+
 ## Upload till InfinityFree (steg för steg)
 
 1. Logga in i InfinityFree Control Panel.

@@ -40,7 +40,8 @@ def main() -> int:
     php_cmd = [php_path]
     if php_ini_path:
         php_cmd.extend(["-c", php_ini_path])
-    php_cmd.extend(["-S", f"{HOST}:{PORT}"])
+    router_path = project_dir / "router.php"
+    php_cmd.extend(["-S", f"{HOST}:{PORT}", "-t", str(project_dir), str(router_path)])
 
     process_env = os.environ.copy()
     process_env["PHP_INI_SCAN_DIR"] = php_ini_scan_dir
