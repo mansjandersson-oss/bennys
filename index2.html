@@ -6,25 +6,34 @@
   <title>Benny's Motorworks</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; background:#141414; color:#f5f5f5; }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
     .card { background:#1f1f1f; border:1px solid #333; border-radius:12px; padding:16px; margin-bottom:16px; }
     input, select, button { width:100%; padding:10px; margin-top:6px; margin-bottom:10px; border-radius:8px; border:1px solid #555; background:#111; color:#fff; }
     button { background:#c42020; border:none; cursor:pointer; }
     button.secondary { background:#444; }
-    .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .row { display:inline-grid; grid-template-columns:1fr 1fr; gap:32px; width:100%; }
     .hidden { display:none; }
     table { width:100%; border-collapse:collapse; font-size:14px; }
-    th, td { border-bottom:1px solid #333; padding:8px; text-align:left; }
+    th, td { border-bottom:1px solid #333; padding:12px 10px; text-align:left; }
     .top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .logo { height:64px; width:auto; border-radius:8px; background:#111; border:1px solid #333; padding:8px; }
     .msg { color:#ff9; margin-bottom:10px; }
-    .toolbar { display:flex; gap:10px; margin-bottom:12px; }
+    .toolbar { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
     .toolbar button { width:auto; padding:10px 14px; }
+    .stats { display:grid; grid-template-columns:repeat(4, minmax(140px, 1fr)); gap:12px; margin-bottom:12px; }
+    .stat-box { background:#161616; border:1px solid #333; border-radius:10px; padding:10px; }
+    .stat-box strong { display:block; font-size:12px; color:#bbb; }
+    .bar-chart { display:flex; flex-direction:column; gap:8px; }
+    .bar-row { display:grid; grid-template-columns:180px 1fr 70px; gap:10px; align-items:center; }
+    .bar-track { background:#2a2a2a; border-radius:999px; height:12px; overflow:hidden; }
+    .bar-fill { background:#d63333; height:100%; }
+    .small { font-size:12px; color:#bbb; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="top">
-      <h1>Benny's Motorworks</h1>
+      <img class="logo" src="logo.svg" alt="Benny's Motorworks logo" />
       <button id="logoutBtn" class="secondary hidden" type="button">Logga ut</button>
     </div>
 
@@ -46,6 +55,8 @@
         <button id="tabReceipts" type="button">Kvitton</button>
         <button id="tabCustomers" type="button" class="secondary">Kundregister</button>
         <button id="tabVehicles" type="button" class="secondary">Fordonsdatabas</button>
+        <button id="tabPrices" type="button" class="secondary">Prislista</button>
+        <button id="tabAdmin" type="button" class="secondary hidden">Admin</button>
       </div>
 
       <section id="receiptsSection">
@@ -83,6 +94,7 @@
             <label>Regplåt
               <input id="plate" placeholder="ABC-123" />
             </label>
+            <div></div>
           </div>
           <button id="saveBtn" type="button">Spara kvitto</button>
         </div>
@@ -92,7 +104,7 @@
           <table>
             <thead>
               <tr>
-                <th>ID</th><th>Mekaniker</th><th>Arbete</th><th>Styling-delar</th><th>Prestanda-delar</th><th>Kund</th><th>Regplåt</th><th>Summa</th><th>Arbetsorder</th>
+                <th>ID</th><th>Mekaniker</th><th>Arbete</th><th>Styling</th><th>Prestanda</th><th>Kund</th><th>Regplåt</th><th>Summa</th><th>Arbetsorder</th><th class="adminOnly hidden">Åtgärder</th>
               </tr>
             </thead>
             <tbody id="receiptBody"></tbody>
@@ -143,6 +155,98 @@
           </table>
         </div>
       </section>
+
+      <section id="pricesSection" class="hidden">
+        <div class="card">
+          <h2>Prislista</h2>
+          <p class="small">Här ser mekaniker priser för tjänster. Behöriga roller kan uppdatera listan.</p>
+          <div id="priceForm" class="hidden">
+            <div class="row">
+              <label>Tjänst
+                <input id="serviceName" />
+              </label>
+              <label>Pris (SEK)
+                <input id="serviceSalePrice" type="number" step="0.01" min="0" />
+              </label>
+            </div>
+            <div class="row">
+              <label>Utgift/Kostnad (SEK)
+                <input id="serviceExpenseCost" type="number" step="0.01" min="0" />
+              </label>
+              <label>Aktiv
+                <select id="serviceIsActive"><option value="1">Ja</option><option value="0">Nej</option></select>
+              </label>
+            </div>
+            <button id="saveServiceBtn" type="button">Spara tjänst</button>
+          </div>
+          <table>
+            <thead><tr><th>Tjänst</th><th>Pris</th><th>Utgift</th><th>Aktiv</th></tr></thead>
+            <tbody id="serviceBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="adminSection" class="hidden">
+        <div class="card">
+          <h2>Adminpanel</h2>
+          <div class="stats">
+            <div class="stat-box"><strong>Försäljning</strong><span id="statSales">0.00</span></div>
+            <div class="stat-box"><strong>Utgifter</strong><span id="statExpenses">0.00</span></div>
+            <div class="stat-box"><strong>Vinst</strong><span id="statProfit">0.00</span></div>
+            <div class="stat-box"><strong>Antal kvitton</strong><span id="statReceipts">0</span></div>
+          </div>
+          <h3>Bäst presterande mekaniker</h3>
+          <div id="topMechanicsChart" class="bar-chart"></div>
+        </div>
+
+        <div class="card">
+          <h2>Skapa / uppdatera användare</h2>
+          <div class="row">
+            <label>Personnummer
+              <input id="adminUserPersonnummer" placeholder="19900101-1234" />
+            </label>
+            <label>Namn
+              <input id="adminUserFullName" placeholder="Förnamn Efternamn" />
+            </label>
+          </div>
+          <div class="row">
+            <label>Lösenord
+              <input id="adminUserPassword" type="password" />
+            </label>
+            <label>Rank
+              <select id="adminUserRank"></select>
+            </label>
+          </div>
+          <button id="saveAdminUserBtn" type="button">Spara användare</button>
+        </div>
+
+        <div class="card">
+          <h2>Skapa / uppdatera rank</h2>
+          <div class="row">
+            <label>Ranknamn
+              <input id="rankName" />
+            </label>
+            <div></div>
+          </div>
+          <div class="row">
+            <label><input id="rankCanViewAdmin" type="checkbox" style="width:auto" /> Visa admin</label>
+            <label><input id="rankCanManageUsers" type="checkbox" style="width:auto" /> Hantera användare/ranker</label>
+          </div>
+          <div class="row">
+            <label><input id="rankCanManagePrices" type="checkbox" style="width:auto" /> Hantera prislista</label>
+            <label><input id="rankCanEditReceipts" type="checkbox" style="width:auto" /> Redigera/radera kvitton</label>
+          </div>
+          <button id="saveRankBtn" type="button">Spara rank</button>
+        </div>
+
+        <div class="card">
+          <h2>Användare</h2>
+          <table>
+            <thead><tr><th>ID</th><th>Personnummer</th><th>Namn</th><th>Rank</th></tr></thead>
+            <tbody id="adminUserBody"></tbody>
+          </table>
+        </div>
+      </section>
     </section>
   </div>
 
@@ -156,8 +260,15 @@ const mechanicInput = document.getElementById('mechanic');
 const receiptsSection = document.getElementById('receiptsSection');
 const customersSection = document.getElementById('customersSection');
 const vehiclesSection = document.getElementById('vehiclesSection');
+const pricesSection = document.getElementById('pricesSection');
+const adminSection = document.getElementById('adminSection');
+
+let currentUser = null;
+let allReceipts = [];
+let allRanks = [];
 
 function showMessage(text){ msg.textContent = text || ''; }
+function esc(v){ return String(v ?? '').replace(/[&<>'"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s])); }
 
 async function api(action, method='GET', body=null){
   const res = await fetch(`index.php?action=${action}`, {
@@ -174,59 +285,118 @@ function showSection(sectionName){
   receiptsSection.classList.toggle('hidden', sectionName !== 'receipts');
   customersSection.classList.toggle('hidden', sectionName !== 'customers');
   vehiclesSection.classList.toggle('hidden', sectionName !== 'vehicles');
+  pricesSection.classList.toggle('hidden', sectionName !== 'prices');
+  adminSection.classList.toggle('hidden', sectionName !== 'admin');
 }
 
 function renderReceipts(items){
+  allReceipts = items;
+  const canEdit = Number(currentUser?.permissions?.can_edit_receipts || 0) === 1;
+  document.querySelectorAll('.adminOnly').forEach(el => el.classList.toggle('hidden', !canEdit));
   const body = document.getElementById('receiptBody');
-  body.innerHTML = items.map(r => `
-    <tr>
+  body.innerHTML = items.map(r => {
+    const editBtns = canEdit ? `<button type="button" onclick="editReceipt(${r.id})">Redigera</button><button type="button" class="secondary" onclick="deleteReceipt(${r.id})">Radera</button>` : '';
+    return `<tr>
       <td>${r.id}</td>
-      <td>${r.mechanic}</td>
-      <td>${r.work_type}</td>
-      <td>${r.styling_parts === "" ? "-" : r.styling_parts}</td>
-      <td>${r.performance_parts === "" ? "-" : r.performance_parts}</td>
-      <td>${r.customer}</td>
-      <td>${r.plate}</td>
+      <td>${esc(r.mechanic_name)}</td>
+      <td>${esc(r.work_type)}</td>
+      <td>${r.styling_parts === '' ? '-' : r.styling_parts}</td>
+      <td>${r.performance_parts === '' ? '-' : r.performance_parts}</td>
+      <td>${esc(r.customer)}</td>
+      <td>${esc(r.plate)}</td>
       <td>${Number(r.amount).toFixed(2)}</td>
-      <td><button type="button" onclick="navigator.clipboard.writeText('${r.work_order.replace(/'/g, "\\'")}')">Kopiera</button></td>
-    </tr>
-  `).join('');
+      <td><button type="button" onclick="navigator.clipboard.writeText('${esc(r.work_order)}')">Kopiera</button></td>
+      ${canEdit ? `<td>${editBtns}</td>` : ''}
+    </tr>`;
+  }).join('');
 }
 
 function renderCustomers(items){
   const body = document.getElementById('customerBody');
-  body.innerHTML = items.map(c => `<tr><td>${c.customer_name}</td><td>${c.phone || '-'}</td></tr>`).join('');
+  body.innerHTML = items.map(c => `<tr><td>${esc(c.customer_name)}</td><td>${esc(c.phone || '-')}</td></tr>`).join('');
 }
 
 function renderVehicles(items){
   const body = document.getElementById('vehicleBody');
-  body.innerHTML = items.map(v => `<tr><td>${v.plate}</td><td>${v.vehicle_model}</td></tr>`).join('');
+  body.innerHTML = items.map(v => `<tr><td>${esc(v.plate)}</td><td>${esc(v.vehicle_model)}</td></tr>`).join('');
+}
+
+function renderServices(items){
+  const body = document.getElementById('serviceBody');
+  body.innerHTML = items.map(s => `<tr><td>${esc(s.service_name)}</td><td>${Number(s.sale_price).toFixed(2)}</td><td>${Number(s.expense_cost).toFixed(2)}</td><td>${Number(s.is_active)===1?'Ja':'Nej'}</td></tr>`).join('');
+}
+
+function renderAdminUsers(items){
+  const body = document.getElementById('adminUserBody');
+  body.innerHTML = items.map(u => `<tr><td>${u.id}</td><td>${esc(u.personnummer)}</td><td>${esc(u.full_name)}</td><td>${esc(u.rank_name)}</td></tr>`).join('');
+}
+
+function renderTopMechanics(items){
+  const chart = document.getElementById('topMechanicsChart');
+  const max = Math.max(1, ...items.map(i => Number(i.total_sales || 0)));
+  chart.innerHTML = items.map(i => {
+    const val = Number(i.total_sales || 0);
+    const pct = (val / max) * 100;
+    return `<div class="bar-row"><div>${esc(i.mechanic_name)}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><div>${val.toFixed(0)} kr</div></div>`;
+  }).join('') || '<div class="small">Ingen data ännu.</div>';
+}
+
+function renderRankOptions(){
+  const sel = document.getElementById('adminUserRank');
+  sel.innerHTML = allRanks.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
 }
 
 async function refresh(){
   try {
     const me = await api('api_me');
     if (!me.user) {
+      currentUser = null;
       loginView.classList.remove('hidden');
       appView.classList.add('hidden');
       logoutBtn.classList.add('hidden');
       return;
     }
 
-    mechanicInput.value = me.user;
+    currentUser = me.user;
+    mechanicInput.value = `${currentUser.full_name} (${currentUser.rank_name})`;
     loginView.classList.add('hidden');
     appView.classList.remove('hidden');
     logoutBtn.classList.remove('hidden');
 
-    const [receiptData, customerData, vehicleData] = await Promise.all([
+    const canViewAdmin = Number(currentUser.permissions?.can_view_admin || 0) === 1;
+    const canManagePrices = Number(currentUser.permissions?.can_manage_prices || 0) === 1;
+    const canManageUsers = Number(currentUser.permissions?.can_manage_users || 0) === 1;
+
+    document.getElementById('tabAdmin').classList.toggle('hidden', !canViewAdmin);
+    document.getElementById('priceForm').classList.toggle('hidden', !canManagePrices);
+
+    const [receiptData, customerData, vehicleData, serviceData] = await Promise.all([
       api('api_receipts'),
       api('api_customers'),
-      api('api_vehicles')
+      api('api_vehicles'),
+      api('api_service_prices')
     ]);
 
     renderReceipts(receiptData.receipts || []);
     renderCustomers(customerData.customers || []);
     renderVehicles(vehicleData.vehicles || []);
+    renderServices(serviceData.services || []);
+
+    if (canViewAdmin) {
+      const adminData = await api('api_admin_summary');
+      document.getElementById('statSales').textContent = `${Number(adminData.stats.sales).toFixed(2)} SEK`;
+      document.getElementById('statExpenses').textContent = `${Number(adminData.stats.expenses).toFixed(2)} SEK`;
+      document.getElementById('statProfit').textContent = `${Number(adminData.stats.profit).toFixed(2)} SEK`;
+      document.getElementById('statReceipts').textContent = adminData.stats.receipt_count;
+      renderTopMechanics(adminData.top_mechanics || []);
+      renderAdminUsers(adminData.users || []);
+    }
+
+    if (canManageUsers) {
+      const rankData = await api('api_ranks');
+      allRanks = rankData.ranks || [];
+      renderRankOptions();
+    }
   } catch (e) {
     showMessage(e.message);
   }
@@ -235,6 +405,8 @@ async function refresh(){
 document.getElementById('tabReceipts').onclick = () => showSection('receipts');
 document.getElementById('tabCustomers').onclick = () => showSection('customers');
 document.getElementById('tabVehicles').onclick = () => showSection('vehicles');
+document.getElementById('tabPrices').onclick = () => showSection('prices');
+document.getElementById('tabAdmin').onclick = () => showSection('admin');
 
 document.getElementById('loginBtn').onclick = async () => {
   try {
@@ -292,11 +464,90 @@ document.getElementById('saveVehicleBtn').onclick = async () => {
   }
 };
 
+document.getElementById('saveServiceBtn').onclick = async () => {
+  try {
+    await api('api_save_service_price', 'POST', {
+      service_name: document.getElementById('serviceName').value,
+      sale_price: document.getElementById('serviceSalePrice').value,
+      expense_cost: document.getElementById('serviceExpenseCost').value,
+      is_active: Number(document.getElementById('serviceIsActive').value),
+    });
+    showMessage('Tjänst sparad.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+};
+
+document.getElementById('saveAdminUserBtn').onclick = async () => {
+  try {
+    await api('api_admin_save_user', 'POST', {
+      personnummer: document.getElementById('adminUserPersonnummer').value,
+      full_name: document.getElementById('adminUserFullName').value,
+      password: document.getElementById('adminUserPassword').value,
+      rank_id: Number(document.getElementById('adminUserRank').value || 0),
+    });
+    showMessage('Användare sparad.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+};
+
+document.getElementById('saveRankBtn').onclick = async () => {
+  try {
+    await api('api_save_rank', 'POST', {
+      name: document.getElementById('rankName').value,
+      can_view_admin: document.getElementById('rankCanViewAdmin').checked,
+      can_manage_users: document.getElementById('rankCanManageUsers').checked,
+      can_manage_prices: document.getElementById('rankCanManagePrices').checked,
+      can_edit_receipts: document.getElementById('rankCanEditReceipts').checked,
+    });
+    showMessage('Rank sparad.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+};
+
+async function deleteReceipt(id){
+  if (!confirm('Radera detta kvitto?')) return;
+  try {
+    await api('api_delete_receipt', 'POST', {id});
+    showMessage('Kvitto raderat.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+}
+
+async function editReceipt(id){
+  const r = allReceipts.find(x => Number(x.id) === Number(id));
+  if (!r) return;
+  const work_type = prompt('Typ av arbete', r.work_type);
+  if (!work_type) return;
+  const styling_parts = prompt('Styling-delar (tomt tillåt)', r.styling_parts === '' ? '' : r.styling_parts);
+  const performance_parts = prompt('Prestanda-delar (tomt tillåt)', r.performance_parts === '' ? '' : r.performance_parts);
+  const amount = prompt('Summa', r.amount);
+  const customer = prompt('Kund', r.customer);
+  const plate = prompt('Regplåt (ABC-123)', r.plate);
+
+  try {
+    await api('api_update_receipt', 'POST', { id, work_type, styling_parts, performance_parts, amount, customer, plate });
+    showMessage('Kvitto uppdaterat.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+}
+
 logoutBtn.onclick = async () => {
   await api('api_logout', 'POST');
   await refresh();
 };
 
+window.deleteReceipt = deleteReceipt;
+window.editReceipt = editReceipt;
 refresh();
 </script>
 </body>
