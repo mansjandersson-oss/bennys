@@ -1,0 +1,40 @@
+name: Deploy bennys to FTP
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-ftp
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy bennys/ to /htdocs/
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT || 21 }}
+          protocol: ftp
+
+          # Uploadar INNEHÅLLET i bennys/
+          local-dir: bennys/
+
+          # Remote path på servern
+          server-dir: ${{ secrets.FTP_REMOTE_DIR }}
+
+          exclude: |
+            **/.git*
+            **/.github/**
+            **/node_modules/**
+            **/.vscode/**
+            **/*.log
+            README.md
