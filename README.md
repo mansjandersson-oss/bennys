@@ -1,4 +1,4 @@
-# Benny's Motorworks (Minimal hemsida)
+# Redline Performance (Minimal hemsida)
 
 Ren hemsida med **minimal PHP** + **HTML/JS**.
 Ingen lokal app-launcher, inga batch/shell-startscript.
@@ -7,7 +7,7 @@ Ingen lokal app-launcher, inga batch/shell-startscript.
 - Inloggning med personnummer + lösenord
 - Skapa kvitto
 - Lista kvitton
-- Kopiera arbetsorder (`Benny's Arbetsorder - 00000`)
+- Kopiera arbetsorder (`Redline Performance Arbetsorder - 00000`)
 - Kundregister (namn + telefon)
 - Fordonsdatabas (regplåt + modell)
 - SQLite lagring i `data/bennys.sqlite`

@@ -983,3 +983,35 @@ button:hover{
   height: auto !important;
   min-height: 0 !important;
 }
+/* ===== Force horizontal side-by-side layout across the site ===== */
+.layout-canvas{
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  align-items:flex-start !important;
+  gap:18px !important;
+  overflow-x:auto !important;
+  overflow-y:visible !important;
+  padding-bottom:4px;
+}
+
+.layout-canvas > .layout-section{
+  flex-direction:column !important;
+  gap:16px;
+  min-width:min(980px, 92vw) !important;
+}
+
+/* När endast en sektion visas: låt den fylla ut bredden åt höger */
+.layout-canvas > .layout-section:not(.hidden){
+  display:flex !important;
+  flex:1 1 auto !important;
+  width:100% !important;
+  max-width:none !important;
+}
+
+.layout-canvas > .layout-section.hidden{
+  display:none !important;
+}
+
+@media (max-width: 1200px){
+  .layout-canvas{ grid-template-columns:none !important; }
+}
