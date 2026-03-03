@@ -857,12 +857,18 @@ body.layout-stack-mode .layout-card-drag-handle,
   border: 1px solid rgba(255,255,255,0.10);
 }
 
-/* Knapp + inputs i save-box fullbredd */
-#receiptsSection .receipt-side input,
-#receiptsSection .receipt-side button,
-#receiptsSection #saveBtn{
+/* Inputs fullbredd i save-box */
+#receiptsSection .receipt-side input{
   width: 100% !important;
   max-width: 100% !important;
+}
+
+/* Spara kvitto-knappen ska inte vara överdrivet lång */
+#receiptsSection .receipt-side button,
+#receiptsSection #saveBtn{
+  width: min(260px, 100%) !important;
+  max-width: min(260px, 100%) !important;
+  align-self: center;
 }
 
 /* ===== Tabeller mer Redline (tight + tydligt) ===== */
