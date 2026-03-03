@@ -2916,13 +2916,12 @@ function showSection(sectionName){
     setActiveLayoutKey(sectionName, true);
     return;
   }
-  // Visa alla sektioner användaren har behörighet till samtidigt.
-  receiptsSection.classList.remove('hidden');
-  customersSection.classList.toggle('hidden', !canViewSection('customers'));
-  vehiclesSection.classList.toggle('hidden', !canViewSection('vehicles'));
-  pricesSection.classList.toggle('hidden', !canViewSection('prices'));
-  payrollSection.classList.toggle('hidden', !canViewSection('payroll'));
-  adminSection.classList.toggle('hidden', !canViewSection('admin'));
+  receiptsSection.classList.toggle('hidden', sectionName !== 'receipts');
+  customersSection.classList.toggle('hidden', sectionName !== 'customers');
+  vehiclesSection.classList.toggle('hidden', sectionName !== 'vehicles');
+  pricesSection.classList.toggle('hidden', sectionName !== 'prices');
+  payrollSection.classList.toggle('hidden', sectionName !== 'payroll');
+  adminSection.classList.toggle('hidden', sectionName !== 'admin');
 
   if (!shouldUseStackLayout()) {
     layoutConfig.sections.forEach(meta => {
@@ -3775,11 +3774,11 @@ async function refresh(){
       const el = document.getElementById(id);
       if (el) el.disabled = !canManagePrices;
     });
-    customersSection.classList.toggle('hidden', !canViewCustomers);
-    vehiclesSection.classList.toggle('hidden', !canViewVehicles);
-    pricesSection.classList.toggle('hidden', !canSeePrices);
-    payrollSection.classList.toggle('hidden', !canViewPayroll);
-    adminSection.classList.toggle('hidden', !canViewAdmin);
+    if (!canViewCustomers) customersSection.classList.add('hidden');
+    if (!canViewVehicles) vehiclesSection.classList.add('hidden');
+    if (!canSeePrices) pricesSection.classList.add('hidden');
+    if (!canViewPayroll) payrollSection.classList.add('hidden');
+    if (!canViewAdmin) adminSection.classList.add('hidden');
 
     const [receiptData, serviceData, discountData, payrollData] = await Promise.all([
       api('api_receipts'),
