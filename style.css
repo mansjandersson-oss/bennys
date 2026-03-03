@@ -871,6 +871,14 @@ body.layout-stack-mode .layout-card-drag-handle,
   align-self: center;
 }
 
+/* Spara kvitto-knappen ska inte vara överdrivet lång */
+#receiptsSection .receipt-side button,
+#receiptsSection #saveBtn{
+  width: min(260px, 100%) !important;
+  max-width: min(260px, 100%) !important;
+  align-self: center;
+}
+
 /* ===== Tabeller mer Redline (tight + tydligt) ===== */
 table{
   border-collapse: separate;
