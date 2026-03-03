@@ -983,3 +983,26 @@ button:hover{
   height: auto !important;
   min-height: 0 !important;
 }
+/* ===== Force horizontal side-by-side layout across the site ===== */
+.layout-canvas{
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  align-items:flex-start !important;
+  gap:18px !important;
+  overflow-x:auto !important;
+  overflow-y:visible !important;
+  padding-bottom:4px;
+}
+
+.layout-canvas > .layout-section{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:16px;
+  flex:0 0 min(980px, 92vw) !important;
+  width:min(980px, 92vw) !important;
+  max-width:min(980px, 92vw) !important;
+}
+
+@media (max-width: 1200px){
+  .layout-canvas{ grid-template-columns:none !important; }
+}
