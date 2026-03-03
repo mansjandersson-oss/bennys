@@ -243,6 +243,45 @@ function find_by_id(array $rows, int $id): ?array
     return null;
 }
 
+function normalize_customer_name_key(string $name): string
+{
+    $v = trim(mb_strtolower($name, 'UTF-8'));
+    return preg_replace('/\s+/', ' ', $v) ?: '';
+}
+
+function ensure_unique_customer(array $rows, int $selfId, string $name, string $pnr): void
+{
+    $nameKey = normalize_customer_name_key($name);
+    foreach ($rows as $row) {
+        $rowId = (int) ($row['id'] ?? 0);
+        if ($selfId > 0 && $rowId === $selfId) {
+            continue;
+        }
+        $rowNameKey = normalize_customer_name_key((string) ($row['customer_name'] ?? ''));
+        if ($nameKey !== '' && $rowNameKey !== '' && $rowNameKey === $nameKey) {
+            json_response(['ok' => false, 'error' => 'Kundnamnet finns redan.'], 422);
+        }
+        $rowPnr = normalize_personnummer((string) ($row['personnummer'] ?? ''));
+        if ($pnr !== '' && $rowPnr !== '' && $rowPnr === $pnr) {
+            json_response(['ok' => false, 'error' => 'Personnummer finns redan i kundregistret.'], 422);
+        }
+    }
+}
+
+function ensure_unique_vehicle(array $rows, int $selfId, string $plate): void
+{
+    foreach ($rows as $row) {
+        $rowId = (int) ($row['id'] ?? 0);
+        if ($selfId > 0 && $rowId === $selfId) {
+            continue;
+        }
+        $rowPlate = normalize_plate((string) ($row['plate'] ?? ''));
+        if ($rowPlate !== '' && $rowPlate === $plate) {
+            json_response(['ok' => false, 'error' => 'Regnummer finns redan i fordonsregistret.'], 422);
+        }
+    }
+}
+
 function log_activity(JsonDb $db, array $user, string $actionType, string $entityType, ?int $entityId, string $description, ?array $meta = null): void
 {
     $db->insert('activity_log', [
@@ -612,8 +651,11 @@ if ($action === 'api_create_customer' && $_SERVER['REQUEST_METHOD'] === 'POST') 
     if ($name === '') json_response(['ok' => false, 'error' => 'Kundnamn krävs.'], 422);
     $pnr = normalize_personnummer((string) ($d['personnummer'] ?? ''));
     $rows = $db->rows('customer_registry');
+
+    ensure_unique_customer($rows, $id, $name, $pnr);
+
     foreach ($rows as &$c) {
-        if (($id > 0 && (int) $c['id'] === $id) || ($id <= 0 && $pnr !== '' && (string) ($c['personnummer'] ?? '') === $pnr)) {
+        if ($id > 0 && (int) ($c['id'] ?? 0) === $id) {
             $c['customer_name'] = $name;
             $c['personnummer'] = $pnr !== '' ? $pnr : null;
             $c['phone'] = trim((string) ($d['phone'] ?? ''));
@@ -623,6 +665,7 @@ if ($action === 'api_create_customer' && $_SERVER['REQUEST_METHOD'] === 'POST') 
         }
     }
     unset($c);
+
     $db->insert('customer_registry', [
         'customer_name' => $name,
         'personnummer' => $pnr !== '' ? $pnr : null,
@@ -661,8 +704,10 @@ if ($action === 'api_create_vehicle' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($model === '') json_response(['ok' => false, 'error' => 'Modell krävs.'], 422);
 
     $rows = $db->rows('vehicle_registry');
+    ensure_unique_vehicle($rows, $id, $plate);
+
     foreach ($rows as &$v) {
-        if (($id > 0 && (int) $v['id'] === $id) || ($id <= 0 && (string) ($v['plate'] ?? '') === $plate)) {
+        if ($id > 0 && (int) ($v['id'] ?? 0) === $id) {
             $v['plate'] = $plate;
             $v['vehicle_model'] = $model;
             $db->setRows('vehicle_registry', $rows);
@@ -670,6 +715,7 @@ if ($action === 'api_create_vehicle' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     unset($v);
+
     $db->insert('vehicle_registry', ['plate' => $plate, 'vehicle_model' => $model, 'created_at' => now_iso()]);
     json_response(['ok' => true]);
 }
