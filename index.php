@@ -784,7 +784,7 @@ if ($action === 'api_receipts' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $row['is_sent'] = (int) ($row['is_sent'] ?? 0);
         $row['discount_percent'] = (float) ($row['discount_percent'] ?? 0);
         $row['customer_personnummer'] = (string) ($row['customer_personnummer'] ?? '');
-        $row['work_order'] = "Benny's Arbetsorder - " . str_pad((string) $row['id'], 5, '0', STR_PAD_LEFT);
+        $row['work_order'] = "Redline Performance Arbetsorder - " . str_pad((string) $row['id'], 5, '0', STR_PAD_LEFT);
     }
 
     json_response(['ok' => true, 'receipts' => $rows]);
