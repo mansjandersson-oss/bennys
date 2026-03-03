@@ -563,7 +563,7 @@ tr.sent-receipt{ opacity:0.82; }
 
 /* Receipt section fine-tuning (kept from your file) */
 #receiptsSection .service-main{ gap:8px; }
-#receiptsSection .receipt-top-grid{ grid-template-columns: 1fr minmax(260px, 320px); align-items:start; gap:16px; }
+#receiptsSection .receipt-top-grid{ grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); align-items:start; gap:16px; }
 #receiptsSection .receipt-fields{ display:flex; flex-direction:column; gap:8px; }
 #receiptsSection .receipt-fields > .row{
   grid-template-columns:repeat(2, minmax(220px, 1fr));
@@ -575,7 +575,8 @@ tr.sent-receipt{ opacity:0.82; }
 #receiptsSection .receipt-fields > .row label input,
 #receiptsSection .receipt-fields > .row label select{
   margin-bottom:4px;
-  max-width:280px;
+  width:100%;
+  max-width:none;
 }
 
 #receiptsSection .receipt-side{
@@ -735,7 +736,7 @@ body.layout-stack-mode .layout-card-drag-handle,
   .service-form-grid{ grid-template-columns: 1fr; }
   .service-main{ align-items:center; }
   .service-side{ width:100%; max-width:420px; }
-  #receiptsSection .receipt-top-grid{ grid-template-columns: 1fr minmax(260px, 320px); align-items:start; gap:16px; }
+  #receiptsSection .receipt-top-grid{ grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); align-items:start; gap:16px; }
   #receiptsSection .receipt-side{
   position: static;
   width: min(320px, 100%);
@@ -838,7 +839,7 @@ body.layout-stack-mode .layout-card-drag-handle,
 #receiptsSection .admin-columns,
 #receiptsSection .service-form-grid{
   display: grid !important;
-  grid-template-columns: 1fr 1.15fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
