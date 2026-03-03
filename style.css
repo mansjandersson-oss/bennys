@@ -1,0 +1,985 @@
+/* =========================================
+   style.css — Redline Performance theme
+   Colors: black / gray / red / white / silver
+   ========================================= */
+
+/* ---------- Design tokens ---------- */
+:root{
+  font-size: 16px;
+
+  /* sizing */
+  --input-pad-vert: clamp(8px,1.2vw,12px);
+  --input-pad-horiz: clamp(10px,1.2vw,12px);
+  --input-font: 1rem;
+  --control-height: calc(var(--input-font) + 2 * var(--input-pad-vert) + 2px);
+  --page-scale-factor: 1;
+
+  /* palette */
+  --bg-0: #070707;
+  --bg-1: #0c0c0f;
+  --bg-2: #121218;
+
+  --text: #f2f5fb;
+  --muted: rgba(242,245,251,0.72);
+
+  --silver: rgba(230,235,245,0.90);
+  --silver-weak: rgba(230,235,245,0.55);
+
+  --border: rgba(230,235,245,0.12);
+  --border-2: rgba(230,235,245,0.08);
+
+  --panel: rgba(255,255,255,0.03);
+  --panel-2: rgba(255,255,255,0.02);
+
+  --red: #e0443c;
+  --red-2: #c8322c;
+
+  --shadow: 0 16px 46px rgba(0,0,0,0.45);
+  --radius: 16px;
+  --radius-lg: 22px;
+}
+
+/* ---------- Global reset ---------- */
+html{ box-sizing:border-box; font-size: clamp(14px, 1.2vw + 10px, 18px); }
+*, *::before, *::after{ box-sizing:inherit; }
+
+body{
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  margin:0;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+
+  /* Redline background: black + red glow + silver haze */
+  background:
+    radial-gradient(1200px 650px at 20% -10%, rgba(224,68,60,0.22), transparent 55%),
+    radial-gradient(900px 520px at 90% 0%, rgba(255,255,255,0.06), transparent 60%),
+    linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 45%, var(--bg-0) 100%) no-repeat;
+  background-attachment: fixed, fixed, fixed;
+}
+
+/* ---------- Layout ---------- */
+.wrap{
+  width: calc(100vw - 24px);   /* tar hela bredden */
+  max-width: none;             /* tar bort 2200px-låset */
+  margin: 0 auto;
+  padding: clamp(8px, 1.5vw, 18px);
+  zoom: var(--page-scale-factor);
+}
+
+@supports not (zoom: 1) {
+  body{ overflow-x:hidden; }
+  .wrap{
+    transform: scale(var(--page-scale-factor));
+    transform-origin: top left;
+    width: calc(100% / var(--page-scale-factor));
+    max-width: calc(2200px / var(--page-scale-factor));
+  }
+}
+
+.hidden{ display:none; }
+
+@supports not (zoom: 1){
+  body { overflow-x: hidden; }
+  .wrap{
+    transform: scale(var(--page-scale-factor));
+    transform-origin: top left;
+    width: calc(100% / var(--page-scale-factor));
+    max-width: none; /* <-- VIKTIGT: ta bort calc(2200px / scale) */
+  }
+}
+
+/* Tillåt sid-scroll om canvas blir större än viewport */
+
+/* Gör canvas minst “stor” så du kan dra ut rejält */
+
+/* ---------- Top header ---------- */
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  position:relative;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+}
+
+.top-right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+/* Logo sizing (fixar “1024 men liten”) */
+.logo{
+  height: 220px;
+  max-height: 28vh;
+  width:auto;
+  background: transparent;
+  border:none;
+  padding:0;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.55));
+}
+
+/* ---------- Cards / panels ---------- */
+.card{
+  background: linear-gradient(180deg, var(--panel), var(--panel-2));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: clamp(14px, 1.6vw, 26px);
+  margin-bottom:18px;
+  box-shadow: var(--shadow);
+}
+
+.card > h2,
+.card > h3{
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Subtle “silver + red” line accent */
+.card::before{
+  content:"";
+  display:block;
+  height:2px;
+  width:100%;
+  border-radius:999px;
+  margin-bottom: 12px;
+  background: linear-gradient(
+    90deg,
+    rgba(230,235,245,0.0),
+    rgba(230,235,245,0.30),
+    rgba(224,68,60,0.55),
+    rgba(230,235,245,0.20),
+    rgba(230,235,245,0.0)
+  );
+}
+
+/* ---------- Form controls ---------- */
+input, select, button, textarea{
+  font-size: var(--input-font);
+  height: var(--control-height);
+  box-sizing:border-box;
+}
+
+input, select, textarea{
+  width: 70%;
+  padding: var(--input-pad-vert) var(--input-pad-horiz);
+  margin-top:6px;
+  margin-bottom:10px;
+  border-radius: 14px;
+  border: 1px solid rgba(230,235,245,0.14);
+  background: rgba(255,255,255,0.035);
+  color: var(--text);
+  outline:none;
+}
+
+select, select option{
+  color: var(--text);
+  background: transparent;
+}
+select option{ background-color: #0b0e12; }
+
+input:focus, select:focus, textarea:focus{
+  border-color: rgba(224,68,60,0.75);
+  box-shadow: 0 0 0 4px rgba(224,68,60,0.14);
+}
+
+input.readonly[readonly]{ opacity: 0.9; }
+
+/* Checkbox */
+input[type="checkbox"]{
+  width:20px;
+  height:20px;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius:6px;
+  border:1px solid rgba(230,235,245,0.18);
+  background: rgba(255,255,255,0.02);
+  display:inline-grid;
+  place-items:center;
+  vertical-align:middle;
+  margin-right:8px;
+}
+input[type="checkbox"]::before{
+  content:'';
+  width:12px;
+  height:12px;
+  display:block;
+  transform: scale(0);
+  transition: transform 140ms ease;
+  border-radius:3px;
+}
+input[type="checkbox"]:checked{
+  background: linear-gradient(180deg, var(--red), var(--red-2));
+  border-color: transparent;
+}
+input[type="checkbox"]:checked::before{
+  transform: scale(1);
+  background: white;
+  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M20.285 6.708l-11.31 11.3-5.26-5.255 1.414-1.414 3.846 3.845 9.896-9.89z"/></svg>') center/contain no-repeat;
+}
+
+/* Buttons */
+button{
+  width: 70%;
+  padding: var(--input-pad-vert) var(--input-pad-horiz);
+  margin-top:6px;
+  margin-bottom:10px;
+  border-radius: 14px;
+  border:none;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  color:#fff;
+  background: linear-gradient(180deg, var(--red), var(--red-2));
+  box-shadow: 0 12px 26px rgba(224,68,60,0.16);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+button:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(224,68,60,0.20);
+}
+button.secondary{
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  color: var(--silver);
+  border: 1px solid rgba(230,235,245,0.18);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.25);
+}
+
+/* Logout button */
+#logoutBtn{
+  padding: 10px 16px;
+  font-size: 16px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  color: var(--silver);
+  border: 1px solid rgba(230,235,245,0.18);
+  cursor:pointer;
+  width:auto;
+  height: var(--control-height);
+  display:inline-flex;
+  align-items:center;
+}
+
+/* ---------- Typography helpers ---------- */
+.small{ font-size: 0.9rem; color: var(--muted); }
+.msg{ color:#ff9; margin-bottom:10px; }
+
+/* ---------- Rows / grids ---------- */
+.row{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap: clamp(12px,2vw,32px);
+  width:auto;
+  padding-right:0;
+  align-items:center;
+}
+
+/* ---------- Tables ---------- */
+.table-wrap{ width:100%; overflow-x:auto; }
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:0.95rem;
+  background:transparent;
+}
+th, td{
+  padding: clamp(10px,1.2vw,14px) clamp(8px,1.2vw,10px);
+  text-align:left;
+}
+thead th{
+  color: rgba(242,245,251,0.80);
+  font-weight:700;
+  font-size:0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-2);
+  background: rgba(255,255,255,0.03);
+}
+tbody tr{ border-bottom:1px solid rgba(230,235,245,0.06); }
+tbody tr:hover{ background: rgba(224,68,60,0.07); }
+tr.sent-receipt{ opacity:0.82; }
+
+/* Workorder controls */
+.workorder-controls{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  align-items:flex-start;
+  min-width:0;
+}
+.workorder-controls button{
+  width:auto;
+  min-height:40px;
+  padding:8px 16px;
+  font-size:0.95rem;
+  min-width:104px;
+  white-space:nowrap;
+}
+
+/* Sent badge */
+.sent-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:0.78rem;
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+  background:rgba(46,160,67,0.16);
+  border:1px solid rgba(46,160,67,0.35);
+  border-radius:999px;
+  padding:2px 10px;
+  color:#9ef3c1;
+}
+.sent-badge::before{ content:'\2713'; font-size:0.9rem; }
+
+/* ---------- Mobile nav ---------- */
+.toolbar{ display:none; gap:10px; margin:0; flex-wrap:wrap; align-items:center; }
+.login-mode .toolbar{ display:none; }
+
+.mobile-tab-nav{ display:block; position:relative; width:auto; }
+.mobile-nav-toggle{ width:52px; height:52px; min-width:52px; padding:0; border-radius:12px; }
+.mobile-nav-icon{ display:flex; flex-direction:column; gap:4px; }
+.mobile-nav-icon span{ width:20px; height:2.5px; border-radius:2px; background:#fff; display:block; }
+.mobile-nav-menu{
+  position:absolute;
+  top:0;
+  right:calc(100% + 10px);
+  min-width:200px;
+  padding:8px;
+  border-radius:12px;
+  border:1px solid rgba(230,235,245,0.14);
+  background: rgba(7,7,10,0.98);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  z-index:1200;
+}
+.mobile-nav-menu.hidden{ display:none; }
+.mobile-nav-menu button{ width:100%; margin:0; justify-content:flex-start; padding:10px 12px; }
+.mobile-nav-menu button.active{
+  border:1px solid rgba(230,235,245,0.22);
+  background: rgba(255,255,255,0.08);
+}
+.mobile-nav-menu #logoutBtn{ width:100%; }
+.login-mode .mobile-tab-nav{ display:none; }
+
+/* ---------- Stats / admin visuals ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+  gap:12px;
+  margin-bottom:12px;
+}
+.stat-box{
+  background: transparent;
+  border:1px solid rgba(230,235,245,0.10);
+  border-radius:12px;
+  padding:12px;
+}
+.stat-box strong{
+  display:block;
+  font-size:0.9rem;
+  color: rgba(242,245,251,0.78);
+  letter-spacing:0.04em;
+  text-transform: uppercase;
+}
+
+.admin-economy{
+  margin-top:24px;
+  padding-top:16px;
+  border-top:1px solid rgba(230,235,245,0.10);
+}
+
+.admin-columns{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(340px,1fr));
+  gap: clamp(16px,2vw,28px);
+  margin-top:24px;
+}
+.admin-columns > .card{ margin-bottom:0; }
+.admin-user-card, .admin-rank-card{ grid-column:1 / -1; }
+
+.bar-row{
+  padding:18px;
+  border-radius: var(--radius);
+  border:1px solid rgba(230,235,245,0.10);
+  background: rgba(255,255,255,0.02);
+}
+.bar-row-header{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.bar-row-header strong{ font-size:1rem; }
+.bar-row-meta{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  font-size:0.85rem;
+  color: rgba(230,235,245,0.70);
+}
+
+.bar-columns{ display:flex; gap:18px; align-items:flex-end; margin-top:16px; }
+.bar-column{ flex:1; display:flex; flex-direction:column; align-items:center; gap:10px; }
+.bar-column-label{
+  font-size:0.78rem;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color: rgba(230,235,245,0.70);
+}
+.bar-vertical{
+  width:38px;
+  border-radius:12px 12px 6px 6px;
+  background: rgba(255,255,255,0.06);
+  position:relative;
+  overflow:hidden;
+  height:160px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+}
+.bar-vertical-fill{ width:100%; border-radius:inherit; background: var(--bar-color, var(--red)); }
+.bar-vertical-fill.count{ --bar-color:#4ad7a8; }
+.bar-vertical-fill.sales{ --bar-color:#e65454; }
+.bar-column-value{ font-variant-numeric:tabular-nums; font-size:0.95rem; }
+
+/* ---------- Service/options layout (kept, just “redline” borders) ---------- */
+.service-options-wrapper{
+  width:100%;
+  max-width:none;
+  margin-inline:auto;
+  border:1px solid rgba(230,235,245,0.10);
+  border-radius: var(--radius);
+  padding:14px;
+  background: rgba(255,255,255,0.02);
+}
+.service-options-wrapper > h3,
+.service-options-wrapper > p.small{ text-align:center; }
+.service-options-wrapper > p.small{ max-width:520px; margin:0 auto; }
+
+.service-options{
+  width:100%;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+  margin-top:8px;
+  direction:ltr;
+}
+.service-category-group{ grid-column:1 / -1; display:grid; gap:6px; margin-top:0; }
+.service-category-title{
+  margin:0;
+  font-size:0.95rem;
+  color: rgba(230,235,245,0.80);
+  font-weight:700;
+  letter-spacing:0.02em;
+}
+.service-category-items{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+  gap:6px;
+  align-items:start;
+}
+.service-option{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto;
+  gap:8px 10px;
+  align-items:center;
+  border:1px solid rgba(230,235,245,0.12);
+  border-radius: var(--radius);
+  padding:9px 10px;
+  background: rgba(255,255,255,0.02);
+  overflow:hidden;
+  min-width:0;
+  width:100%;
+  max-width:none;
+  min-height:92px;
+}
+.service-option label{ display:flex; align-items:center; gap:10px; margin:0; min-width:0; }
+.service-option label span{ min-width:0; white-space:normal; overflow:visible; text-overflow:clip; line-height:1.25; }
+.service-option .service-price{ font-size:0.9rem; color: rgba(230,235,245,0.72); white-space:nowrap; justify-self:end; }
+.service-option .service-qty{
+  grid-column:1 / -1;
+  display:grid;
+  grid-template-columns:auto auto;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  margin:0;
+}
+.service-option .service-qty input{
+  width:84px;
+  min-width:84px;
+  margin:0;
+  padding:6px 8px;
+  height:32px;
+}
+.service-option input[type="checkbox"],
+.service-option input[type="number"]{ margin:0; }
+.service-option input[type="checkbox"]{ margin-right:8px; }
+
+.service-filter-row{ display:flex; justify-content:flex-end; margin:10px 0 8px; }
+.service-filter-row label{ width:min(300px, 100%); }
+
+.service-qty-static{ color: rgba(230,235,245,0.70); font-size:0.9rem; display:block; }
+
+/* Receipt form layout */
+.service-form-grid{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr);
+  gap: clamp(16px,2.2vw,36px);
+  align-items:flex-start;
+}
+.service-main{ display:flex; flex-direction:column; gap:12px; width:100%; }
+
+.service-side{
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+  border:1px solid rgba(230,235,245,0.10);
+  border-radius: var(--radius-lg);
+  padding: clamp(16px,1.5vw,24px);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  width: min(360px, 100%);
+  margin-inline:auto;
+}
+.service-side button{ width:100%; margin-top:4px; }
+
+/* Receipt section fine-tuning (kept from your file) */
+#receiptsSection .service-main{ gap:8px; }
+#receiptsSection .receipt-top-grid{ grid-template-columns: 1fr minmax(260px, 320px); align-items:start; gap:16px; }
+#receiptsSection .receipt-fields{ display:flex; flex-direction:column; gap:8px; }
+#receiptsSection .receipt-fields > .row{
+  grid-template-columns:repeat(2, minmax(220px, 1fr));
+  justify-content:stretch;
+  gap: clamp(10px,1.2vw,16px);
+}
+#receiptsSection .receipt-fields > .row.single-field-row{ grid-template-columns:minmax(0, 1fr); }
+#receiptsSection .receipt-fields > .row label{ width:100%; }
+#receiptsSection .receipt-fields > .row label input,
+#receiptsSection .receipt-fields > .row label select{
+  margin-bottom:4px;
+  max-width:280px;
+}
+
+#receiptsSection .receipt-side{
+  position: static;
+  width: min(320px, 100%);
+  max-width: 320px;
+  padding: 12px 12px;
+  margin-left: auto;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+}
+
+/* Buttons sizes */
+#saveBtn{ width:70%; padding: var(--input-pad-vert) var(--input-pad-horiz); height: var(--control-height); line-height:normal; margin-top:8px; }
+#saveServiceBtn, #saveDiscountPresetBtn, #saveAdminUserBtn{ width:auto; align-self:flex-start; padding:10px 22px; }
+
+.bool-chip{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  border-radius:10px;
+  font-size:0.85rem;
+  font-weight:700;
+  border:1px solid rgba(230,235,245,0.14);
+  color: rgba(242,245,251,0.85);
+}
+.bool-chip-yes{
+  background: linear-gradient(180deg, #2d7f4f, #1d6139);
+  border-color: rgba(46,160,67,0.35);
+  color:#f4fff6;
+  box-shadow: 0 4px 10px rgba(20,80,40,0.35);
+}
+.bool-chip-no{ background: rgba(255,255,255,0.02); }
+
+.receipt-toggle-btn{ width:auto; min-width:78px; padding:6px 12px; min-height:36px; }
+.receipt-details-row td{ padding-top:0; }
+.receipt-details-box{
+  border:1px solid rgba(230,235,245,0.10);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.02);
+  padding:10px 12px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:10px 14px;
+}
+.receipt-detail-item{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.receipt-detail-item strong{
+  font-size:0.78rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color: rgba(230,235,245,0.70);
+}
+.receipt-detail-item span{
+  font-size:0.9rem;
+  color: var(--text);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.table-actions{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+#receiptsSection .table-actions button{ min-height:40px; padding:8px 16px; font-size:0.95rem; }
+
+/* ---------- Login mode ---------- */
+.login-mode .top{ justify-content:center; }
+.login-mode #logoutBtn{ display:none; }
+.login-mode .scale-select-wrap{ display:none; }
+.login-mode #loginView{
+  width: min(720px, 50%);
+  max-width: 720px;
+  margin: 0 auto;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  align-items:center;
+}
+.login-form{
+  width:100%;
+  max-width:360px;
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:center;
+  text-align:center;
+}
+.login-form label{
+  width:100%;
+  max-width:320px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  align-items:center;
+  text-align:center;
+}
+.login-form label input{ width:100%; max-width:320px; }
+.login-form button{ width:100%; max-width:320px; }
+.login-mode .login-form input{ text-align:center; }
+/* =========================================
+   LAYOUT SYSTEM (RESTORE)
+   Behövs för layout-edit / drag / resize
+   ========================================= */
+
+
+
+/* När layout är “aktiverad” blir sektionerna absolut-positionerade */
+
+/* Dölja sektioner */
+
+/* Edit mode highlight */
+
+/* HUD / controls */
+
+
+.layout-hud-controls input,
+
+
+/* Drag handle (sektion) */
+
+/* Visa handles i edit mode (om du vill ha dem, ta bort !important) */
+
+/* Resize handle */
+
+/* Card-baserade layout-klasser */
+
+
+
+
+/* Card drag handle */
+
+/* Card resize handle */
+
+
+/* Drop indicators */
+
+
+/* Stack mode: layout blir normal flow igen */
+
+body.layout-stack-mode .layout-drag-handle,
+body.layout-stack-mode .layout-resize-handle,
+body.layout-stack-mode .layout-card-drag-handle,
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px){
+  :root{ --page-scale-factor: 1; }
+  .wrap{ width: min(100%, 2200px); padding:14px; }
+  .top{ justify-content:center; align-items:center; }
+  .top-right{ width:100%; justify-content:center; position:relative; }
+  .row{ grid-template-columns: 1fr; gap:14px; }
+  .row label{ align-items:center; text-align:center; }
+  .row label input, .row label select{ margin-inline:auto; max-width:420px; }
+  .service-form-grid{ grid-template-columns: 1fr; }
+  .service-main{ align-items:center; }
+  .service-side{ width:100%; max-width:420px; }
+  #receiptsSection .receipt-top-grid{ grid-template-columns: 1fr minmax(260px, 320px); align-items:start; gap:16px; }
+  #receiptsSection .receipt-side{
+  position: static;
+  width: min(320px, 100%);
+  max-width: 320px;
+  padding: 12px 12px;
+  margin-left: auto;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+}
+  th, td{ padding:10px 8px; }
+}
+
+@media (max-width: 480px){
+  .logo{
+    height: 160px;
+    max-height: 22vh;
+  }
+  .wrap{ padding:10px; }
+  .mobile-tab-nav{ top:10px; right:10px; }
+  .mobile-nav-menu{ right:calc(100% + 10px); min-width:180px; }
+  .service-option{ padding:12px; }
+  .stat-box{ padding:8px; }
+}
+/* =========================================
+   HUVUDLAYOUT – SEKTIONSGRID
+   ========================================= */
+
+.layout-canvas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+/* Se till att sektionerna fyller sin grid */
+.layout-section {
+  width: 100% !important;
+  height: auto !important;
+  position: static !important;
+}
+
+/* På mindre skärmar staplas de igen */
+@media (max-width: 1100px){
+  .layout-canvas {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================
+   REDLINE DASHBOARD LAYOUT (NO LAYOUT SYSTEM)
+   ========================================= */
+
+/* Gör sidan bredare och mer “premium” */
+.wrap{
+  width: min(1600px, calc(100vw - 32px)) !important;
+  max-width: none !important;
+  margin: 0 auto !important;
+}
+
+/* Header känns som en egen “panel” */
+.top.card{
+  border-radius: 18px;
+  padding: 18px 22px;
+  background:
+    radial-gradient(120% 220% at 0% 0%, rgba(255,60,60,0.10) 0%, rgba(0,0,0,0) 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+}
+
+/* ===== Huvud-grid: vänster tung, höger lista ===== */
+.layout-canvas{
+  display: grid !important;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 22px;
+  align-items: start;
+  margin-top: 18px;
+}
+
+.layout-section{
+  position: static !important;
+  width: 100% !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Sektion-kort: “metal” card */
+.layout-section .card{
+  border-radius: 18px;
+  background:
+    radial-gradient(120% 200% at 10% 0%, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 45%, rgba(255,255,255,0.01) 100%),
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.50);
+}
+
+/* ===== Receipts: två cards bredvid varandra (Skapa / Registrerade) ===== */
+#receiptsSection .admin-columns,
+#receiptsSection .service-form-grid{
+  display: grid !important;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 18px;
+  align-items: start;
+}
+
+/* “Spara kvitto”-rutan får aldrig flyta över */
+#receiptsSection .receipt-side{
+  position: static !important;
+  inset: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 14px !important;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+/* Knapp + inputs i save-box fullbredd */
+#receiptsSection .receipt-side input,
+#receiptsSection .receipt-side button,
+#receiptsSection #saveBtn{
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* ===== Tabeller mer Redline (tight + tydligt) ===== */
+table{
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+tbody tr{
+  border-bottom: none;
+}
+tbody tr td{
+  background: rgba(255,255,255,0.02);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+tbody tr td:first-child{
+  border-left: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px 0 0 14px;
+}
+tbody tr td:last-child{
+  border-right: 1px solid rgba(255,255,255,0.06);
+  border-radius: 0 14px 14px 0;
+}
+
+/* Accent: röd highlight på primära knappar (om du vill förstärka) */
+button{
+  border-radius: 14px;
+}
+button:hover{
+  filter: brightness(1.05);
+}
+
+/* ===== Responsivt ===== */
+@media (max-width: 1200px){
+  .wrap{ width: calc(100vw - 24px) !important; }
+  .layout-canvas{ grid-template-columns: 1fr; }
+  #receiptsSection .admin-columns,
+  #receiptsSection .service-form-grid{
+    grid-template-columns: 1fr;
+  }
+}
+/* ===== SHOW MENU ON DESKTOP TOO ===== */
+.mobile-tab-nav{
+  display: block !important;
+  position: relative;
+}
+
+/* Dropdownen ska öppnas snyggt på desktop */
+.mobile-nav-menu{
+  top: calc(100% + 10px) !important;
+  right: 0 !important;
+  left: auto !important;
+  min-width: 220px;
+}
+
+/* Se till att top-right inte trycks ihop */
+.top-right{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+/* hard lock: never allow absolute layout */
+.layout-section, .layout-card{
+  position: static !important;
+  left: auto !important;
+  top: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  transform: none !important;
+}
+
+/* =========================================
+   CARDS: AUTO HEIGHT (no unnecessary big boxes)
+   ========================================= */
+
+/* Allt ska växa efter innehåll */
+.layout-section,
+.layout-card,
+.card{
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+/* Om någon wrapper tvingar stor höjd */
+.layout-canvas{
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+/* Sluta scrolla inne i rutorna om det inte behövs */
+.layout-section,
+.layout-card{
+  overflow: visible !important;
+}
+
+/* Grid ska inte “strecha” höjd */
+.row,
+.layout-canvas,
+.admin-columns,
+.service-form-grid,
+.service-options-wrapper,
+.table-wrap{
+  align-items: start !important;
+}
+
+/* Tabeller ska expandera naturligt */
+.table-wrap{
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Om du har någon sektion som tidigare hade fast höjd */
+#receiptsSection .card,
+#customersSection .card,
+#vehiclesSection .card,
+#pricesSection .card,
+#payrollSection .card,
+#adminSection .card{
+  height: auto !important;
+  min-height: 0 !important;
+}

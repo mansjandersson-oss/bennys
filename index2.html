@@ -4,142 +4,221 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Benny's Motorworks</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; background:#141414; color:#f5f5f5; }
-    .wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
-    .card { background:#1f1f1f; border:1px solid #333; border-radius:12px; padding:16px; margin-bottom:16px; }
-    input, select, button { width:100%; padding:10px; margin-top:6px; margin-bottom:10px; border-radius:8px; border:1px solid #555; background:#111; color:#fff; }
-    button { background:#c42020; border:none; cursor:pointer; }
-    button.secondary { background:#444; }
-    .row { display:inline-grid; grid-template-columns:1fr 1fr; gap:32px; width:100%; }
-    .hidden { display:none; }
-    table { width:100%; border-collapse:collapse; font-size:14px; }
-    th, td { border-bottom:1px solid #333; padding:12px 10px; text-align:left; }
-    .top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
-    .logo { height:64px; width:auto; border-radius:8px; background:#111; border:1px solid #333; padding:8px; }
-    .msg { color:#ff9; margin-bottom:10px; }
-    .toolbar { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
-    .toolbar button { width:auto; padding:10px 14px; }
-    .stats { display:grid; grid-template-columns:repeat(4, minmax(140px, 1fr)); gap:12px; margin-bottom:12px; }
-    .stat-box { background:#161616; border:1px solid #333; border-radius:10px; padding:10px; }
-    .stat-box strong { display:block; font-size:12px; color:#bbb; }
-    .bar-chart { display:flex; flex-direction:column; gap:8px; }
-    .bar-row { display:grid; grid-template-columns:180px 1fr 70px; gap:10px; align-items:center; }
-    .bar-track { background:#2a2a2a; border-radius:999px; height:12px; overflow:hidden; }
-    .bar-fill { background:#d63333; height:100%; }
-    .small { font-size:12px; color:#bbb; }
-  </style>
+  
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="login-mode">
   <div class="wrap">
     <div class="top">
-      <img class="logo" src="logo.svg" alt="Benny's Motorworks logo" />
-      <button id="logoutBtn" class="secondary hidden" type="button">Logga ut</button>
+      <img src="logo.png" alt="Benny's Motorworks" class="logo" />
+      <div class="top-right">
+        <div id="mobileTabNav" class="mobile-tab-nav">
+          <button id="mobileNavToggle" type="button" class="secondary mobile-nav-toggle" aria-label="Öppna meny" aria-expanded="false">
+            <span class="mobile-nav-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+          </button>
+          <div id="mobileNavMenu" class="mobile-nav-menu hidden" role="menu" aria-label="Sektioner">
+            <button id="tabReceipts" type="button" data-section="receipts" role="menuitem">Kvitton</button>
+            <button id="tabCustomers" type="button" data-section="customers" role="menuitem">Kunder</button>
+            <button id="tabVehicles" type="button" data-section="vehicles" role="menuitem">Fordon</button>
+            <button id="tabPrices" type="button" data-section="prices" role="menuitem">Prislista</button>
+            <button id="tabPayroll" type="button" data-section="payroll" role="menuitem">Löner</button>
+            <button id="tabAdmin" type="button" data-section="admin" role="menuitem">Admin</button>
+            <button id="layoutModeBtn" type="button" class="secondary hidden" role="menuitem">Layoutläge</button>
+            <button id="logoutBtn" type="button" class="secondary hidden" role="menuitem">Logga ut</button>
+          </div>
+        </div>
+        <div class="scale-select-wrap">
+          <label for="scalePresetSelect">Upplösning
+            <select id="scalePresetSelect" class="scale-select"></select>
+          </label>
+        </div>
+      </div>
     </div>
-
     <div id="msg" class="msg"></div>
 
     <section id="loginView" class="card">
       <h2>Inloggning</h2>
-      <label>Personnummer
-        <input id="personnummer" placeholder="19900101-1234" />
-      </label>
-      <label>Lösenord
-        <input id="password" type="password" />
-      </label>
-      <button id="loginBtn" type="button">Logga in</button>
+      <div class="login-form">
+        <label>Personnummer
+          <input id="personnummer" placeholder="19900101-1234" data-autosize-skip="true" />
+        </label>
+        <label>Lösenord
+          <input id="password" type="password" placeholder="••••••" data-autosize-skip="true" />
+        </label>
+        <button id="loginBtn" type="button">Logga in</button>
+      </div>
+      <div id="loginMsg" class="msg"></div>
     </section>
 
-    <section id="appView" class="hidden">
-      <div class="toolbar">
-        <button id="tabReceipts" type="button">Kvitton</button>
-        <button id="tabCustomers" type="button" class="secondary">Kundregister</button>
-        <button id="tabVehicles" type="button" class="secondary">Fordonsdatabas</button>
-        <button id="tabPrices" type="button" class="secondary">Prislista</button>
-        <button id="tabAdmin" type="button" class="secondary hidden">Admin</button>
-      </div>
-
-      <section id="receiptsSection">
-        <div class="card">
-          <h2>Nytt kvitto</h2>
-          <div class="row">
-            <label>Mekaniker
-              <input id="mechanic" disabled />
-            </label>
-            <label>Typ av arbete
-              <select id="workType">
-                <option>Reperation</option>
-                <option>Styling</option>
-                <option>Prestanda</option>
+    <div id="appView" class="hidden">
+      <div id="layoutHud" class="layout-hud hidden">
+        <div class="layout-hud-info">
+          <strong>Layout-läge aktivt</strong>
+          <span id="layoutHudMessage">Dra panelerna till önskat läge och spara när du är klar.</span>
+        </div>
+        <div class="layout-hud-controls">
+          <div class="layout-hud-controls-group layout-hud-scope-group">
+            <label>Lagring
+              <select id="layoutScopeSelect">
+                <option value="local">Personlig</option>
+                <option value="global">Global</option>
               </select>
             </label>
+            <span id="layoutScopeHint" class="layout-scope-hint">Ändringar sparas bara för dig.</span>
           </div>
-          <div class="row">
-            <label>Styling-delar
-              <input id="stylingParts" type="number" min="0" />
+          <div class="layout-hud-controls-group">
+            <label>Panel
+              <select id="layoutPanelSelect"></select>
             </label>
-            <label>Prestanda-delar
-              <input id="performanceParts" type="number" min="0" />
+            <label>Bredd (px)
+              <input id="layoutWidthInput" type="number" min="320" step="10" />
             </label>
+            <label>Höjd (px)
+              <input id="layoutHeightInput" type="number" min="320" step="10" />
+            </label>
+            <div class="layout-hud-buttons">
+              <button id="layoutFillWidthBtn" type="button" class="secondary">Fyll bredd</button>
+              <button id="layoutFillHeightBtn" type="button" class="secondary">Fyll höjd</button>
+            </div>
           </div>
-          <div class="row">
-            <label>Summa (SEK)
-              <input id="amount" type="number" min="0" step="0.01" />
+          <div class="layout-hud-controls-group">
+            <label>Kort i panelen
+              <select id="layoutCardSelect" disabled></select>
             </label>
-            <label>Kund
-              <input id="customer" />
+            <label>Kortbredd (px)
+              <input id="layoutCardWidthInput" type="number" min="260" step="10" disabled />
             </label>
+            <label>Korthöjd (px)
+              <input id="layoutCardHeightInput" type="number" min="220" step="10" disabled />
+            </label>
+            <div class="layout-hud-buttons">
+              <button id="layoutCardFillWidthBtn" type="button" class="secondary" disabled>Fyll panelbredd</button>
+              <button id="layoutCardFillHeightBtn" type="button" class="secondary" disabled>Fyll panelhöjd</button>
+            </div>
           </div>
-          <div class="row">
-            <label>Regplåt
-              <input id="plate" placeholder="ABC-123" />
-            </label>
-            <div></div>
+        </div>
+        <div class="layout-hud-actions">
+          <select id="layoutPresetSelect" class="layout-preset-select" aria-label="Välj layoutpreset"></select>
+          <button id="layoutSaveBtn" type="button" disabled>Spara layout</button>
+          <button id="layoutPresetBtn" type="button" class="secondary hidden">Ladda preset</button>
+          <button id="layoutResetBtn" type="button" class="secondary">Återställ standard</button>
+          <button id="layoutExitBtn" type="button" class="secondary">Avsluta</button>
+        </div>
+      </div>
+      <div id="layoutCanvas" class="layout-canvas">
+      <section id="receiptsSection" data-autosize-skip="true" class="layout-section" data-layout-key="receipts" data-layout-label="Kvitton" data-section-name="receipts">
+        <div class="card">
+          <h2>Skapa kvitto</h2>
+          <div class="service-form-grid">
+            <div class="service-main">
+              <div class="receipt-top-grid">
+                <div class="receipt-fields">
+                  <div class="row">
+                    <label>Mekaniker
+                      <input id="mechanic" readonly />
+                    </label>
+                    <label>Kund
+                      <input id="customer" list="customerSuggestions" placeholder="Kund eller företag" />
+                      <datalist id="customerSuggestions"></datalist>
+                    </label>
+                  </div>
+                  <div class="row">
+                    <label>Regnummer
+                      <input id="plate" list="plateSuggestions" placeholder="ABC-123 / ABC-12A" />
+                      <datalist id="plateSuggestions"></datalist>
+                    </label>
+                    <label>Rabatt
+                      <select id="discountPresetSelect">
+                        <option value="">Ingen</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="row single-field-row">
+                    <label>Kommentar "frivillig"
+                      <input id="orderComment" placeholder="Valfri kommentar" />
+                    </label>
+                  </div>
+                  <div id="discountInfo" class="small hidden"></div>
+                </div>
+                <div class="service-side receipt-side">
+                  <label>Totalt belopp (SEK)
+                    <input id="amount" class="readonly" readonly value="0" />
+                  </label>
+                  <button id="saveBtn" type="button">Spara kvitto</button>
+                </div>
+              </div>
+              <div class="service-options-wrapper">
+                <h3>Tjänster</h3>
+                <p class="small">Välj de tjänster som ingår i arbetet. Kvittosumman uppdateras automatiskt.</p>
+                <div id="serviceOptions" class="service-options"></div>
+              </div>
+            </div>
           </div>
-          <button id="saveBtn" type="button">Spara kvitto</button>
         </div>
 
         <div class="card">
-          <h2>Alla kvitton</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th><th>Mekaniker</th><th>Arbete</th><th>Styling</th><th>Prestanda</th><th>Kund</th><th>Regplåt</th><th>Summa</th><th>Arbetsorder</th><th class="adminOnly hidden">Åtgärder</th>
-              </tr>
-            </thead>
-            <tbody id="receiptBody"></tbody>
-          </table>
+          <h2>Registrerade kvitton</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mekaniker</th>
+                  <th>Arbete</th>
+                  <th>Belopp</th>
+                  <th>Detaljer</th>
+                  <th>Arbetsorder</th>
+                  <th class="adminOnly">Åtgärder</th>
+                </tr>
+              </thead>
+              <tbody id="receiptBody"></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
-      <section id="customersSection" class="hidden">
+      <section id="customersSection" class="hidden layout-section" data-layout-key="customers" data-layout-label="Kunder" data-section-name="customers">
         <div class="card">
           <h2>Kundregister</h2>
           <div class="row">
             <label>Kundnamn
               <input id="customerNameReg" />
+              <input id="customerId" type="hidden" />
             </label>
-            <label>Telefonnummer
+            <label>Telefon
               <input id="customerPhoneReg" />
             </label>
           </div>
-          <button id="saveCustomerBtn" type="button">Spara kund</button>
+          <div class="row">
+            <label>Förinställd rabatt
+              <select id="customerDiscountPreset">
+                <option value="">Ingen</option>
+              </select>
+            </label>
+            <div></div>
+          </div>
+          <div class="row">
+            <button id="saveCustomerBtn" type="button">Spara kund</button>
+            <button type="button" class="secondary" onclick="resetCustomerForm()">Rensa formulär</button>
+          </div>
         </div>
         <div class="card">
-          <h2>Sparade kunder</h2>
-          <table>
-            <thead><tr><th>Namn</th><th>Telefon</th></tr></thead>
-            <tbody id="customerBody"></tbody>
-          </table>
+          <h2>Kunder</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Namn</th><th>Telefon</th><th>Rabatt</th><th>Åtgärder</th></tr></thead>
+              <tbody id="customerBody"></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
-      <section id="vehiclesSection" class="hidden">
+      <section id="vehiclesSection" class="hidden layout-section" data-layout-key="vehicles" data-layout-label="Fordon" data-section-name="vehicles">
         <div class="card">
           <h2>Fordonsdatabas</h2>
           <div class="row">
             <label>Regplåt
-              <input id="vehiclePlateReg" placeholder="ABC-123" />
+              <input id="vehiclePlateReg" placeholder="ABC-123 / ABC-12A" />
+              <input id="vehicleId" type="hidden" />
             </label>
             <label>Fordonets modell
               <input id="vehicleModelReg" />
@@ -149,14 +228,16 @@
         </div>
         <div class="card">
           <h2>Sparade fordon</h2>
-          <table>
-            <thead><tr><th>Regplåt</th><th>Modell</th></tr></thead>
-            <tbody id="vehicleBody"></tbody>
-          </table>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Regplåt</th><th>Modell</th><th>Åtgärder</th></tr></thead>
+              <tbody id="vehicleBody"></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
-      <section id="pricesSection" class="hidden">
+      <section id="pricesSection" class="hidden layout-section" data-layout-key="prices" data-layout-label="Prislista" data-section-name="prices">
         <div class="card">
           <h2>Prislista</h2>
           <p class="small">Här ser mekaniker priser för tjänster. Behöriga roller kan uppdatera listan.</p>
@@ -164,6 +245,7 @@
             <div class="row">
               <label>Tjänst
                 <input id="serviceName" />
+                <input id="serviceId" type="hidden" />
               </label>
               <label>Pris (SEK)
                 <input id="serviceSalePrice" type="number" step="0.01" min="0" />
@@ -174,19 +256,75 @@
                 <input id="serviceExpenseCost" type="number" step="0.01" min="0" />
               </label>
               <label>Aktiv
-                <select id="serviceIsActive"><option value="1">Ja</option><option value="0">Nej</option></select>
+                <select id="serviceIsActive">
+                  <option value="1">Ja</option>
+                  <option value="0">Nej</option>
+                </select>
+              </label>
+            </div>
+            <div class="row">
+              <label>Dropdown / antal
+                <select id="serviceHasDropdown">
+                  <option value="1">Ja - visa antal</option>
+                  <option value="0">Nej - endast kryssruta</option>
+                </select>
+              </label>
+              <label>Kategori
+                <input id="serviceCategory" list="serviceCategorySuggestions" placeholder="t.ex. Prestanda" />
+                <datalist id="serviceCategorySuggestions"></datalist>
               </label>
             </div>
             <button id="saveServiceBtn" type="button">Spara tjänst</button>
           </div>
-          <table>
-            <thead><tr><th>Tjänst</th><th>Pris</th><th>Utgift</th><th>Aktiv</th></tr></thead>
-            <tbody id="serviceBody"></tbody>
-          </table>
+          <div class="service-filter-row">
+            <label>Filtrera kategori
+              <select id="serviceCategoryFilter">
+                <option value="">Alla kategorier</option>
+              </select>
+            </label>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Tjänst</th><th>Kategori</th><th>Pris</th><th>Utgift</th><th>Aktiv</th><th>Dropdown</th><th>Åtgärder</th></tr></thead>
+              <tbody id="serviceBody"></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
-      <section id="adminSection" class="hidden">
+      <section id="payrollSection" class="hidden layout-section" data-layout-key="payroll" data-layout-label="Löner" data-section-name="payroll">
+        <div class="card">
+          <h2>Lönhantering</h2>
+          <p class="small">Logga varje utbetalning för att hålla koll på lönekostnader.</p>
+          <div class="row">
+            <label>Namn
+              <input id="payrollName" placeholder="Anställd" />
+              <input id="payrollId" type="hidden" />
+            </label>
+            <label>Belopp (SEK)
+              <input id="payrollAmount" type="number" min="0" step="0.01" />
+            </label>
+          </div>
+          <div class="row">
+            <label>Utbetalningsdag
+              <input id="payrollDate" type="date" />
+            </label>
+            <div></div>
+          </div>
+          <button id="savePayrollBtn" type="button">Registrera utbetalning</button>
+        </div>
+        <div class="card">
+          <h2>Lönehistorik</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Namn</th><th>Belopp</th><th>Utbetalningsdag</th><th>Åtgärder</th></tr></thead>
+              <tbody id="payrollBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="adminSection" class="hidden layout-section" data-layout-key="admin" data-layout-label="Admin" data-section-name="admin">
         <div class="card">
           <h2>Adminpanel</h2>
           <div class="stats">
@@ -194,81 +332,719 @@
             <div class="stat-box"><strong>Utgifter</strong><span id="statExpenses">0.00</span></div>
             <div class="stat-box"><strong>Vinst</strong><span id="statProfit">0.00</span></div>
             <div class="stat-box"><strong>Antal kvitton</strong><span id="statReceipts">0</span></div>
+            <div class="stat-box"><strong>Löner</strong><span id="statPayroll">0.00</span><div class="small" id="statPayrollLast">Senaste utbetalning: -</div></div>
           </div>
           <h3>Bäst presterande mekaniker</h3>
           <div id="topMechanicsChart" class="bar-chart"></div>
+          <div class="admin-economy">
+            <h3>Ekonomi</h3>
+            <p class="small">Visar hur intäkter, utgifter och vinst utvecklas just nu.</p>
+            <div class="economy-chart">
+              <div class="economy-pie-wrapper">
+                <div id="economyPie" class="economy-pie"></div>
+                <div id="economyPieValue" class="economy-pie-value"><span>Totalt</span><strong>0 SEK</strong></div>
+              </div>
+              <div id="economyLegend" class="economy-legend"></div>
+            </div>
+          </div>
         </div>
 
-        <div class="card">
-          <h2>Skapa / uppdatera användare</h2>
-          <div class="row">
-            <label>Personnummer
-              <input id="adminUserPersonnummer" placeholder="19900101-1234" />
-            </label>
-            <label>Namn
-              <input id="adminUserFullName" placeholder="Förnamn Efternamn" />
-            </label>
+        <div class="admin-columns">
+          <div class="card">
+            <h2>Rabatter</h2>
+            <p class="small">Skapa förinställda rabatter som kan kopplas till kunder och kvitton.</p>
+            <div class="row">
+              <label>Namn
+                <input id="discountName" />
+                <input id="discountId" type="hidden" />
+              </label>
+              <label>Rabatt (%)
+                <input id="discountPercent" type="number" min="0" max="100" step="0.1" />
+              </label>
+            </div>
+            <button id="saveDiscountPresetBtn" type="button">Spara rabatt</button>
+            <div class="table-wrap" style="margin-top:16px;">
+              <table>
+                <thead><tr><th>Namn</th><th>Procent</th><th>Åtgärder</th></tr></thead>
+                <tbody id="discountBody"></tbody>
+              </table>
+            </div>
           </div>
-          <div class="row">
-            <label>Lösenord
-              <input id="adminUserPassword" type="password" />
-            </label>
-            <label>Rank
-              <select id="adminUserRank"></select>
-            </label>
+
+          <div class="card admin-user-card">
+            <h2>Skapa / uppdatera användare</h2>
+            <div class="row">
+              <label>Personnummer
+                <input id="adminUserPersonnummer" placeholder="19900101-1234" />
+                <input id="adminUserId" type="hidden" />
+              </label>
+              <label>Namn
+                <input id="adminUserFullName" placeholder="Förnamn Efternamn" />
+              </label>
+            </div>
+            <div class="row">
+              <label>Lösenord
+                <input id="adminUserPassword" type="password" />
+              </label>
+              <label>Rank
+                <select id="adminUserRank"></select>
+              </label>
+            </div>
+            <button id="saveAdminUserBtn" type="button">Spara användare</button>
+            <h3 style="margin-top:8px;">Användare</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Personnummer</th><th>Namn</th><th>Rank</th><th>Åtgärder</th></tr></thead>
+                <tbody id="adminUserBody"></tbody>
+              </table>
+            </div>
           </div>
-          <button id="saveAdminUserBtn" type="button">Spara användare</button>
+
+          <div class="card admin-rank-card">
+            <h2>Ranker</h2>
+            <div class="row">
+              <label>Ranknamn
+                <input id="rankName" />
+                <input id="rankId" type="hidden" />
+              </label>
+              <div></div>
+            </div>
+            <button id="saveRankBtn" type="button">Skapa rank</button>
+            <div class="table-wrap" style="margin-top:16px;">
+              <table>
+                <thead><tr><th>Rank</th><th>Visa ägare</th><th>Hantera användare</th><th>Hantera priser</th><th>Redigera kvitton</th><th>Visa kunder</th><th>Visa fordon</th><th>Visa prislista</th><th>Åtgärder</th></tr></thead>
+                <tbody id="rankBody"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
-        <div class="card">
-          <h2>Skapa / uppdatera rank</h2>
-          <div class="row">
-            <label>Ranknamn
-              <input id="rankName" />
-            </label>
-            <div></div>
-          </div>
-          <div class="row">
-            <label><input id="rankCanViewAdmin" type="checkbox" style="width:auto" /> Visa admin</label>
-            <label><input id="rankCanManageUsers" type="checkbox" style="width:auto" /> Hantera användare/ranker</label>
-          </div>
-          <div class="row">
-            <label><input id="rankCanManagePrices" type="checkbox" style="width:auto" /> Hantera prislista</label>
-            <label><input id="rankCanEditReceipts" type="checkbox" style="width:auto" /> Redigera/radera kvitton</label>
-          </div>
-          <button id="saveRankBtn" type="button">Spara rank</button>
-        </div>
-
-        <div class="card">
-          <h2>Användare</h2>
-          <table>
-            <thead><tr><th>ID</th><th>Personnummer</th><th>Namn</th><th>Rank</th></tr></thead>
-            <tbody id="adminUserBody"></tbody>
-          </table>
-        </div>
       </section>
-    </section>
+      </div>
+    </div>
   </div>
 
 <script>
 const msg = document.getElementById('msg');
+const loginMsg = document.getElementById('loginMsg');
 const loginView = document.getElementById('loginView');
 const appView = document.getElementById('appView');
 const logoutBtn = document.getElementById('logoutBtn');
 const mechanicInput = document.getElementById('mechanic');
 
-const receiptsSection = document.getElementById('receiptsSection');
+  const receiptsSection = document.getElementById('receiptsSection');
 const customersSection = document.getElementById('customersSection');
 const vehiclesSection = document.getElementById('vehiclesSection');
 const pricesSection = document.getElementById('pricesSection');
+const payrollSection = document.getElementById('payrollSection');
 const adminSection = document.getElementById('adminSection');
+const layoutModeBtn = document.getElementById('layoutModeBtn');
+const layoutHud = document.getElementById('layoutHud');
+const layoutHudMessage = document.getElementById('layoutHudMessage');
+const layoutSaveBtn = document.getElementById('layoutSaveBtn');
+const layoutResetBtn = document.getElementById('layoutResetBtn');
+const layoutExitBtn = document.getElementById('layoutExitBtn');
+const layoutCanvasEl = document.getElementById('layoutCanvas');
+const layoutPanelSelect = document.getElementById('layoutPanelSelect');
+const layoutWidthInput = document.getElementById('layoutWidthInput');
+const layoutHeightInput = document.getElementById('layoutHeightInput');
+const layoutFillWidthBtn = document.getElementById('layoutFillWidthBtn');
+const layoutFillHeightBtn = document.getElementById('layoutFillHeightBtn');
+const layoutPanelControlsGroup = layoutPanelSelect ? layoutPanelSelect.closest('.layout-hud-controls-group') : null;
+const layoutCardSelect = document.getElementById('layoutCardSelect');
+const layoutCardWidthInput = document.getElementById('layoutCardWidthInput');
+const layoutCardHeightInput = document.getElementById('layoutCardHeightInput');
+const layoutCardFillWidthBtn = document.getElementById('layoutCardFillWidthBtn');
+const layoutCardFillHeightBtn = document.getElementById('layoutCardFillHeightBtn');
+const layoutScopeSelect = document.getElementById('layoutScopeSelect');
+const layoutScopeHint = document.getElementById('layoutScopeHint');
+const layoutPresetBtn = document.getElementById('layoutPresetBtn');
+const layoutPresetSelect = document.getElementById('layoutPresetSelect');
+const scalePresetSelect = document.getElementById('scalePresetSelect');
+const mobileTabNav = document.getElementById('mobileTabNav');
+const mobileNavToggle = document.getElementById('mobileNavToggle');
+const mobileNavMenu = document.getElementById('mobileNavMenu');
+
+  // Receipt price state
+  window.serviceOptionLookup = {};
+  window.selectedServices = [];
+  window.currentReceiptExpenseTotal = 0;
+  window.currentReceiptGrossTotal = 0;
+  window.discountPresets = [];
+  window.discountPresetLookup = {};
+  window.currentReceiptDiscount = null;
+  window.customerLookup = {};
+  window.customerList = [];
+  window.vehicleList = [];
+  window.payrollEntries = [];
+  window.discountSelectionReason = null;
+const audioTracks = {};
+const audioConfig = {
+  receipt: { src: 'sounds/receipt-printer.mp3', volume: 0.85 },
+  payroll: { src: 'sounds/coin-chime.wav', volume: 0.9 },
+};
+Object.keys(audioConfig).forEach(key => preloadAudioTrack?.(key));
 
 let currentUser = null;
 let allReceipts = [];
 let allRanks = [];
+const rankPermissionMeta = [
+  { key: 'can_view_admin', label: 'Visa ägare' },
+  { key: 'can_manage_users', label: 'Hantera användare' },
+  { key: 'can_manage_prices', label: 'Hantera priser' },
+  { key: 'can_edit_receipts', label: 'Redigera kvitton' },
+  { key: 'can_view_customers', label: 'Visa kunder' },
+  { key: 'can_view_vehicles', label: 'Visa fordon' },
+  { key: 'can_view_prices', label: 'Visa prislista' },
+];
 
-function showMessage(text){ msg.textContent = text || ''; }
+const layoutConfig = {
+  minWidth: 520,
+  minHeight: 420,
+  sections: [
+    { key: 'receipts', sectionId: 'receiptsSection', label: 'Kvitton', sectionName: 'receipts', minWidth: 940, minHeight: 780, defaults: { x: 0, y: 0, w: 940, h: 920, z: 1 } },
+    { key: 'customers', sectionId: 'customersSection', label: 'Kunder', sectionName: 'customers', minWidth: 520, minHeight: 600, defaults: { x: 980, y: 0, w: 560, h: 640, z: 2 } },
+    { key: 'vehicles', sectionId: 'vehiclesSection', label: 'Fordon', sectionName: 'vehicles', minWidth: 520, minHeight: 520, defaults: { x: 980, y: 660, w: 560, h: 520, z: 3 } },
+    { key: 'prices', sectionId: 'pricesSection', label: 'Prislista', sectionName: 'prices', minWidth: 620, minHeight: 620, defaults: { x: 0, y: 940, w: 900, h: 780, z: 4 } },
+    { key: 'payroll', sectionId: 'payrollSection', label: 'Löner', sectionName: 'payroll', minWidth: 540, minHeight: 520, defaults: { x: 940, y: 1180, w: 600, h: 520, z: 5 } },
+    { key: 'admin', sectionId: 'adminSection', label: 'Admin', sectionName: 'admin', minWidth: 1200, minHeight: 900, defaults: { x: 0, y: 1760, w: 1540, h: 980, z: 6 } },
+  ],
+};
+
+const GLOBAL_LAYOUT_PRESET_VERSION = '20260220A';
+const DEFAULT_GLOBAL_LAYOUT_MAP = {
+  receipts: { x: 0, y: 0, w: 2084, h: 1202, z: 17 },
+  customers: { x: 0, y: 0, w: 2049, h: 2049, z: 23 },
+  vehicles: { x: 0, y: 0, w: 2084, h: 2048, z: 25 },
+  prices: { x: 0, y: 0, w: 2015, h: 1548, z: 31 },
+  payroll: { x: 8, y: 11, w: 2084, h: 975, z: 36 },
+  admin: { x: 0, y: 3, w: 2084, h: 2400, z: 46 },
+  'card::receipts__skapa-kvitto': { x: 24, y: 24, w: 887, h: 837, z: 18 },
+  'card::receipts__registrerade-kvitton': { x: 918, y: 24, w: 1142, h: 837, z: 19 },
+  'card::customers__kundregister': { x: 24, y: 24, w: 350, h: 365, z: 9 },
+  'card::customers__kunder': { x: 379, y: 24, w: 1646, h: 1006, z: 11 },
+  'card::vehicles__fordonsdatabas': { x: 24, y: 24, w: 347, h: 291, z: 4 },
+  'card::vehicles__sparade-fordon': { x: 371, y: 24, w: 1665, h: 951, z: 7 },
+  'card::prices__prislista': { x: 24, y: 24, w: 1967, h: 1500, z: 3 },
+  'card::payroll__lonhantering': { x: 24, y: 24, w: 420, h: 405, z: 4 },
+  'card::payroll__lonehistorik': { x: 443, y: 24, w: 1617, h: 927, z: 6 },
+  'card::admin__adminpanel': { x: 24, y: 24, w: 875, h: 794, z: 30 },
+  'card::admin__rabatter': { x: 899, y: 24, w: 1150, h: 794, z: 34 },
+  'card::admin__skapa-uppdatera-anvandare': { x: 24, y: 818, w: 875, h: 1304, z: 26 },
+  'card::admin__ranker': { x: 899, y: 818, w: 1161, h: 1304, z: 25 },
+  _metaPresetVersion: GLOBAL_LAYOUT_PRESET_VERSION,
+};
+
+function createLayoutPresetMap(overrides = {}){
+  return {
+    ...DEFAULT_GLOBAL_LAYOUT_MAP,
+    ...overrides,
+    _metaPresetVersion: GLOBAL_LAYOUT_PRESET_VERSION,
+  };
+}
+
+const LAYOUT_PRESETS = {
+  standard: {
+    label: 'Standard',
+    map: DEFAULT_GLOBAL_LAYOUT_MAP,
+  },
+  kvittofokus: {
+    label: 'Kvittofokus',
+    map: createLayoutPresetMap({
+      receipts: { x: 0, y: 0, w: 2084, h: 1570, z: 40 },
+      customers: { x: 0, y: 1578, w: 1024, h: 760, z: 32 },
+      vehicles: { x: 1060, y: 1578, w: 1024, h: 760, z: 33 },
+      prices: { x: 0, y: 2346, w: 1024, h: 1140, z: 30 },
+      payroll: { x: 1060, y: 2346, w: 1024, h: 1140, z: 31 },
+      admin: { x: 0, y: 3494, w: 2084, h: 1700, z: 29 },
+      'card::receipts__skapa-kvitto': { x: 24, y: 24, w: 1026, h: 1108, z: 42 },
+      'card::receipts__registrerade-kvitton': { x: 1058, y: 24, w: 1002, h: 1108, z: 43 },
+    }),
+  },
+  adminfokus: {
+    label: 'Adminfokus',
+    map: createLayoutPresetMap({
+      receipts: { x: 0, y: 0, w: 2084, h: 980, z: 20 },
+      customers: { x: 0, y: 988, w: 1024, h: 860, z: 21 },
+      vehicles: { x: 1060, y: 988, w: 1024, h: 860, z: 22 },
+      prices: { x: 0, y: 1856, w: 1024, h: 860, z: 23 },
+      payroll: { x: 1060, y: 1856, w: 1024, h: 860, z: 24 },
+      admin: { x: 0, y: 2724, w: 2084, h: 2200, z: 48 },
+      'card::admin__adminpanel': { x: 24, y: 24, w: 980, h: 880, z: 49 },
+      'card::admin__rabatter': { x: 1012, y: 24, w: 1048, h: 880, z: 50 },
+      'card::admin__skapa-uppdatera-anvandare': { x: 24, y: 912, w: 980, h: 1264, z: 51 },
+      'card::admin__ranker': { x: 1012, y: 912, w: 1048, h: 1264, z: 52 },
+    }),
+  },
+  kompakt: {
+    label: 'Kompakt rutnät',
+    map: createLayoutPresetMap({
+      receipts: { x: 0, y: 0, w: 1024, h: 1120, z: 30 },
+      customers: { x: 1060, y: 0, w: 1024, h: 1120, z: 31 },
+      vehicles: { x: 0, y: 1128, w: 1024, h: 1120, z: 32 },
+      prices: { x: 1060, y: 1128, w: 1024, h: 1120, z: 33 },
+      payroll: { x: 0, y: 2256, w: 1024, h: 1120, z: 34 },
+      admin: { x: 1060, y: 2256, w: 1024, h: 1120, z: 35 },
+    }),
+  },
+};
+const DEFAULT_LAYOUT_PRESET_KEY = 'standard';
+
+const LAYOUT_SNAP_THRESHOLD = 14;
+const LAYOUT_CARD_MIN_WIDTH = 320;
+const LAYOUT_CARD_MIN_HEIGHT = 240;
+const LAYOUT_CARD_PADDING = 24;
+const CARD_MEASURE_MAX_HEIGHT = 1600;
+
+const SCALE_PRESETS = {
+  '1280x720': { label: '1280×720', width: 1280, height: 720 },
+  '1920x1080': { label: '1920×1080', width: 1920, height: 1080 },
+  '2560x1440': { label: '2560×1440', width: 2560, height: 1440 },
+  '3440x1440': { label: '3440×1440', width: 3440, height: 1440 },
+  '3840x2160': { label: '4K (3840×2160)', width: 3840, height: 2160 },
+};
+const DEFAULT_SCALE_PRESET = '1920x1080';
+const SCALE_STORAGE_KEY = 'benny_ui_scale_preset';
+const SCALE_BASE_WIDTH = 1536;
+const SCALE_MIN_FACTOR = 0.45;
+const SCALE_MAX_FACTOR = 1.3;
+
+let currentScalePreset = null;
+
+let layoutCardRegistry = [];
+let layoutCardsBySection = {};
+let layoutCardState = {};
+let layoutActiveCardKey = null;
+let defaultLayoutSourceHydrated = null;
+
+let layoutState = buildDefaultLayoutState();
+let layoutLoadedOnce = false;
+let layoutIsEditing = false;
+let layoutDirty = false;
+let layoutSnapshotBeforeEdit = null;
+let layoutPointerSession = null;
+let layoutActiveKey = null;
+let layoutCardDropIndicator = null;
+let layoutSectionDropIndicator = null;
+
+collectLayoutCards();
+layoutCardState = buildDefaultCardLayoutState();
+defaultLayoutSourceHydrated = hydrateLayoutSources(DEFAULT_GLOBAL_LAYOUT_MAP);
+if (defaultLayoutSourceHydrated) {
+  layoutState = deepCloneLayout(defaultLayoutSourceHydrated.sections);
+  layoutCardState = deepCloneLayout(defaultLayoutSourceHydrated.cards);
+}
+
+const LOCAL_LAYOUT_KEY_PREFIX = 'benny_layout_local_';
+const LOCAL_LAYOUT_SCOPE_PREF_PREFIX = 'benny_layout_scope_pref_';
+
+let layoutSources = {
+  global: cloneLayoutSource(defaultLayoutSourceHydrated) || {
+    sections: deepCloneLayout(layoutState),
+    cards: deepCloneLayout(layoutCardState),
+  },
+  local: null,
+};
+let layoutActiveScope = 'global';
+
+let autosizeProbeEl = null;
+let autosizeResizeTimer = null;
+let serviceCardOrientationResizeTimer = null;
+
+function updateServiceCardOrientation(){
+  document.querySelectorAll('.service-options-wrapper').forEach(wrapper => {
+    const hostCard = wrapper.closest('.layout-card, .card') || wrapper;
+    const width = hostCard.clientWidth || 0;
+    const height = hostCard.clientHeight || 0;
+    if (width < 1 || height < 1) return;
+    const orientation = width >= height ? 'horizontal' : 'vertical';
+    wrapper.dataset.cardOrientation = orientation;
+  });
+}
+
+function shouldSkipAutosize(input){
+  if (!input) return true;
+  if (input.type === 'hidden') return true;
+  if (input.classList.contains('autosize-disabled')) return true;
+  if (input.closest('[data-autosize-skip]')) return true;
+  return false;
+}
+
+function getAutosizeProbe(){
+  if (!autosizeProbeEl) {
+    autosizeProbeEl = document.createElement('span');
+    autosizeProbeEl.className = 'autosize-probe';
+    document.body.appendChild(autosizeProbeEl);
+  }
+  return autosizeProbeEl;
+}
+
+function autoSizeInputField(input){
+  if (!input || shouldSkipAutosize(input)) return;
+  const probe = getAutosizeProbe();
+  const style = window.getComputedStyle(input);
+  probe.style.font = style.font;
+  probe.style.fontSize = style.fontSize;
+  probe.style.fontFamily = style.fontFamily;
+  probe.style.fontWeight = style.fontWeight;
+  probe.style.fontStyle = style.fontStyle;
+  probe.style.letterSpacing = style.letterSpacing;
+  probe.textContent = `${input.value || input.placeholder || ''} `;
+  const paddingX = parseFloat(style.paddingLeft || '0') + parseFloat(style.paddingRight || '0');
+  const parentWidth = input.parentElement ? (input.parentElement.clientWidth || window.innerWidth) : window.innerWidth;
+  const minWidthSetting = Number(input.dataset.autosizeMin || 140);
+  const maxWidthSetting = Number(input.dataset.autosizeMax || 0);
+  const minWidth = Math.min(parentWidth, minWidthSetting);
+  const maxWidth = maxWidthSetting > 0 ? Math.min(parentWidth, maxWidthSetting) : parentWidth;
+  const desired = probe.offsetWidth + paddingX + 10;
+  const nextWidth = Math.min(maxWidth, Math.max(minWidth, desired));
+  input.style.width = `${Math.max(0, nextWidth)}px`;
+}
+
+function attachInputAutosize(){
+  const selector = 'input[type="text"], input[type="password"], input[type="number"], input[type="email"], input[type="tel"], input[type="url"], input[type="search"], input:not([type])';
+  document.querySelectorAll(selector).forEach(input => {
+    if (shouldSkipAutosize(input)) {
+      if (input.dataset.autosizeAttached === '1') {
+        delete input.dataset.autosizeAttached;
+        input.classList.remove('autosize-input');
+        input.style.width = '';
+      }
+      return;
+    }
+    input.classList.add('autosize-input');
+    if (input.dataset.autosizeAttached === '1') {
+      autoSizeInputField(input);
+      return;
+    }
+    input.dataset.autosizeAttached = '1';
+    autoSizeInputField(input);
+    input.addEventListener('input', () => autoSizeInputField(input));
+    input.addEventListener('change', () => autoSizeInputField(input));
+  });
+}
+
+function refreshAutosizeWidths(){
+  document.querySelectorAll('input[data-autosize-attached="1"]').forEach(input => {
+    if (shouldSkipAutosize(input)) return;
+    autoSizeInputField(input);
+  });
+}
+
+window.addEventListener('resize', () => {
+  if (!layoutIsEditing) {
+    return;
+  }
+  clearTimeout(autosizeResizeTimer);
+  autosizeResizeTimer = setTimeout(refreshAutosizeWidths, 120);
+});
+window.addEventListener('resize', () => {
+  clearTimeout(serviceCardOrientationResizeTimer);
+  serviceCardOrientationResizeTimer = setTimeout(updateServiceCardOrientation, 120);
+});
+window.addEventListener('resize', handleLayoutResize);
+
+  let currentSection = 'receipts';
+
+const sectionTabMeta = [
+  { section: 'receipts', label: 'Kvitton', buttonId: 'tabReceipts' },
+  { section: 'customers', label: 'Kunder', buttonId: 'tabCustomers' },
+  { section: 'vehicles', label: 'Fordon', buttonId: 'tabVehicles' },
+  { section: 'prices', label: 'Prislista', buttonId: 'tabPrices' },
+  { section: 'payroll', label: 'Löner', buttonId: 'tabPayroll' },
+  { section: 'admin', label: 'Admin', buttonId: 'tabAdmin' },
+];
+
+function closeMobileNavMenu(){
+  if (!mobileNavMenu) return;
+  mobileNavMenu.classList.add('hidden');
+  mobileNavToggle?.setAttribute('aria-expanded', 'false');
+}
+
+function syncMobileNavState(){
+  if (!mobileNavMenu) return;
+  const items = Array.from(mobileNavMenu.querySelectorAll('button[data-section]'));
+  items.forEach(item => {
+    const section = item.dataset.section || '';
+    const meta = sectionTabMeta.find(entry => entry.section === section);
+    const desktopTab = meta ? document.getElementById(meta.buttonId) : null;
+    const hidden = !!desktopTab?.classList.contains('hidden');
+    item.classList.toggle('hidden', hidden);
+    item.classList.toggle('active', section === currentSection && !hidden);
+  });
+}
+
+function updateMobileTabAvailability(){
+  if (!mobileNavMenu) return;
+  syncMobileNavState();
+}
+
+function showMessage(text){
+  const message = text || '';
+  msg.textContent = message;
+  if (loginMsg) {
+    const onLoginScreen = document.body.classList.contains('login-mode');
+    loginMsg.textContent = onLoginScreen ? message : '';
+  }
+}
 function esc(v){ return String(v ?? '').replace(/[&<>'"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s])); }
+function normalizeServiceCategoryName(value){
+  const category = String(value || '').trim();
+  return category || 'Övrigt';
+}
+function normalizeServiceCategoryKey(value){
+  return normalizeServiceCategoryName(value)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+function getServiceCategorySortPriority(categoryName){
+  const key = normalizeServiceCategoryKey(categoryName);
+  if (key === 'ovrigt') return -1;
+  if (key === 'reperation' || key === 'reparation') return 0;
+  if (key === 'service') return 1;
+  return 10;
+}
+function formatCurrency(value){
+  const number = Number(value) || 0;
+  return new Intl.NumberFormat('sv-SE', {
+    style: 'currency',
+    currency: 'SEK',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(number);
+}
+function formatDateDisplay(value){
+  if (!value) return '-';
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString('sv-SE');
+}
+
+function clampNumber(value, min, max){
+  if (!Number.isFinite(value)) return min;
+  return Math.min(max, Math.max(min, value));
+}
+
+function computeScaleFromWidth(width){
+  if (!width || !Number.isFinite(width)) return SCALE_MIN_FACTOR;
+  const factor = SCALE_BASE_WIDTH / width;
+  return clampNumber(factor, SCALE_MIN_FACTOR, SCALE_MAX_FACTOR);
+}
+
+function applyScaleFactor(factor){
+  const safe = clampNumber(factor, SCALE_MIN_FACTOR, SCALE_MAX_FACTOR);
+  document.documentElement.style.setProperty('--page-scale-factor', String(safe));
+}
+
+function applyScalePreset(presetId, options = {}){
+  const preset = SCALE_PRESETS[presetId] || SCALE_PRESETS[DEFAULT_SCALE_PRESET];
+  const factor = computeScaleFromWidth(preset.width);
+  currentScalePreset = presetId;
+  applyScaleFactor(factor);
+  if (scalePresetSelect) {
+    scalePresetSelect.value = presetId;
+  }
+  if (options.persist === false) {
+    return;
+  }
+  try {
+    localStorage.setItem(SCALE_STORAGE_KEY, presetId);
+  } catch (error) {
+    /* ignore */
+  }
+}
+
+function initScalePresetSelector(){
+  if (!scalePresetSelect) return;
+  scalePresetSelect.innerHTML = Object.entries(SCALE_PRESETS).map(([id, meta]) => `<option value="${id}">${meta.label}</option>`).join('');
+  let stored = null;
+  try {
+    stored = localStorage.getItem(SCALE_STORAGE_KEY);
+  } catch (error) {
+    stored = null;
+  }
+  if (!stored || !SCALE_PRESETS[stored]) {
+    stored = DEFAULT_SCALE_PRESET;
+  }
+  applyScalePreset(stored, { persist: false });
+  scalePresetSelect.value = stored;
+  scalePresetSelect.addEventListener('change', event => {
+    const value = event.target.value;
+    applyScalePreset(value);
+  });
+}
+function preloadAudioTrack(key){
+  if (typeof Audio === 'undefined') return null;
+  if (audioTracks[key]) return audioTracks[key];
+  const cfg = audioConfig[key];
+  if (!cfg) return null;
+  const track = new Audio(cfg.src);
+  track.preload = 'auto';
+  track.volume = cfg.volume ?? 1;
+  track.playsInline = true;
+  audioTracks[key] = track;
+  return track;
+}
+function playSoundEffect(key){
+  const track = preloadAudioTrack(key);
+  if (!track) return;
+  try {
+    track.pause();
+    track.currentTime = 0;
+  } catch (e) {
+    /* ignore */
+  }
+  track.play().catch(() => {
+    /* autoplay block ignored */
+  });
+}
+function playReceiptPrintedSound(){
+  playSoundEffect('receipt');
+}
+function playCoinClinkSound(){
+  playSoundEffect('payroll');
+}
+Object.keys(audioConfig).forEach(preloadAudioTrack);
+function hasPermission(key){
+  if (!currentUser || !currentUser.permissions) return false;
+  return Number(currentUser.permissions[key] || 0) === 1;
+}
+function canViewSection(sectionName){
+  switch (sectionName) {
+    case 'customers':
+      return hasPermission('can_view_customers');
+    case 'vehicles':
+      return hasPermission('can_view_vehicles');
+    case 'prices':
+      return hasPermission('can_view_prices') || hasPermission('can_manage_prices');
+    case 'payroll':
+      return hasPermission('can_view_admin');
+    case 'admin':
+      return hasPermission('can_view_admin');
+    default:
+      return true;
+  }
+}
+
+function setDiscountPresetOptions(list) {
+  window.discountPresets = Array.isArray(list) ? list : [];
+  window.discountPresetLookup = {};
+  window.discountPresets.forEach(preset => {
+    window.discountPresetLookup[String(preset.id)] = preset;
+  });
+  const receiptSelect = document.getElementById('discountPresetSelect');
+  const customerSelect = document.getElementById('customerDiscountPreset');
+  const buildOptions = () => ['<option value="">Ingen</option>'].concat(window.discountPresets.map(p => {
+    const percent = Number(p.percent || 0);
+    const percentLabel = percent % 1 === 0 ? percent.toFixed(0) : percent.toFixed(1);
+    return `<option value="${p.id}">${esc(p.name)} (${percentLabel}%)</option>`;
+  })).join('');
+  if (receiptSelect) {
+    const currentValue = receiptSelect.value;
+    receiptSelect.innerHTML = buildOptions();
+    if (currentValue && window.discountPresetLookup[currentValue]) {
+      receiptSelect.value = currentValue;
+    }
+  }
+  if (customerSelect) {
+    const current = customerSelect.value;
+    customerSelect.innerHTML = buildOptions();
+    if (current && window.discountPresetLookup[current]) {
+      customerSelect.value = current;
+    }
+  }
+  updateReceiptAmount();
+}
+
+function getSelectedDiscountPreset() {
+  const select = document.getElementById('discountPresetSelect');
+  if (!select) return null;
+  const id = select.value;
+  if (!id) return null;
+  return window.discountPresetLookup?.[id] || null;
+}
+
+function updateDiscountInfo(messageOverride) {
+  const info = document.getElementById('discountInfo');
+  if (!info) return;
+  const preset = getSelectedDiscountPreset();
+  if (!preset) {
+    info.textContent = '';
+    info.classList.add('hidden');
+    return;
+  }
+  const reason = messageOverride || (window.discountSelectionReason === 'customer' ? ' (kopplad från kundkort)' : '');
+  info.textContent = `${preset.name} - ${Number(preset.percent).toFixed(1).replace(/\.0$/, '')}%${reason}`;
+  info.classList.remove('hidden');
+}
+
+function applyCustomerDiscountIfAny() {
+  const input = document.getElementById('customer');
+  if (!input) return;
+  const name = input.value.trim().toLowerCase();
+  const record = name ? window.customerLookup?.[name] : null;
+  if (record && record.discount_preset_id && window.discountPresetLookup[String(record.discount_preset_id)]) {
+    const select = document.getElementById('discountPresetSelect');
+    if (select) {
+      select.value = String(record.discount_preset_id);
+      window.discountSelectionReason = 'customer';
+      updateReceiptAmount();
+      updateDiscountInfo();
+    }
+  } else if (window.discountSelectionReason === 'customer') {
+    const select = document.getElementById('discountPresetSelect');
+    if (select) select.value = '';
+    window.discountSelectionReason = null;
+    updateReceiptAmount();
+  }
+}
+
+// Auto-format helpers for plates and personnummer
+function formatPlateValue(raw){
+  let s = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if (s.length <= 3) return s;
+  const part1 = s.slice(0,3);
+  const part2 = s.slice(3,6);
+  const rest = s.slice(6);
+  return part1 + (part2 ? '-' + part2 : '') + (rest ? rest : '');
+}
+
+function formatPersonnummerValue(raw){
+  let s = String(raw || '').replace(/\D/g,'');
+  if (s.length <= 8) return s;
+  const first = s.slice(0,8);
+  const last = s.slice(8,12);
+  return first + (last ? '-' + last : '');
+}
+
+function attachFormatting(){
+  const plateIds = ['plate','vehiclePlateReg'];
+  for (const id of plateIds){
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.addEventListener('input', (e) => {
+      // keep typing fluid but uppercase and remove invalid chars
+      const pos = e.target.selectionStart;
+      e.target.value = String(e.target.value).toUpperCase().replace(/[^A-Z0-9-]/g,'');
+      e.target.setSelectionRange(pos, pos);
+    });
+    el.addEventListener('blur', (e) => { e.target.value = formatPlateValue(e.target.value); });
+  }
+
+  const pIds = ['personnummer','adminUserPersonnummer'];
+  for (const id of pIds){
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.addEventListener('input', (e) => {
+      const pos = e.target.selectionStart;
+      e.target.value = String(e.target.value).replace(/[^0-9-]/g,'');
+      e.target.setSelectionRange(pos, pos);
+    });
+    el.addEventListener('blur', (e) => { e.target.value = formatPersonnummerValue(e.target.value); });
+  }
+}
+
 
 async function api(action, method='GET', body=null){
   const res = await fetch(`index.php?action=${action}`, {
@@ -281,69 +1057,2651 @@ async function api(action, method='GET', body=null){
   return data;
 }
 
+function buildDefaultLayoutState(){
+  const defaults = {};
+  layoutConfig.sections.forEach((meta, index) => {
+    const base = { ...(meta.defaults || {}) };
+    defaults[meta.key] = {
+      x: Number(base.x) || 0,
+      y: Number(base.y) || 0,
+      w: Number(base.w) || (layoutConfig.minWidth * 2),
+      h: Number(base.h) || (layoutConfig.minHeight * 2),
+      z: Number(base.z) || index + 1,
+    };
+  });
+  return defaults;
+}
+
+function getLayoutMetaByKey(key){
+  return layoutConfig.sections.find(meta => meta.key === key) || null;
+}
+
+function sanitizeLayoutMap(layout){
+  const sanitized = {};
+  layoutConfig.sections.forEach((meta, index) => {
+    sanitized[meta.key] = normalizeLayoutRect(layout?.[meta.key], meta, index);
+  });
+  return sanitized;
+}
+
+function normalizeLayoutRect(rawConfig, meta, index){
+  const defaults = meta.defaults || { x: 0, y: 0, w: 900, h: 700, z: index + 1 };
+  const result = { ...defaults };
+  if (rawConfig && typeof rawConfig === 'object') {
+    if (Number.isFinite(Number(rawConfig.x))) result.x = Number(rawConfig.x);
+    if (Number.isFinite(Number(rawConfig.y))) result.y = Number(rawConfig.y);
+    if (Number.isFinite(Number(rawConfig.w))) result.w = Number(rawConfig.w);
+    if (Number.isFinite(Number(rawConfig.h))) result.h = Number(rawConfig.h);
+    if (Number.isFinite(Number(rawConfig.z))) result.z = Number(rawConfig.z);
+  }
+  const minWidth = meta.minWidth || layoutConfig.minWidth;
+  const minHeight = meta.minHeight || layoutConfig.minHeight;
+  result.w = Math.max(minWidth, Math.min(2400, result.w));
+  result.h = Math.max(minHeight, Math.min(2400, result.h));
+  result.x = Math.max(0, Math.min(4000, result.x));
+  result.y = Math.max(0, Math.min(4000, result.y));
+  result.z = Math.max(1, Math.min(999, result.z || index + 1));
+  return result;
+}
+
+function clampRectToCanvas(rect, meta, canvasWidth){
+  if (!canvasWidth) {
+    canvasWidth = layoutCanvasEl ? (layoutCanvasEl.clientWidth || layoutCanvasEl.offsetWidth || window.innerWidth) : window.innerWidth;
+  }
+  const minWidth = meta.minWidth || layoutConfig.minWidth;
+  const minHeight = meta.minHeight || layoutConfig.minHeight;
+  const maxWidth = Math.max(minWidth, canvasWidth - 20);
+  const next = { ...rect };
+  next.w = Math.max(minWidth, Math.min(maxWidth, next.w));
+  next.x = Math.max(0, Math.min(next.x, Math.max(0, canvasWidth - next.w)));
+  next.h = Math.max(minHeight, Math.min(2400, next.h));
+  next.y = Math.max(0, Math.min(3200, next.y));
+  return next;
+}
+
+function rectsOverlap(a, b){
+  if (!a || !b) return false;
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function sectionOverlaps(key, rect){
+  if (!rect) return false;
+  return Object.entries(layoutState).some(([sectionKey, cfg]) => sectionKey !== key && rectsOverlap(rect, cfg));
+}
+
+function hideSectionDropIndicator(){
+  if (!layoutSectionDropIndicator) return;
+  layoutSectionDropIndicator.classList.remove('active');
+}
+
+function showSectionDropIndicator(rect){
+  if (!layoutCanvasEl || !rect) return;
+  if (!layoutSectionDropIndicator || layoutSectionDropIndicator.parentElement !== layoutCanvasEl) {
+    if (layoutSectionDropIndicator && layoutSectionDropIndicator.parentElement) {
+      layoutSectionDropIndicator.parentElement.removeChild(layoutSectionDropIndicator);
+    }
+    layoutSectionDropIndicator = document.createElement('div');
+    layoutSectionDropIndicator.className = 'layout-section-drop-indicator';
+    layoutCanvasEl.appendChild(layoutSectionDropIndicator);
+  }
+  layoutSectionDropIndicator.style.left = `${rect.x}px`;
+  layoutSectionDropIndicator.style.top = `${rect.y}px`;
+  layoutSectionDropIndicator.style.width = `${rect.w}px`;
+  layoutSectionDropIndicator.style.height = `${rect.h}px`;
+  layoutSectionDropIndicator.classList.add('active');
+}
+
+function distanceBetweenRectOrigins(a, b){
+  if (!a || !b) return Number.MAX_SAFE_INTEGER;
+  const dx = (Number(a.x) || 0) - (Number(b.x) || 0);
+  const dy = (Number(a.y) || 0) - (Number(b.y) || 0);
+  return Math.hypot(dx, dy);
+}
+
+function clampRectToAvoidOverlap(rect, key){
+  const meta = getLayoutMetaByKey(key);
+  if (!meta) return rect;
+  const canvasWidth = layoutCanvasEl ? (layoutCanvasEl.clientWidth || layoutCanvasEl.offsetWidth || window.innerWidth) : window.innerWidth;
+  const base = clampRectToCanvas(rect, meta, canvasWidth);
+  if (!sectionOverlaps(key, base)) {
+    return base;
+  }
+  const others = layoutConfig.sections
+    .filter(item => item.key !== key)
+    .map(item => layoutState[item.key] || item.defaults)
+    .filter(Boolean);
+  const candidates = [];
+  const pushCandidate = (x, y) => {
+    const next = clampRectToCanvas({ ...base, x, y }, meta, canvasWidth);
+    if (!sectionOverlaps(key, next)) {
+      candidates.push(next);
+    }
+  };
+  pushCandidate(base.x, base.y);
+  others.forEach(other => {
+    pushCandidate(other.x - base.w, base.y);
+    pushCandidate(other.x + other.w, base.y);
+    pushCandidate(base.x, other.y - base.h);
+    pushCandidate(base.x, other.y + other.h);
+    pushCandidate(other.x - base.w, other.y);
+    pushCandidate(other.x + other.w, other.y);
+    pushCandidate(other.x, other.y - base.h);
+    pushCandidate(other.x, other.y + other.h);
+  });
+  if (!candidates.length) {
+    return base;
+  }
+  let best = candidates[0];
+  let bestDistance = distanceBetweenRectOrigins(base, best);
+  for (let i = 1; i < candidates.length; i += 1) {
+    const distance = distanceBetweenRectOrigins(base, candidates[i]);
+    if (distance < bestDistance) {
+      best = candidates[i];
+      bestDistance = distance;
+    }
+  }
+  return best;
+}
+
+function updateSectionStyle(key, rect){
+  const meta = getLayoutMetaByKey(key);
+  if (!meta) return;
+  const section = document.getElementById(meta.sectionId);
+  if (!section) return;
+  section.style.top = `${rect.y}px`;
+  section.style.left = `${rect.x}px`;
+  section.style.width = `${rect.w}px`;
+  section.style.height = `${rect.h}px`;
+  section.style.zIndex = String(rect.z || 1);
+}
+
+function updateLayoutCanvasSize(){
+  if (!layoutCanvasEl) return;
+  let targets = layoutConfig.sections;
+  if (layoutIsEditing) {
+    const activeMeta = layoutConfig.sections.find(meta => meta.key === layoutActiveKey) || layoutConfig.sections[0];
+    targets = activeMeta ? [activeMeta] : layoutConfig.sections;
+  } else {
+    const activeMeta = layoutConfig.sections.find(meta => meta.sectionName === currentSection) || layoutConfig.sections[0];
+    targets = activeMeta ? [activeMeta] : layoutConfig.sections;
+  }
+  let maxBottom = 0;
+  targets.forEach(meta => {
+    const rect = layoutState[meta.key] || meta.defaults;
+    maxBottom = Math.max(maxBottom, rect.y + rect.h);
+  });
+  const desired = Math.max(420, Math.ceil(maxBottom + 60));
+  layoutCanvasEl.style.minHeight = `${desired}px`;
+}
+
+function shouldUseStackLayout(){
+  return true;
+}
+
+function ensureLayoutHandles(){
+  layoutConfig.sections.forEach(meta => {
+    const section = document.getElementById(meta.sectionId);
+    if (!section) return;
+    section.classList.add('layout-section');
+    if (!section.querySelector('.layout-drag-handle')) {
+      const handle = document.createElement('button');
+      handle.type = 'button';
+      handle.className = 'layout-drag-handle';
+      const labelSpan = document.createElement('span');
+      labelSpan.textContent = meta.label;
+      const dotsSpan = document.createElement('span');
+      dotsSpan.className = 'layout-handle-dots';
+      dotsSpan.textContent = '...';
+      handle.appendChild(labelSpan);
+      handle.appendChild(dotsSpan);
+      handle.addEventListener('pointerdown', event => beginLayoutPointer(meta, 'move', event));
+      section.appendChild(handle);
+    }
+    if (!section.querySelector('.layout-resize-handle')) {
+      const resizeHandle = document.createElement('div');
+      resizeHandle.className = 'layout-resize-handle';
+      resizeHandle.addEventListener('pointerdown', event => beginLayoutPointer(meta, 'resize', event));
+      section.appendChild(resizeHandle);
+    }
+  });
+}
+
+function slugifyForLayout(value){
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    || 'kort';
+}
+
+function measureCardHeightApprox(cardEl, width){
+  if (!cardEl || !document || !document.body) {
+    return 400;
+  }
+  const clone = cardEl.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+  clone.style.position = 'absolute';
+  clone.style.visibility = 'hidden';
+  clone.style.pointerEvents = 'none';
+  clone.style.height = 'auto';
+  clone.style.width = `${Math.max(LAYOUT_CARD_MIN_WIDTH, width)}px`;
+  clone.style.left = '-99999px';
+  clone.style.top = '0';
+  document.body.appendChild(clone);
+  const measured = Math.min(CARD_MEASURE_MAX_HEIGHT, Math.max(clone.scrollHeight, clone.offsetHeight, 360));
+  document.body.removeChild(clone);
+  return measured;
+}
+
+function ensureCardHandlesForSection(sectionMeta){
+  if (!sectionMeta) return;
+  const cards = layoutCardsBySection[sectionMeta.key] || [];
+  cards.forEach(cardMeta => {
+    const cardEl = cardMeta.element;
+    if (!cardEl) return;
+    cardEl.classList.add('layout-card');
+    if (cardEl.dataset.layoutCardPointerAttached !== '1') {
+      cardEl.dataset.layoutCardPointerAttached = '1';
+      cardEl.addEventListener('pointerdown', event => {
+        if (!layoutIsEditing) return;
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        if (target.closest('input, select, textarea, button, a, [contenteditable="true"], .layout-card-resize-handle')) {
+          return;
+        }
+        beginLayoutPointer(cardMeta, 'move', event, 'card');
+      });
+    }
+    if (!cardEl.querySelector('.layout-card-drag-handle')) {
+      const handle = document.createElement('button');
+      handle.type = 'button';
+      handle.className = 'layout-card-drag-handle';
+      const labelSpan = document.createElement('span');
+      labelSpan.textContent = cardMeta.label;
+      const dotsSpan = document.createElement('span');
+      dotsSpan.className = 'layout-card-handle-dots';
+      dotsSpan.textContent = '...';
+      handle.appendChild(labelSpan);
+      handle.appendChild(dotsSpan);
+      handle.addEventListener('pointerdown', event => {
+        event.stopPropagation();
+        beginLayoutPointer(cardMeta, 'move', event, 'card');
+      });
+      cardEl.appendChild(handle);
+    }
+    if (!cardEl.querySelector('.layout-card-resize-handle')) {
+      const resizeHandle = document.createElement('div');
+      resizeHandle.className = 'layout-card-resize-handle';
+      resizeHandle.addEventListener('pointerdown', event => {
+        event.stopPropagation();
+        beginLayoutPointer(cardMeta, 'resize', event, 'card');
+      });
+      cardEl.appendChild(resizeHandle);
+    }
+  });
+}
+
+function computeCardSlotRect(sectionKey, slotIndex, totalCards){
+  const cards = layoutCardsBySection[sectionKey] || [];
+  const total = Math.max(1, Number.isFinite(totalCards) ? totalCards : cards.length);
+  const index = Math.max(0, Math.min(total - 1, Number(slotIndex) || 0));
+  const sectionRect = layoutState[sectionKey] || getLayoutMetaByKey(sectionKey)?.defaults;
+  if (!sectionRect) return null;
+  const padding = LAYOUT_CARD_PADDING;
+  const minHeight = LAYOUT_CARD_MIN_HEIGHT;
+  const usableHeight = Math.max(minHeight, sectionRect.h - (padding * 2));
+  const totalGap = padding * Math.max(0, total - 1);
+  const perCardHeight = Math.max(minHeight, Math.floor((usableHeight - totalGap) / total));
+  const top = padding + (index * (perCardHeight + padding));
+  return {
+    x: padding,
+    y: top,
+    w: Math.max(LAYOUT_CARD_MIN_WIDTH, sectionRect.w - (padding * 2)),
+    h: perCardHeight,
+    z: index + 1,
+  };
+}
+
+function getCardOrderForSection(sectionKey){
+  const cards = layoutCardsBySection[sectionKey] || [];
+  const baseOrder = cards.map(meta => meta.key);
+  return baseOrder.sort((aKey, bKey) => {
+    const aRect = layoutCardState[aKey];
+    const bRect = layoutCardState[bKey];
+    const aY = Number.isFinite(Number(aRect?.y)) ? Number(aRect.y) : Number.MAX_SAFE_INTEGER;
+    const bY = Number.isFinite(Number(bRect?.y)) ? Number(bRect.y) : Number.MAX_SAFE_INTEGER;
+    if (aY !== bY) return aY - bY;
+    const aZ = Number.isFinite(Number(aRect?.z)) ? Number(aRect.z) : 0;
+    const bZ = Number.isFinite(Number(bRect?.z)) ? Number(bRect.z) : 0;
+    if (aZ !== bZ) return aZ - bZ;
+    return baseOrder.indexOf(aKey) - baseOrder.indexOf(bKey);
+  });
+}
+
+function applyCardOrderToSection(sectionKey, orderedKeys){
+  const cards = layoutCardsBySection[sectionKey] || [];
+  if (!cards.length) return;
+  const sectionRect = layoutState[sectionKey] || getLayoutMetaByKey(sectionKey)?.defaults;
+  if (!sectionRect) return;
+  const fallbackOrder = cards.map(meta => meta.key);
+  const seen = new Set();
+  const normalizedOrder = [];
+  (orderedKeys || []).forEach(key => {
+    if (!fallbackOrder.includes(key) || seen.has(key)) return;
+    seen.add(key);
+    normalizedOrder.push(key);
+  });
+  fallbackOrder.forEach(key => {
+    if (seen.has(key)) return;
+    seen.add(key);
+    normalizedOrder.push(key);
+  });
+  let cursorY = LAYOUT_CARD_PADDING;
+  normalizedOrder.forEach((cardKey, index) => {
+    const meta = getCardMetaByKey(cardKey);
+    if (!meta) return;
+    const currentRect = layoutCardState[cardKey] || meta.defaults;
+    const remainingCards = normalizedOrder.length - index - 1;
+    const minRemaining = remainingCards * ((meta.minHeight || LAYOUT_CARD_MIN_HEIGHT) + LAYOUT_CARD_PADDING);
+    const maxHeightForCurrent = Math.max(
+      meta.minHeight || LAYOUT_CARD_MIN_HEIGHT,
+      sectionRect.h - LAYOUT_CARD_PADDING - cursorY - minRemaining,
+    );
+    const desiredRect = {
+      x: LAYOUT_CARD_PADDING,
+      y: cursorY,
+      w: Number.isFinite(Number(currentRect?.w)) ? Number(currentRect.w) : (meta.defaults?.w || meta.minWidth || LAYOUT_CARD_MIN_WIDTH),
+      h: Math.max(meta.minHeight || LAYOUT_CARD_MIN_HEIGHT, Math.min(maxHeightForCurrent, Number(currentRect?.h) || (meta.defaults?.h || LAYOUT_CARD_MIN_HEIGHT))),
+      z: index + 1,
+    };
+    const nextRect = clampCardRect(desiredRect, meta);
+    nextRect.y = cursorY;
+    nextRect.z = index + 1;
+    layoutCardState[cardKey] = nextRect;
+    updateCardStyle(cardKey, nextRect);
+    cursorY += nextRect.h + LAYOUT_CARD_PADDING;
+  });
+}
+
+function hideCardDropIndicator(){
+  if (!layoutCardDropIndicator) return;
+  layoutCardDropIndicator.classList.remove('active');
+}
+
+function showCardDropIndicator(sectionKey, rect){
+  const sectionMeta = getLayoutMetaByKey(sectionKey);
+  if (!sectionMeta) return;
+  const sectionEl = document.getElementById(sectionMeta.sectionId);
+  if (!sectionEl) return;
+  if (!layoutCardDropIndicator || layoutCardDropIndicator.parentElement !== sectionEl) {
+    if (layoutCardDropIndicator && layoutCardDropIndicator.parentElement) {
+      layoutCardDropIndicator.parentElement.removeChild(layoutCardDropIndicator);
+    }
+    layoutCardDropIndicator = document.createElement('div');
+    layoutCardDropIndicator.className = 'layout-card-drop-indicator';
+    sectionEl.appendChild(layoutCardDropIndicator);
+  }
+  if (!rect) {
+    hideCardDropIndicator();
+    return;
+  }
+  layoutCardDropIndicator.style.left = `${rect.x}px`;
+  layoutCardDropIndicator.style.top = `${rect.y}px`;
+  layoutCardDropIndicator.style.width = `${rect.w}px`;
+  layoutCardDropIndicator.style.height = `${rect.h}px`;
+  layoutCardDropIndicator.classList.add('active');
+}
+
+function cardOverlapsInSection(sectionKey, excludeCardKey, rect, sectionState = null){
+  if (!sectionKey || !rect) return false;
+  const cards = layoutCardsBySection[sectionKey] || [];
+  const state = sectionState || layoutCardState;
+  return cards.some(meta => {
+    if (!meta || meta.key === excludeCardKey) return false;
+    const otherRect = state?.[meta.key];
+    if (!otherRect) return false;
+    return rectsOverlap(rect, otherRect);
+  });
+}
+
+function sectionHasAnyCardOverlap(sectionKey, sectionState){
+  const cards = layoutCardsBySection[sectionKey] || [];
+  for (let i = 0; i < cards.length; i += 1) {
+    const rectA = sectionState?.[cards[i].key];
+    if (!rectA) continue;
+    for (let j = i + 1; j < cards.length; j += 1) {
+      const rectB = sectionState?.[cards[j].key];
+      if (!rectB) continue;
+      if (rectsOverlap(rectA, rectB)) return true;
+    }
+  }
+  return false;
+}
+
+function packCardsIntoGrid(sectionKey, ordered, sectionRect){
+  const packed = {};
+  const step = 20;
+  const minX = LAYOUT_CARD_PADDING;
+  const minY = LAYOUT_CARD_PADDING;
+  if (!sectionRect) return packed;
+  ordered.forEach(meta => {
+    const currentRect = layoutCardState[meta.key] || meta.defaults;
+    const baseRect = clampCardRect(currentRect, meta);
+    const maxX = Math.max(minX, sectionRect.w - LAYOUT_CARD_PADDING - baseRect.w);
+    const maxY = Math.max(minY, sectionRect.h - LAYOUT_CARD_PADDING - baseRect.h);
+    let placed = null;
+    for (let y = minY; y <= maxY; y += step) {
+      for (let x = minX; x <= maxX; x += step) {
+        const candidate = clampCardRect({ ...baseRect, x, y }, meta);
+        if (!cardOverlapsInSection(sectionKey, meta.key, candidate, packed)) {
+          placed = candidate;
+          break;
+        }
+      }
+      if (placed) break;
+    }
+    placed = placed || baseRect;
+    packed[meta.key] = placed;
+  });
+  return packed;
+}
+
+function packCardsInTwoColumns(sectionKey, ordered, sectionRect){
+  const packed = {};
+  if (!sectionRect) return packed;
+  const padding = LAYOUT_CARD_PADDING;
+  const availableWidth = Math.max(LAYOUT_CARD_MIN_WIDTH * 2, sectionRect.w - (padding * 3));
+  const columnWidth = Math.max(LAYOUT_CARD_MIN_WIDTH, Math.floor(availableWidth / 2));
+  const columnX = [padding, padding * 2 + columnWidth];
+  let columnY = [padding, padding];
+  ordered.forEach(meta => {
+    const currentRect = layoutCardState[meta.key] || meta.defaults;
+    const baseRect = clampCardRect({
+      ...currentRect,
+      w: Math.min(columnWidth, Number(currentRect?.w) || columnWidth),
+    }, meta);
+    const targetColumn = columnY[0] <= columnY[1] ? 0 : 1;
+    const placed = clampCardRect({
+      ...baseRect,
+      x: columnX[targetColumn],
+      y: columnY[targetColumn],
+      w: columnWidth,
+    }, meta);
+    packed[meta.key] = placed;
+    columnY[targetColumn] += placed.h + padding;
+  });
+  return packed;
+}
+
+function expandSectionHeightToFitCards(sectionKey, packedState){
+  if (!sectionKey || !packedState) return false;
+  const meta = getLayoutMetaByKey(sectionKey);
+  if (!meta) return false;
+  const current = layoutState[sectionKey] || meta.defaults;
+  if (!current) return false;
+  let maxBottom = 0;
+  (layoutCardsBySection[sectionKey] || []).forEach(cardMeta => {
+    const rect = packedState[cardMeta.key];
+    if (!rect) return;
+    maxBottom = Math.max(maxBottom, rect.y + rect.h);
+  });
+  const desiredHeight = Math.max(meta.minHeight || layoutConfig.minHeight, Math.ceil(maxBottom + LAYOUT_CARD_PADDING));
+  if (desiredHeight <= current.h) return false;
+  layoutState[sectionKey] = { ...current, h: desiredHeight };
+  updateSectionStyle(sectionKey, layoutState[sectionKey]);
+  updateLayoutCanvasSize();
+  return true;
+}
+
+function findNearestFreeCardRect(cardMeta, targetRect, fallbackRect, sectionState = null){
+  if (!cardMeta) return targetRect;
+  const sectionKey = cardMeta.sectionKey;
+  const base = clampCardRect(targetRect, cardMeta);
+  if (!cardOverlapsInSection(sectionKey, cardMeta.key, base, sectionState)) {
+    return base;
+  }
+  const step = 20;
+  const maxRadius = 1200;
+  let best = null;
+  let bestDistance = Number.MAX_SAFE_INTEGER;
+  for (let radius = step; radius <= maxRadius; radius += step) {
+    for (let dy = -radius; dy <= radius; dy += step) {
+      for (let dx = -radius; dx <= radius; dx += step) {
+        if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
+        const candidate = clampCardRect({ ...base, x: base.x + dx, y: base.y + dy }, cardMeta);
+        if (cardOverlapsInSection(sectionKey, cardMeta.key, candidate, sectionState)) continue;
+        const distance = Math.hypot(candidate.x - base.x, candidate.y - base.y);
+        if (distance < bestDistance) {
+          best = candidate;
+          bestDistance = distance;
+        }
+      }
+    }
+    if (best) break;
+  }
+  if (best) return best;
+  const sectionRect = layoutState[sectionKey] || getLayoutMetaByKey(sectionKey)?.defaults;
+  if (!sectionRect) return base;
+  const minX = LAYOUT_CARD_PADDING;
+  const minY = LAYOUT_CARD_PADDING;
+  const maxX = Math.max(minX, sectionRect.w - LAYOUT_CARD_PADDING - base.w);
+  const maxY = Math.max(minY, sectionRect.h - LAYOUT_CARD_PADDING - base.h);
+  for (let y = minY; y <= maxY; y += step) {
+    for (let x = minX; x <= maxX; x += step) {
+      const candidate = clampCardRect({ ...base, x, y }, cardMeta);
+      if (!cardOverlapsInSection(sectionKey, cardMeta.key, candidate, sectionState)) {
+        return candidate;
+      }
+    }
+  }
+  const safeFallback = fallbackRect ? clampCardRect(fallbackRect, cardMeta) : null;
+  if (safeFallback && !cardOverlapsInSection(sectionKey, cardMeta.key, safeFallback, sectionState)) {
+    return safeFallback;
+  }
+  return base;
+}
+
+function moveCardToNearestFreeSlot(cardMeta, targetRect){
+  if (!cardMeta) return;
+  const previous = layoutCardState[cardMeta.key] || cardMeta.defaults;
+  const placed = findNearestFreeCardRect(cardMeta, targetRect, previous);
+  if (!cardOverlapsInSection(cardMeta.sectionKey, cardMeta.key, placed)) {
+    layoutCardState[cardMeta.key] = placed;
+    updateCardStyle(cardMeta.key, placed);
+    showCardDropIndicator(cardMeta.sectionKey, placed);
+  } else {
+    const safePrev = clampCardRect(previous, cardMeta);
+    layoutCardState[cardMeta.key] = safePrev;
+    updateCardStyle(cardMeta.key, safePrev);
+    hideCardDropIndicator();
+  }
+  updateLayoutCanvasSize();
+}
+
+function collectLayoutCards(){
+  layoutCardRegistry = [];
+  layoutCardsBySection = {};
+  const slugUsage = {};
+  layoutConfig.sections.forEach(sectionMeta => {
+    const section = document.getElementById(sectionMeta.sectionId);
+    if (!section) return;
+    const cards = Array.from(section.querySelectorAll('.card'));
+    const sectionRect = layoutState[sectionMeta.key] || sectionMeta.defaults || {};
+    let cursorY = LAYOUT_CARD_PADDING;
+    cards.forEach((cardEl, index) => {
+      const heading = cardEl.querySelector('h2, h3, h4, h5, h6');
+      const headingText = heading ? heading.textContent.trim() : '';
+      const customId = cardEl.dataset && cardEl.dataset.layoutCardId ? cardEl.dataset.layoutCardId.trim() : '';
+      const baseSlug = customId || slugifyForLayout(headingText || `kort-${index + 1}`);
+      const slugKey = `${sectionMeta.key}__${baseSlug}`;
+      const slugCount = (slugUsage[slugKey] || 0) + 1;
+      slugUsage[slugKey] = slugCount;
+      const finalKey = slugCount > 1 ? `${slugKey}-${slugCount}` : slugKey;
+      const label = headingText ? `${sectionMeta.label}: ${headingText}` : `${sectionMeta.label} kort ${index + 1}`;
+      const sectionWidth = sectionRect.w || sectionMeta.defaults?.w || sectionMeta.minWidth || layoutConfig.minWidth;
+      const widthBase = Math.max(LAYOUT_CARD_MIN_WIDTH, sectionWidth - (LAYOUT_CARD_PADDING * 2));
+      const measuredHeight = measureCardHeightApprox(cardEl, widthBase);
+      const approxHeight = Math.max(LAYOUT_CARD_MIN_HEIGHT, Math.min(CARD_MEASURE_MAX_HEIGHT, measuredHeight));
+      const rect = {
+        x: LAYOUT_CARD_PADDING,
+        y: cursorY,
+        w: widthBase,
+        h: approxHeight,
+        z: index + 1,
+      };
+      cursorY += approxHeight + LAYOUT_CARD_PADDING;
+      const meta = {
+        key: finalKey,
+        sectionKey: sectionMeta.key,
+        sectionId: sectionMeta.sectionId,
+        label,
+        element: cardEl,
+        minWidth: LAYOUT_CARD_MIN_WIDTH,
+        minHeight: LAYOUT_CARD_MIN_HEIGHT,
+        defaults: rect,
+      };
+      layoutCardRegistry.push(meta);
+      if (!layoutCardsBySection[sectionMeta.key]) {
+        layoutCardsBySection[sectionMeta.key] = [];
+      }
+      layoutCardsBySection[sectionMeta.key].push(meta);
+      cardEl.classList.add('layout-card');
+    });
+    if (!layoutCardsBySection[sectionMeta.key]) {
+      layoutCardsBySection[sectionMeta.key] = [];
+    }
+  });
+}
+
+function getCardMetaByKey(key){
+  return layoutCardRegistry.find(meta => meta.key === key) || null;
+}
+
+function buildDefaultCardLayoutState(){
+  const defaults = {};
+  layoutCardRegistry.forEach(meta => {
+    defaults[meta.key] = { ...(meta.defaults || {
+      x: LAYOUT_CARD_PADDING,
+      y: LAYOUT_CARD_PADDING,
+      w: meta.minWidth || LAYOUT_CARD_MIN_WIDTH,
+      h: meta.minHeight || LAYOUT_CARD_MIN_HEIGHT,
+      z: 1,
+    }) };
+  });
+  return defaults;
+}
+
+function sanitizeCardLayout(layoutMap){
+  const sanitized = {};
+  layoutCardRegistry.forEach(meta => {
+    const stored = layoutMap ? layoutMap[`card::${meta.key}`] : null;
+    sanitized[meta.key] = normalizeCardRect(stored, meta);
+  });
+  return sanitized;
+}
+
+function syncCardLayoutStateWithRegistry(preserveExisting = true){
+  const nextState = {};
+  layoutCardRegistry.forEach(meta => {
+    const existing = preserveExisting && layoutCardState ? layoutCardState[meta.key] : null;
+    const source = existing ? { ...existing } : { ...(meta.defaults || {
+      x: LAYOUT_CARD_PADDING,
+      y: LAYOUT_CARD_PADDING,
+      w: meta.minWidth || LAYOUT_CARD_MIN_WIDTH,
+      h: meta.minHeight || LAYOUT_CARD_MIN_HEIGHT,
+      z: 1,
+    }) };
+    nextState[meta.key] = clampCardRect(source, meta);
+  });
+  layoutCardState = nextState;
+}
+
+function clampCardLayoutsForSection(sectionKey){
+  if (!sectionKey) return;
+  const cards = layoutCardsBySection[sectionKey] || [];
+  const ordered = cards.slice().sort((a, b) => {
+    const aRect = layoutCardState[a.key] || a.defaults || {};
+    const bRect = layoutCardState[b.key] || b.defaults || {};
+    const yDiff = (Number(aRect.y) || 0) - (Number(bRect.y) || 0);
+    if (yDiff !== 0) return yDiff;
+    const xDiff = (Number(aRect.x) || 0) - (Number(bRect.x) || 0);
+    if (xDiff !== 0) return xDiff;
+    return (Number(aRect.z) || 1) - (Number(bRect.z) || 1);
+  });
+  const placedSectionState = {};
+  ordered.forEach(meta => {
+    const rect = layoutCardState[meta.key] || meta.defaults;
+    const clamped = clampCardRect(rect, meta);
+    const resolved = findNearestFreeCardRect(meta, clamped, null, placedSectionState);
+    placedSectionState[meta.key] = resolved;
+    layoutCardState[meta.key] = resolved;
+    updateCardStyle(meta.key, resolved);
+  });
+  if (sectionHasAnyCardOverlap(sectionKey, placedSectionState)) {
+    let sectionRect = layoutState[sectionKey] || getLayoutMetaByKey(sectionKey)?.defaults;
+    const useTwoColumns = sectionKey === 'admin' || sectionKey === 'receipts' || sectionKey === 'payroll';
+    let packed = useTwoColumns
+      ? packCardsInTwoColumns(sectionKey, ordered, sectionRect)
+      : packCardsIntoGrid(sectionKey, ordered, sectionRect);
+    if (expandSectionHeightToFitCards(sectionKey, packed)) {
+      sectionRect = layoutState[sectionKey] || getLayoutMetaByKey(sectionKey)?.defaults;
+      packed = useTwoColumns
+        ? packCardsInTwoColumns(sectionKey, ordered, sectionRect)
+        : packCardsIntoGrid(sectionKey, ordered, sectionRect);
+    }
+    Object.entries(packed).forEach(([key, rect]) => {
+      layoutCardState[key] = rect;
+      updateCardStyle(key, rect);
+    });
+  }
+}
+
+function getSectionSnapGuides(excludeKey){
+  const guides = { vertical: [0], horizontal: [0] };
+  const canvasWidth = layoutCanvasEl ? (layoutCanvasEl.clientWidth || layoutCanvasEl.offsetWidth || window.innerWidth) : window.innerWidth;
+  const canvasHeight = layoutCanvasEl ? Math.max(layoutCanvasEl.scrollHeight || 0, layoutCanvasEl.clientHeight || 0, window.innerHeight) : window.innerHeight;
+  guides.vertical.push(canvasWidth);
+  guides.horizontal.push(canvasHeight);
+  layoutConfig.sections.forEach(meta => {
+    if (meta.key === excludeKey) return;
+    const rect = layoutState[meta.key] || meta.defaults;
+    guides.vertical.push(rect.x, rect.x + rect.w);
+    guides.horizontal.push(rect.y, rect.y + rect.h);
+  });
+  return guides;
+}
+
+function getCardSnapGuides(sectionKey, excludeKey){
+  const guides = { vertical: [], horizontal: [] };
+  const sectionMeta = getLayoutMetaByKey(sectionKey);
+  const sectionRect = layoutState[sectionKey] || (sectionMeta ? sectionMeta.defaults : null);
+  const secWidth = Number(sectionRect && sectionRect.w) || sectionMeta?.minWidth || layoutConfig.minWidth;
+  const secHeight = Number(sectionRect && sectionRect.h) || sectionMeta?.minHeight || layoutConfig.minHeight;
+  guides.vertical.push(LAYOUT_CARD_PADDING, Math.max(LAYOUT_CARD_PADDING, secWidth - LAYOUT_CARD_PADDING));
+  guides.horizontal.push(LAYOUT_CARD_PADDING, Math.max(LAYOUT_CARD_PADDING, secHeight - LAYOUT_CARD_PADDING));
+  (layoutCardsBySection[sectionKey] || []).forEach(meta => {
+    if (meta.key === excludeKey) return;
+    const rect = layoutCardState[meta.key] || meta.defaults;
+    guides.vertical.push(rect.x, rect.x + rect.w);
+    guides.horizontal.push(rect.y, rect.y + rect.h);
+  });
+  return guides;
+}
+
+function findSnapTargetValue(value, candidates){
+  if (!Array.isArray(candidates) || !candidates.length) return null;
+  let target = null;
+  let bestDistance = LAYOUT_SNAP_THRESHOLD + 1;
+  candidates.forEach(candidate => {
+    if (!Number.isFinite(candidate)) return;
+    const distance = Math.abs(candidate - value);
+    if (distance <= LAYOUT_SNAP_THRESHOLD && distance < bestDistance) {
+      bestDistance = distance;
+      target = candidate;
+    }
+  });
+  return target;
+}
+
+function chooseSnapDelta(deltaA, deltaB){
+  const validA = Number.isFinite(deltaA) ? Math.abs(deltaA) : null;
+  const validB = Number.isFinite(deltaB) ? Math.abs(deltaB) : null;
+  if (validA === null && validB === null) return 0;
+  if (validA === null) return deltaB;
+  if (validB === null) return deltaA;
+  return validA <= validB ? deltaA : deltaB;
+}
+
+function applySnapToSectionRect(rect, meta, mode){
+  if (!meta) return rect;
+  const guides = getSectionSnapGuides(meta.key);
+  const result = { ...rect };
+  const left = result.x;
+  const right = result.x + result.w;
+  const top = result.y;
+  const bottom = result.y + result.h;
+  if (mode === 'move') {
+    const snappedLeft = findSnapTargetValue(left, guides.vertical);
+    const snappedRight = findSnapTargetValue(right, guides.vertical);
+    const deltaX = chooseSnapDelta(
+      snappedLeft !== null ? snappedLeft - left : null,
+      snappedRight !== null ? snappedRight - right : null,
+    );
+    result.x += deltaX;
+    const snappedTop = findSnapTargetValue(top, guides.horizontal);
+    const snappedBottom = findSnapTargetValue(bottom, guides.horizontal);
+    const deltaY = chooseSnapDelta(
+      snappedTop !== null ? snappedTop - top : null,
+      snappedBottom !== null ? snappedBottom - bottom : null,
+    );
+    result.y += deltaY;
+  } else if (mode === 'resize') {
+    const snappedRight = findSnapTargetValue(right, guides.vertical);
+    if (snappedRight !== null) {
+      result.w = Math.max(meta.minWidth || layoutConfig.minWidth, snappedRight - result.x);
+    }
+    const snappedBottom = findSnapTargetValue(bottom, guides.horizontal);
+    if (snappedBottom !== null) {
+      result.h = Math.max(meta.minHeight || layoutConfig.minHeight, snappedBottom - result.y);
+    }
+  }
+  return result;
+}
+
+function applySnapToCardRect(rect, meta, mode){
+  if (!meta) return rect;
+  const guides = getCardSnapGuides(meta.sectionKey, meta.key);
+  const result = { ...rect };
+  const left = result.x;
+  const right = result.x + result.w;
+  const top = result.y;
+  const bottom = result.y + result.h;
+  if (mode === 'move') {
+    const snappedLeft = findSnapTargetValue(left, guides.vertical);
+    const snappedRight = findSnapTargetValue(right, guides.vertical);
+    const deltaX = chooseSnapDelta(
+      snappedLeft !== null ? snappedLeft - left : null,
+      snappedRight !== null ? snappedRight - right : null,
+    );
+    result.x += deltaX;
+    const snappedTop = findSnapTargetValue(top, guides.horizontal);
+    const snappedBottom = findSnapTargetValue(bottom, guides.horizontal);
+    const deltaY = chooseSnapDelta(
+      snappedTop !== null ? snappedTop - top : null,
+      snappedBottom !== null ? snappedBottom - bottom : null,
+    );
+    result.y += deltaY;
+  } else if (mode === 'resize') {
+    const snappedRight = findSnapTargetValue(right, guides.vertical);
+    if (snappedRight !== null) {
+      result.w = Math.max(meta.minWidth || LAYOUT_CARD_MIN_WIDTH, snappedRight - result.x);
+    }
+    const snappedBottom = findSnapTargetValue(bottom, guides.horizontal);
+    if (snappedBottom !== null) {
+      result.h = Math.max(meta.minHeight || LAYOUT_CARD_MIN_HEIGHT, snappedBottom - result.y);
+    }
+  }
+  return result;
+}
+
+function normalizeCardRect(rawConfig, meta){
+  const defaults = meta?.defaults || {
+    x: LAYOUT_CARD_PADDING,
+    y: LAYOUT_CARD_PADDING,
+    w: meta?.minWidth || LAYOUT_CARD_MIN_WIDTH,
+    h: meta?.minHeight || LAYOUT_CARD_MIN_HEIGHT,
+    z: 1,
+  };
+  const rect = { ...defaults };
+  if (rawConfig && typeof rawConfig === 'object') {
+    ['x','y','w','h','z'].forEach(axis => {
+      if (Number.isFinite(Number(rawConfig[axis]))) {
+        rect[axis] = Number(rawConfig[axis]);
+      }
+    });
+  }
+  return clampCardRect(rect, meta);
+}
+
+function clampCardRect(rect, cardMeta){
+  if (!cardMeta) return rect;
+  const sectionRect = layoutState[cardMeta.sectionKey] || getLayoutMetaByKey(cardMeta.sectionKey)?.defaults;
+  if (!sectionRect) return rect;
+  const padding = LAYOUT_CARD_PADDING;
+  const minWidth = cardMeta.minWidth || LAYOUT_CARD_MIN_WIDTH;
+  const minHeight = cardMeta.minHeight || LAYOUT_CARD_MIN_HEIGHT;
+  const usableWidth = Math.max(minWidth, sectionRect.w - padding * 2);
+  const usableHeight = Math.max(minHeight, sectionRect.h - padding * 2);
+  const next = { ...rect };
+  next.w = Math.max(minWidth, Math.min(usableWidth, rect.w));
+  next.h = Math.max(minHeight, Math.min(usableHeight, rect.h));
+  next.x = Math.max(padding, Math.min(sectionRect.w - padding - next.w, rect.x));
+  next.y = Math.max(padding, Math.min(sectionRect.h - padding - next.h, rect.y));
+  next.z = Math.max(1, Math.min(999, rect.z || 1));
+  return next;
+}
+
+function updateCardStyle(key, rect){
+  const meta = getCardMetaByKey(key);
+  if (!meta || !meta.element) return;
+  meta.element.style.top = `${rect.y}px`;
+  meta.element.style.left = `${rect.x}px`;
+  meta.element.style.width = `${rect.w}px`;
+  meta.element.style.height = `${rect.h}px`;
+  meta.element.style.zIndex = String(rect.z || 1);
+  updateServiceCardOrientation();
+}
+
+function applyCardLayoutStyles(){
+  const stackMode = shouldUseStackLayout();
+  if (stackMode) {
+    hideCardDropIndicator();
+    hideSectionDropIndicator();
+  }
+  layoutConfig.sections.forEach(sectionMeta => {
+    const cards = layoutCardsBySection[sectionMeta.key] || [];
+    cards.forEach(meta => {
+      const cardEl = meta.element;
+      if (!cardEl) return;
+      if (stackMode) {
+        cardEl.style.top = '';
+        cardEl.style.left = '';
+        cardEl.style.width = '';
+        cardEl.style.height = '';
+        cardEl.style.zIndex = '';
+      }
+    });
+    if (stackMode) {
+      return;
+    }
+    clampCardLayoutsForSection(sectionMeta.key);
+  });
+  updateServiceCardOrientation();
+}
+
+function populateLayoutCardSelect(sectionKey){
+  if (!layoutCardSelect) return;
+  const cards = sectionKey ? (layoutCardsBySection[sectionKey] || []) : [];
+  if (cards.length === 0) {
+    layoutCardSelect.innerHTML = '';
+    layoutCardSelect.value = '';
+    layoutCardSelect.disabled = true;
+    return;
+  }
+  layoutCardSelect.innerHTML = cards.map(meta => `<option value="${esc(meta.key)}">${esc(meta.label)}</option>`).join('');
+  layoutCardSelect.disabled = false;
+}
+
+function setActiveLayoutCardKey(cardKey, scrollIntoView){
+  const cards = layoutCardsBySection[layoutActiveKey] || [];
+  let targetMeta = cards.find(meta => meta.key === cardKey) || cards[0] || null;
+  layoutActiveCardKey = targetMeta ? targetMeta.key : null;
+  if (layoutCardSelect) {
+    layoutCardSelect.value = layoutActiveCardKey || '';
+    layoutCardSelect.disabled = !layoutIsEditing || cards.length === 0;
+  }
+  cards.forEach(meta => {
+    if (!meta.element) return;
+    const selected = layoutIsEditing && layoutActiveCardKey === meta.key;
+    meta.element.classList.toggle('layout-card-selected', selected);
+  });
+  if (layoutIsEditing && scrollIntoView && targetMeta?.element) {
+    targetMeta.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  updateLayoutHudInputs();
+}
+
+function updatePanelHudInputs(){
+  if (!layoutWidthInput || !layoutHeightInput) return;
+  if (layoutPanelControlsGroup) {
+    layoutPanelControlsGroup.classList.add('hidden');
+  }
+  const meta = getLayoutMetaByKey(layoutActiveKey);
+  if (!meta || !layoutIsEditing) {
+    layoutWidthInput.value = '';
+    layoutHeightInput.value = '';
+    layoutWidthInput.disabled = true;
+    layoutHeightInput.disabled = true;
+    layoutFillWidthBtn?.setAttribute('disabled', 'disabled');
+    layoutFillHeightBtn?.setAttribute('disabled', 'disabled');
+    return;
+  }
+  layoutWidthInput.disabled = true;
+  layoutHeightInput.disabled = true;
+  layoutFillWidthBtn?.setAttribute('disabled', 'disabled');
+  layoutFillHeightBtn?.setAttribute('disabled', 'disabled');
+  const rect = layoutState[meta.key] || meta.defaults;
+  layoutWidthInput.value = Math.round(rect.w);
+  layoutHeightInput.value = Math.round(rect.h);
+}
+
+function updateCardHudInputs(){
+  if (!layoutCardWidthInput || !layoutCardHeightInput) return;
+  const meta = getCardMetaByKey(layoutActiveCardKey);
+  if (!meta || !layoutIsEditing) {
+    layoutCardWidthInput.value = '';
+    layoutCardHeightInput.value = '';
+    layoutCardWidthInput.disabled = true;
+    layoutCardHeightInput.disabled = true;
+    layoutCardFillWidthBtn?.setAttribute('disabled', 'disabled');
+    layoutCardFillHeightBtn?.setAttribute('disabled', 'disabled');
+    return;
+  }
+  layoutCardWidthInput.disabled = false;
+  layoutCardHeightInput.disabled = false;
+  layoutCardFillWidthBtn?.removeAttribute('disabled');
+  layoutCardFillHeightBtn?.removeAttribute('disabled');
+  const rect = layoutCardState[meta.key] || meta.defaults;
+  layoutCardWidthInput.value = Math.round(rect.w);
+  layoutCardHeightInput.value = Math.round(rect.h);
+}
+
+function updateLayoutHudInputs(){
+  updatePanelHudInputs();
+  updateCardHudInputs();
+}
+
+function handleLayoutCardDimensionInput(axis){
+  if (!layoutIsEditing) return;
+  const meta = getCardMetaByKey(layoutActiveCardKey);
+  if (!meta) return;
+  const targetInput = axis === 'w' ? layoutCardWidthInput : layoutCardHeightInput;
+  if (!targetInput) return;
+  const raw = Number(targetInput.value);
+  if (!Number.isFinite(raw) || raw <= 0) return;
+  const rect = { ...(layoutCardState[meta.key] || meta.defaults) };
+  if (axis === 'w') {
+    rect.w = raw;
+  } else {
+    rect.h = raw;
+  }
+  const clamped = clampCardRect(rect, meta);
+  layoutCardState[meta.key] = clamped;
+  updateCardStyle(meta.key, clamped);
+  setLayoutDirty(true);
+  updateLayoutHudInputs();
+}
+
+function fillCardWidthForActiveCard(){
+  if (!layoutIsEditing) return;
+  const meta = getCardMetaByKey(layoutActiveCardKey);
+  if (!meta) return;
+  const sectionRect = layoutState[meta.sectionKey] || getLayoutMetaByKey(meta.sectionKey)?.defaults;
+  if (!sectionRect) return;
+  const rect = { ...(layoutCardState[meta.key] || meta.defaults) };
+  rect.x = LAYOUT_CARD_PADDING;
+  rect.w = Math.max(meta.minWidth || LAYOUT_CARD_MIN_WIDTH, sectionRect.w - (LAYOUT_CARD_PADDING * 2));
+  layoutCardState[meta.key] = clampCardRect(rect, meta);
+  updateCardStyle(meta.key, layoutCardState[meta.key]);
+  setLayoutDirty(true);
+  updateLayoutHudInputs();
+}
+
+function fillCardHeightForActiveCard(){
+  if (!layoutIsEditing) return;
+  const meta = getCardMetaByKey(layoutActiveCardKey);
+  if (!meta) return;
+  const sectionRect = layoutState[meta.sectionKey] || getLayoutMetaByKey(meta.sectionKey)?.defaults;
+  if (!sectionRect) return;
+  const rect = { ...(layoutCardState[meta.key] || meta.defaults) };
+  rect.y = LAYOUT_CARD_PADDING;
+  rect.h = Math.max(meta.minHeight || LAYOUT_CARD_MIN_HEIGHT, sectionRect.h - (LAYOUT_CARD_PADDING * 2));
+  layoutCardState[meta.key] = clampCardRect(rect, meta);
+  updateCardStyle(meta.key, layoutCardState[meta.key]);
+  setLayoutDirty(true);
+  updateLayoutHudInputs();
+}
+
+function bringCardToFront(cardKey){
+  const meta = getCardMetaByKey(cardKey);
+  if (!meta) return;
+  const cards = layoutCardsBySection[meta.sectionKey] || [];
+  const highest = cards.reduce((max, item) => Math.max(max, (layoutCardState[item.key]?.z || item.defaults?.z || 1)), 1);
+  const rect = { ...(layoutCardState[cardKey] || meta.defaults) };
+  rect.z = Math.min(999, highest + 1);
+  layoutCardState[cardKey] = rect;
+  updateCardStyle(cardKey, rect);
+}
+
+function populateLayoutPanelSelect(){
+  if (!layoutPanelSelect) return;
+  layoutPanelSelect.innerHTML = layoutConfig.sections.map(meta => `<option value="${meta.key}">${meta.label}</option>`).join('');
+}
+
+function setActiveLayoutKey(key, scrollIntoView){
+  if (!layoutIsEditing) {
+    layoutActiveKey = key;
+    if (layoutPanelSelect) {
+      layoutPanelSelect.value = layoutActiveKey || '';
+      layoutPanelSelect.disabled = true;
+    }
+    layoutActiveCardKey = null;
+    populateLayoutCardSelect(null);
+    clearLayoutSelections();
+    updateLayoutHudInputs();
+    return;
+  }
+  let targetMeta = getLayoutMetaByKey(key);
+  if (!targetMeta) {
+    targetMeta = layoutConfig.sections[0] || null;
+  }
+  layoutActiveKey = targetMeta ? targetMeta.key : null;
+  if (layoutPanelSelect) {
+    layoutPanelSelect.value = layoutActiveKey || '';
+    layoutPanelSelect.disabled = false;
+  }
+  const cards = layoutActiveKey ? (layoutCardsBySection[layoutActiveKey] || []) : [];
+  if (targetMeta) {
+    ensureCardHandlesForSection(targetMeta);
+    populateLayoutCardSelect(targetMeta.key);
+  } else {
+    populateLayoutCardSelect(null);
+  }
+  let nextCardKey = layoutActiveCardKey;
+  if (!cards.some(meta => meta.key === nextCardKey)) {
+    nextCardKey = cards[0]?.key || null;
+  }
+  setActiveLayoutCardKey(nextCardKey, scrollIntoView);
+  layoutConfig.sections.forEach(meta => {
+    const section = document.getElementById(meta.sectionId);
+    if (!section) return;
+    const selected = layoutIsEditing && layoutActiveKey === meta.key;
+    section.classList.toggle('layout-section-selected', selected);
+    if (selected && scrollIntoView) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+  if (layoutIsEditing) {
+    updateLayoutSectionVisibility();
+    updateLayoutCanvasSize();
+  }
+}
+
+function updateLayoutSectionVisibility(){
+  if (!layoutIsEditing) return;
+  layoutConfig.sections.forEach(meta => {
+    const section = document.getElementById(meta.sectionId);
+    if (!section) return;
+    const shouldShow = layoutActiveKey === meta.key;
+    section.classList.toggle('hidden', !shouldShow);
+  });
+}
+
+function handleLayoutDimensionInput(axis){
+  if (!layoutIsEditing) return;
+  showMessage('Panelstorlek är låst. Flytta panelen istället.');
+  updateLayoutHudInputs();
+  return;
+  const meta = getLayoutMetaByKey(layoutActiveKey);
+  if (!meta) return;
+  const targetInput = axis === 'w' ? layoutWidthInput : layoutHeightInput;
+  if (!targetInput) return;
+  const raw = Number(targetInput.value);
+  if (!Number.isFinite(raw) || raw <= 0) return;
+  const rect = { ...(layoutState[meta.key] || meta.defaults) };
+  if (axis === 'w') {
+    rect.w = raw;
+  } else {
+    rect.h = raw;
+  }
+  const clamped = clampRectToCanvas(rect, meta);
+  layoutState[meta.key] = clamped;
+  updateSectionStyle(meta.key, clamped);
+  clampCardLayoutsForSection(meta.key);
+  updateLayoutCanvasSize();
+  setLayoutDirty(true);
+  updateLayoutHudInputs();
+}
+
+function fillWidthForActivePanel(){
+  if (!layoutIsEditing) return;
+  showMessage('Panelstorlek är låst. Flytta panelen istället.');
+  updateLayoutHudInputs();
+  return;
+  const meta = getLayoutMetaByKey(layoutActiveKey);
+  if (!meta) return;
+  const canvasWidth = layoutCanvasEl ? (layoutCanvasEl.clientWidth || layoutCanvasEl.offsetWidth || window.innerWidth) : window.innerWidth;
+  const rect = { ...(layoutState[meta.key] || meta.defaults) };
+  rect.x = 0;
+  rect.w = canvasWidth;
+  layoutState[meta.key] = clampRectToCanvas(rect, meta, canvasWidth);
+  updateSectionStyle(meta.key, layoutState[meta.key]);
+  clampCardLayoutsForSection(meta.key);
+  updateLayoutCanvasSize();
+  setLayoutDirty(true);
+  updateLayoutHudInputs();
+}
+
+function fillHeightForActivePanel(){
+  if (!layoutIsEditing) return;
+  showMessage('Panelstorlek är låst. Flytta panelen istället.');
+  updateLayoutHudInputs();
+  return;
+  const meta = getLayoutMetaByKey(layoutActiveKey);
+  if (!meta) return;
+  const rect = { ...(layoutState[meta.key] || meta.defaults) };
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 900;
+  rect.h = Math.max(meta.minHeight || layoutConfig.minHeight, viewportHeight - 200);
+  layoutState[meta.key] = clampRectToCanvas(rect, meta);
+  updateSectionStyle(meta.key, layoutState[meta.key]);
+  clampCardLayoutsForSection(meta.key);
+  updateLayoutCanvasSize();
+  setLayoutDirty(true);
+  updateLayoutHudInputs();
+}
+
+function applyLayoutStyles(){
+  if (!layoutCanvasEl) return;
+  ensureLayoutHandles();
+  const stackMode = shouldUseStackLayout();
+  document.body.classList.toggle('layout-stack-mode', stackMode);
+  document.body.classList.toggle('layout-ready', !stackMode);
+  if (stackMode) {
+    layoutConfig.sections.forEach(meta => {
+      const section = document.getElementById(meta.sectionId);
+      if (!section) return;
+      section.style.top = '';
+      section.style.left = '';
+      section.style.width = '';
+      section.style.height = '';
+      section.style.zIndex = '';
+    });
+    layoutCanvasEl.style.minHeight = '';
+    applyCardLayoutStyles();
+    return;
+  }
+  const canvasWidth = layoutCanvasEl.clientWidth || layoutCanvasEl.offsetWidth || window.innerWidth;
+  layoutConfig.sections.forEach(meta => {
+    const current = layoutState[meta.key] || meta.defaults;
+    const clamped = clampRectToCanvas(current, meta, canvasWidth);
+    layoutState[meta.key] = clamped;
+    updateSectionStyle(meta.key, clamped);
+  });
+  updateLayoutCanvasSize();
+  applyCardLayoutStyles();
+  if (layoutIsEditing) {
+    updateLayoutSectionVisibility();
+  }
+}
+
+function beginLayoutPointer(meta, mode, event, targetType = 'section'){
+  if (!layoutIsEditing) return;
+  if (targetType === 'section') return;
+  event.preventDefault();
+  const targetElement = targetType === 'card' ? meta.element : document.getElementById(meta.sectionId);
+  if (!targetElement) return;
+  if (targetType === 'card') {
+    setActiveLayoutKey(meta.sectionKey, false);
+    setActiveLayoutCardKey(meta.key, false);
+  } else {
+    setActiveLayoutKey(meta.key, false);
+  }
+  const pointerCaptureElement = event.target instanceof Element ? event.target : targetElement;
+  try {
+    pointerCaptureElement.setPointerCapture?.(event.pointerId);
+  } catch (error) {
+    try {
+      targetElement.setPointerCapture?.(event.pointerId);
+    } catch (fallbackError) {
+      /* ignore pointer capture failures */
+    }
+  }
+  if (targetType === 'card') {
+    bringCardToFront(meta.key);
+  } else {
+    bringSectionToFront(meta.key);
+  }
+  layoutPointerSession = {
+    pointerId: event.pointerId,
+    mode,
+    meta,
+    targetType,
+    pointerCaptureElement,
+    startX: event.clientX,
+    startY: event.clientY,
+    rect: targetType === 'card'
+      ? { ...(layoutCardState[meta.key] || meta.defaults) }
+      : { ...(layoutState[meta.key] || meta.defaults) },
+  };
+  window.addEventListener('pointermove', handleLayoutPointerMove);
+  window.addEventListener('pointerup', endLayoutPointerSession);
+}
+
+function handleLayoutPointerMove(event){
+  if (!layoutPointerSession) return;
+  const { meta, mode, rect, targetType } = layoutPointerSession;
+  const dx = event.clientX - layoutPointerSession.startX;
+  const dy = event.clientY - layoutPointerSession.startY;
+  const updated = { ...rect };
+  if (mode === 'move') {
+    updated.x = rect.x + dx;
+    updated.y = rect.y + dy;
+  } else if (mode === 'resize') {
+    updated.w = rect.w + dx;
+    updated.h = rect.h + dy;
+  }
+  if (targetType === 'card') {
+    let clampedCard = clampCardRect(updated, meta);
+    if (mode === 'move') {
+      const snappedMove = clampCardRect(applySnapToCardRect(clampedCard, meta, mode), meta);
+      clampedCard.x = snappedMove.x;
+      clampedCard.y = snappedMove.y;
+      clampedCard.w = rect.w;
+      clampedCard.h = rect.h;
+      clampedCard = clampCardRect(clampedCard, meta);
+    } else {
+      clampedCard = clampCardRect(applySnapToCardRect(clampedCard, meta, mode), meta);
+    }
+    if (mode === 'resize') {
+      const previousCardRect = layoutCardState[meta.key] || rect;
+      const resolvedResize = findNearestFreeCardRect(meta, clampedCard, previousCardRect);
+      if (!cardOverlapsInSection(meta.sectionKey, meta.key, resolvedResize)) {
+        layoutCardState[meta.key] = resolvedResize;
+        updateCardStyle(meta.key, resolvedResize);
+      } else {
+        const safePrevious = clampCardRect(previousCardRect, meta);
+        layoutCardState[meta.key] = safePrevious;
+        updateCardStyle(meta.key, safePrevious);
+      }
+      hideCardDropIndicator();
+    } else {
+      moveCardToNearestFreeSlot(meta, clampedCard);
+    }
+  } else {
+    const canvasWidth = layoutCanvasEl ? (layoutCanvasEl.clientWidth || layoutCanvasEl.offsetWidth || window.innerWidth) : window.innerWidth;
+    let clampedSection = clampRectToCanvas(updated, meta, canvasWidth);
+    clampedSection = clampRectToCanvas(applySnapToSectionRect(clampedSection, meta, mode), meta, canvasWidth);
+    if (mode === 'move') {
+      clampedSection = clampRectToAvoidOverlap(clampedSection, meta.key);
+      showSectionDropIndicator(clampedSection);
+    } else {
+      hideSectionDropIndicator();
+    }
+    layoutState[meta.key] = clampedSection;
+    updateSectionStyle(meta.key, clampedSection);
+    clampCardLayoutsForSection(meta.key);
+    updateLayoutCanvasSize();
+  }
+  setLayoutDirty(true);
+  updateLayoutHudInputs();
+}
+
+function endLayoutPointerSession(){
+  if (!layoutPointerSession) return;
+  const targetElement = layoutPointerSession.targetType === 'card'
+    ? layoutPointerSession.meta.element
+    : document.getElementById(layoutPointerSession.meta.sectionId);
+  const pointerCaptureElement = layoutPointerSession.pointerCaptureElement;
+  try {
+    pointerCaptureElement?.releasePointerCapture?.(layoutPointerSession.pointerId);
+  } catch (error) {
+    try {
+      targetElement?.releasePointerCapture?.(layoutPointerSession.pointerId);
+    } catch (fallbackError) {
+      /* ignore pointer release failures */
+    }
+  }
+  window.removeEventListener('pointermove', handleLayoutPointerMove);
+  window.removeEventListener('pointerup', endLayoutPointerSession);
+  layoutPointerSession = null;
+  hideCardDropIndicator();
+  hideSectionDropIndicator();
+}
+
+function bringSectionToFront(key){
+  const current = layoutState[key];
+  if (!current) return;
+  const highest = Math.max(...Object.values(layoutState).map(cfg => cfg?.z || 1));
+  current.z = Math.min(999, highest + 1);
+  updateSectionStyle(key, current);
+}
+
+function deepCloneLayout(state){
+  return JSON.parse(JSON.stringify(state || {}));
+}
+
+function clearLayoutSelections(){
+  document.querySelectorAll('.layout-section-selected').forEach(el => el.classList.remove('layout-section-selected'));
+  document.querySelectorAll('.layout-card-selected').forEach(el => el.classList.remove('layout-card-selected'));
+}
+
+function captureLayoutSnapshot(){
+  return {
+    sections: deepCloneLayout(layoutState),
+    cards: deepCloneLayout(layoutCardState),
+  };
+}
+
+function restoreLayoutSnapshot(snapshot){
+  if (!snapshot) return;
+  layoutState = deepCloneLayout(snapshot.sections || {});
+  layoutCardState = deepCloneLayout(snapshot.cards || {});
+  applyLayoutStyles();
+}
+
+function setLayoutDirty(flag){
+  layoutDirty = !!flag;
+  if (layoutSaveBtn) {
+    layoutSaveBtn.disabled = !layoutDirty;
+  }
+  if (layoutHudMessage) {
+    const dirtyText = layoutActiveScope === 'global'
+      ? 'Du har osparade ändringar i den globala layouten.'
+      : 'Du har osparade ändringar i din personliga layout.';
+    layoutHudMessage.textContent = layoutDirty ? dirtyText : getScopeStatusText();
+  }
+}
+
+async function enterLayoutEditMode(){
+  if (layoutIsEditing) return;
+  if (!currentUser) {
+    showMessage('Logga in för att ändra layouten.');
+    return;
+  }
+  if (shouldUseStackLayout()) {
+    showMessage('Layout-läget kräver en bredare skärm.');
+    return;
+  }
+  if (!layoutLoadedOnce) {
+    await loadLayoutFromServer(true);
+  }
+  collectLayoutCards();
+  refreshStoredLayoutCaches();
+  syncCardLayoutStateWithRegistry(true);
+  layoutSnapshotBeforeEdit = captureLayoutSnapshot();
+  layoutIsEditing = true;
+  document.body.classList.add('layout-edit-mode');
+  layoutHud?.classList.remove('hidden');
+  layoutPresetBtn?.classList.remove('hidden');
+  if (layoutModeBtn) layoutModeBtn.textContent = 'Avsluta layout';
+  layoutConfig.sections.forEach(meta => {
+    const section = document.getElementById(meta.sectionId);
+    if (!section) return;
+    if (!canViewSection(meta.sectionName || 'receipts')) return;
+  });
+  ensureLayoutHandles();
+  populateLayoutPanelSelect();
+  updateLayoutScopeControls();
+  applyLayoutStyles();
+  const initialKey = canViewSection(currentSection) ? currentSection : (layoutConfig.sections[0] ? layoutConfig.sections[0].key : null);
+  setActiveLayoutKey(initialKey, true);
+  setLayoutDirty(false);
+  showMessage(layoutActiveScope === 'global'
+    ? 'Layout-läget är aktivt. Du redigerar den globala layouten.'
+    : 'Layout-läget är aktivt. Du redigerar din personliga layout.');
+}
+
+function requestExitLayoutMode(){
+  if (!layoutIsEditing) return;
+  if (layoutDirty) {
+    const discard = confirm('Du har osparade layoutändringar. Vill du kassera dem?');
+    if (!discard) return;
+    exitLayoutEditMode(true);
+  } else {
+    exitLayoutEditMode(false);
+  }
+}
+
+function exitLayoutEditMode(discardChanges){
+  if (!layoutIsEditing) return;
+  if (discardChanges && layoutSnapshotBeforeEdit) {
+    restoreLayoutSnapshot(layoutSnapshotBeforeEdit);
+  }
+  layoutIsEditing = false;
+  layoutSnapshotBeforeEdit = null;
+  document.body.classList.remove('layout-edit-mode');
+  layoutHud?.classList.add('hidden');
+  layoutPresetBtn?.classList.add('hidden');
+  if (layoutModeBtn) layoutModeBtn.textContent = 'Layoutläge';
+  setLayoutDirty(false);
+  layoutActiveCardKey = null;
+  hideCardDropIndicator();
+  hideSectionDropIndicator();
+  populateLayoutCardSelect(null);
+  setActiveLayoutKey(null);
+  clearLayoutSelections();
+  showSection(currentSection);
+}
+
+async function saveLayoutChanges(){
+  if (!layoutIsEditing || !layoutDirty) return;
+  const payload = serializeLayoutState();
+  if (layoutActiveScope === 'global') {
+    if (!hasPermission('can_view_admin')) {
+      showMessage('Endast ägare kan spara den globala layouten. Byt till personlig sparning.');
+      return;
+    }
+    try {
+      await api('api_layout_save', 'POST', { layout: payload });
+      layoutSources.global = {
+        sections: sanitizeLayoutMap(payload),
+        cards: sanitizeCardLayout(payload),
+      };
+      refreshStoredLayoutCaches();
+      layoutSnapshotBeforeEdit = captureLayoutSnapshot();
+      setLayoutDirty(false);
+      showMessage('Global layout sparad.');
+    } catch (error) {
+      showMessage(error.message);
+    }
+    return;
+  }
+  saveLocalLayoutMap(payload);
+  layoutSources.local = {
+    sections: sanitizeLayoutMap(payload),
+    cards: sanitizeCardLayout(payload),
+  };
+  refreshStoredLayoutCaches();
+  layoutSnapshotBeforeEdit = captureLayoutSnapshot();
+  setLayoutDirty(false);
+  showMessage('Din personliga layout sparades på denna enhet.');
+}
+
+async function resetLayoutOnServer(){
+  if (!layoutIsEditing) return;
+  if (layoutActiveScope === 'global') {
+    if (!hasPermission('can_view_admin')) {
+      showMessage('Endast ägare kan återställa den globala layouten.');
+      return;
+    }
+    if (!confirm('Återställ den globala layouten till standard för alla användare?')) return;
+    try {
+      await api('api_layout_reset', 'POST');
+      await api('api_layout_save', 'POST', { layout: DEFAULT_GLOBAL_LAYOUT_MAP });
+      await loadLayoutFromServer(true);
+      layoutSnapshotBeforeEdit = captureLayoutSnapshot();
+      setLayoutDirty(false);
+      showMessage('Global layout återställd till standard.');
+    } catch (error) {
+      showMessage(error.message);
+    }
+    return;
+  }
+  if (!confirm('Återställ din personliga layout till den globala standarden?')) return;
+  clearLocalLayoutMap();
+  layoutSources.local = null;
+  applyLayoutScope('local');
+  layoutSnapshotBeforeEdit = captureLayoutSnapshot();
+  setLayoutDirty(false);
+  showMessage('Din personliga layout återställdes.');
+}
+
+function serializeLayoutState(){
+  const payload = {};
+  layoutConfig.sections.forEach(meta => {
+    const rect = layoutState[meta.key] || meta.defaults;
+    payload[meta.key] = {
+      x: Math.round(rect.x),
+      y: Math.round(rect.y),
+      w: Math.round(rect.w),
+      h: Math.round(rect.h),
+      z: Math.round(rect.z || 1),
+    };
+  });
+  layoutCardRegistry.forEach(meta => {
+    const rect = layoutCardState[meta.key] || meta.defaults;
+    payload[`card::${meta.key}`] = {
+      x: Math.round(rect.x),
+      y: Math.round(rect.y),
+      w: Math.round(rect.w),
+      h: Math.round(rect.h),
+      z: Math.round(rect.z || 1),
+    };
+  });
+  return payload;
+}
+
+function cloneLayoutSource(source){
+  if (!source) return null;
+  return {
+    sections: deepCloneLayout(source.sections || {}),
+    cards: deepCloneLayout(source.cards || {}),
+  };
+}
+
+function hydrateLayoutSources(map){
+  if (!map || typeof map !== 'object') return null;
+  return {
+    sections: sanitizeLayoutMap(map),
+    cards: sanitizeCardLayout(map),
+  };
+}
+
+function getDefaultPresetSource(){
+  if (!defaultLayoutSourceHydrated) {
+    defaultLayoutSourceHydrated = hydrateLayoutSources(DEFAULT_GLOBAL_LAYOUT_MAP);
+  }
+  return cloneLayoutSource(defaultLayoutSourceHydrated);
+}
+
+function getPresetSourceByKey(presetKey){
+  const safeKey = presetKey && LAYOUT_PRESETS[presetKey] ? presetKey : DEFAULT_LAYOUT_PRESET_KEY;
+  const rawPreset = LAYOUT_PRESETS[safeKey]?.map || DEFAULT_GLOBAL_LAYOUT_MAP;
+  const hydrated = hydrateLayoutSources(rawPreset);
+  return cloneLayoutSource(hydrated);
+}
+
+function populateLayoutPresetSelect(){
+  if (!layoutPresetSelect) return;
+  const entries = Object.entries(LAYOUT_PRESETS);
+  layoutPresetSelect.innerHTML = entries.map(([key, preset]) => `<option value="${esc(key)}">${esc(preset.label || key)}</option>`).join('');
+  if (!layoutPresetSelect.value || !LAYOUT_PRESETS[layoutPresetSelect.value]) {
+    layoutPresetSelect.value = DEFAULT_LAYOUT_PRESET_KEY;
+  }
+}
+
+function buildPayloadFromSource(source){
+  const payload = {};
+  if (source?.sections) {
+    Object.entries(source.sections).forEach(([key, rect]) => {
+      payload[key] = rect;
+    });
+  }
+  if (source?.cards) {
+    Object.entries(source.cards).forEach(([key, rect]) => {
+      payload[`card::${key}`] = rect;
+    });
+  }
+  return payload;
+}
+
+function sanitizeSourceCache(source){
+  if (!source) return null;
+  const payload = buildPayloadFromSource(source);
+  return {
+    sections: sanitizeLayoutMap(payload),
+    cards: sanitizeCardLayout(payload),
+  };
+}
+
+function refreshStoredLayoutCaches(){
+  layoutSources.global = sanitizeSourceCache(layoutSources.global) || layoutSources.global;
+  if (layoutSources.local) {
+    layoutSources.local = sanitizeSourceCache(layoutSources.local);
+  }
+}
+
+function getLocalLayoutStorageKey(){
+  const id = currentUser?.personnummer || currentUser?.full_name || '';
+  if (!id) return null;
+  return `${LOCAL_LAYOUT_KEY_PREFIX}${id}`;
+}
+
+function getLayoutScopePreferenceKey(){
+  const id = currentUser?.personnummer || currentUser?.full_name || '';
+  if (!id) return null;
+  return `${LOCAL_LAYOUT_SCOPE_PREF_PREFIX}${id}`;
+}
+
+function loadLocalLayoutMap(){
+  const key = getLocalLayoutStorageKey();
+  if (!key) return null;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return typeof parsed === 'object' && parsed ? parsed : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function saveLocalLayoutMap(payload){
+  const key = getLocalLayoutStorageKey();
+  if (!key) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(payload));
+  } catch (error) {
+    showMessage('Kunde inte spara den personliga layouten lokalt.');
+  }
+}
+
+function clearLocalLayoutMap(){
+  const key = getLocalLayoutStorageKey();
+  if (!key) return;
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    /* ignore */
+  }
+}
+
+function loadScopePreference(){
+  const key = getLayoutScopePreferenceKey();
+  if (!key) return null;
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    return null;
+  }
+}
+
+function saveScopePreference(scope){
+  if (!hasPermission('can_view_admin')) return;
+  const key = getLayoutScopePreferenceKey();
+  if (!key) return;
+  try {
+    localStorage.setItem(key, scope);
+  } catch (error) {
+    /* ignore */
+  }
+}
+
+function determineInitialLayoutScope(){
+  if (hasPermission('can_view_admin')) {
+    const stored = loadScopePreference();
+    return stored === 'local' ? 'local' : 'global';
+  }
+  return 'local';
+}
+
+function ensureLocalSourceInitialized(){
+  if (layoutSources.local) return;
+  layoutSources.local = {
+    sections: deepCloneLayout(layoutSources.global?.sections || buildDefaultLayoutState()),
+    cards: deepCloneLayout(layoutSources.global?.cards || buildDefaultCardLayoutState()),
+  };
+}
+
+function applyLayoutScope(scope, options = {}){
+  const desired = scope === 'global' ? 'global' : 'local';
+  if (desired === 'global' && !hasPermission('can_view_admin')) {
+    layoutActiveScope = 'local';
+  } else {
+    layoutActiveScope = desired;
+  }
+  if (layoutActiveScope === 'local' && !layoutSources.local) {
+    ensureLocalSourceInitialized();
+  }
+  const source = layoutActiveScope === 'global' ? layoutSources.global : layoutSources.local;
+  layoutState = deepCloneLayout(source?.sections || buildDefaultLayoutState());
+  layoutCardState = deepCloneLayout(source?.cards || buildDefaultCardLayoutState());
+  applyLayoutStyles();
+  if (!options.silent) {
+    updateLayoutScopeControls();
+    setLayoutDirty(layoutDirty);
+  }
+}
+
+function applyPresetToCurrentScope(presetKey){
+  if (!layoutIsEditing) {
+    showMessage('Aktivera layoutläget för att kunna ladda en preset.');
+    return;
+  }
+  const safeKey = presetKey && LAYOUT_PRESETS[presetKey] ? presetKey : DEFAULT_LAYOUT_PRESET_KEY;
+  const preset = getPresetSourceByKey(safeKey);
+  if (!preset) {
+    showMessage('Kunde inte läsa vald preset.');
+    return;
+  }
+  const presetLabel = LAYOUT_PRESETS[safeKey]?.label || safeKey;
+  layoutState = deepCloneLayout(preset.sections || {});
+  layoutCardState = deepCloneLayout(preset.cards || {});
+  if (layoutActiveScope === 'global') {
+    layoutSources.global = cloneLayoutSource(preset);
+  } else {
+    ensureLocalSourceInitialized();
+    layoutSources.local = cloneLayoutSource(preset);
+  }
+  applyLayoutStyles();
+  setLayoutDirty(true);
+  showMessage(layoutActiveScope === 'global'
+    ? `${presetLabel} laddades. Spara för att göra den aktiv för alla användare.`
+    : `${presetLabel} laddades för din layout. Spara om du vill behålla den.`);
+}
+
+function getScopeStatusText(){
+  return layoutActiveScope === 'global'
+    ? 'Du redigerar den globala layouten. Ändringar påverkar alla användare.'
+    : 'Du redigerar din personliga layout. Ändringar sparas bara för dig på denna enhet.';
+}
+
+function updateLayoutScopeControls(){
+  if (!layoutScopeSelect) return;
+  const canEditGlobal = hasPermission('can_view_admin');
+  const scopeValue = canEditGlobal ? layoutActiveScope : 'local';
+  layoutScopeSelect.value = scopeValue;
+  layoutScopeSelect.disabled = !canEditGlobal;
+  const globalOption = layoutScopeSelect.querySelector('option[value="global"]');
+  if (globalOption) {
+    globalOption.disabled = !canEditGlobal;
+  }
+  if (layoutScopeHint) {
+    layoutScopeHint.textContent = scopeValue === 'global'
+      ? 'Ändringar sparas för alla användare.'
+      : 'Ändringar sparas endast för dig på denna enhet.';
+  }
+  if (layoutSaveBtn) {
+    layoutSaveBtn.textContent = scopeValue === 'global' ? 'Spara global layout' : 'Spara personlig layout';
+  }
+  if (layoutResetBtn) {
+    layoutResetBtn.textContent = scopeValue === 'global' ? 'Återställ globalt' : 'Återställ personlig';
+  }
+}
+
+async function loadLayoutFromServer(force = false){
+  if (!layoutCanvasEl) return;
+  if (layoutIsEditing && !force) {
+    applyLayoutStyles();
+    return;
+  }
+  let remoteLayout = null;
+  try {
+    const res = await api('api_layout_get');
+    remoteLayout = res.layout || {};
+  } catch (error) {
+    if (!layoutLoadedOnce) {
+      showMessage('Hittade ingen sparad global layout, använder standard.');
+    }
+  }
+  if (!remoteLayout || Object.keys(remoteLayout).length === 0) {
+    remoteLayout = DEFAULT_GLOBAL_LAYOUT_MAP;
+  }
+  const hydratedRemote = hydrateLayoutSources(remoteLayout);
+  if (hydratedRemote) {
+    layoutSources.global = hydratedRemote;
+  } else if (!layoutSources.global) {
+    const fallback = getDefaultPresetSource();
+    if (fallback) {
+      layoutSources.global = fallback;
+    } else {
+      layoutSources.global = {
+        sections: buildDefaultLayoutState(),
+        cards: buildDefaultCardLayoutState(),
+      };
+    }
+  } else {
+    layoutSources.global = sanitizeSourceCache(layoutSources.global) || layoutSources.global;
+  }
+
+  const localMap = loadLocalLayoutMap();
+  if (localMap) {
+    layoutSources.local = {
+      sections: sanitizeLayoutMap(localMap),
+      cards: sanitizeCardLayout(localMap),
+    };
+  } else if (layoutSources.local) {
+    layoutSources.local = sanitizeSourceCache(layoutSources.local);
+  } else {
+    layoutSources.local = null;
+  }
+
+  layoutLoadedOnce = true;
+  refreshStoredLayoutCaches();
+  const scopeToUse = determineInitialLayoutScope();
+  applyLayoutScope(scopeToUse, { silent: true });
+  updateLayoutScopeControls();
+  ensureLayoutHandles();
+  applyLayoutStyles();
+}
+
+function updateLayoutButtonAvailability(isLoggedIn){
+  if (!layoutModeBtn) return;
+  const stackMode = shouldUseStackLayout();
+  const visible = !!isLoggedIn;
+  layoutModeBtn.classList.toggle('hidden', !visible);
+  layoutModeBtn.disabled = stackMode || !visible;
+  if (stackMode) {
+    layoutModeBtn.title = 'Layout-läget kräver en bredare skärm.';
+  } else {
+    layoutModeBtn.removeAttribute('title');
+  }
+  if ((!visible || stackMode) && layoutIsEditing) {
+    exitLayoutEditMode(true);
+  }
+}
+
+function handleLayoutResize(){
+  updateLayoutButtonAvailability(!!currentUser);
+  if (!layoutIsEditing) {
+    return;
+  }
+  applyLayoutStyles();
+  if (layoutIsEditing && shouldUseStackLayout()) {
+    showMessage('Layout-läget avslutades eftersom fönstret krympte.');
+    exitLayoutEditMode(true);
+  }
+}
+
 function showSection(sectionName){
+  if (!canViewSection(sectionName)) {
+    sectionName = 'receipts';
+  }
+  if (layoutIsEditing) {
+    currentSection = sectionName;
+    syncMobileNavState();
+    setActiveLayoutKey(sectionName, true);
+    return;
+  }
   receiptsSection.classList.toggle('hidden', sectionName !== 'receipts');
   customersSection.classList.toggle('hidden', sectionName !== 'customers');
   vehiclesSection.classList.toggle('hidden', sectionName !== 'vehicles');
   pricesSection.classList.toggle('hidden', sectionName !== 'prices');
+  payrollSection.classList.toggle('hidden', sectionName !== 'payroll');
   adminSection.classList.toggle('hidden', sectionName !== 'admin');
+
+  if (!shouldUseStackLayout()) {
+    layoutConfig.sections.forEach(meta => {
+      const section = document.getElementById(meta.sectionId);
+      if (!section) return;
+      const isActive = meta.key === sectionName;
+      if (isActive) {
+        section.style.top = '0px';
+        section.style.left = '0px';
+      } else {
+        const rect = layoutState[meta.key] || meta.defaults;
+        section.style.top = `${rect.y}px`;
+        section.style.left = `${rect.x}px`;
+      }
+    });
+  }
+
+  currentSection = sectionName;
+  syncMobileNavState();
+  updateLayoutCanvasSize();
+  updateServiceCardOrientation();
+}
+
+// Kopiera arbetsorder med fallback och feedback
+function copyWorkOrder(encodedText, btn) {
+  let text = '';
+  try {
+    text = decodeURIComponent(encodedText || '');
+  } catch (e) {
+    text = '';
+  }
+
+  if (!text) {
+    showMessage('Inget att kopiera för detta kvitto.');
+    return;
+  }
+
+  const markSuccess = () => {
+    btn.textContent = 'Kopierat!';
+    setTimeout(() => { btn.textContent = 'Kopiera'; }, 1500);
+    showMessage('Kvitto kopierat till urklipp.');
+  };
+  const markFailure = () => {
+    btn.textContent = 'Misslyckades';
+    setTimeout(() => { btn.textContent = 'Kopiera'; }, 2000);
+    showMessage('Kunde inte kopiera kvittot, försök igen.');
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(markSuccess).catch(() => {
+      fallbackCopy(text) ? markSuccess() : markFailure();
+    });
+  } else if (fallbackCopy(text)) {
+    markSuccess();
+  } else {
+    markFailure();
+  }
+}
+function fallbackCopy(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.top = '0';
+  textarea.style.left = '0';
+  textarea.style.opacity = '0';
+  textarea.style.pointerEvents = 'none';
+  document.body.appendChild(textarea);
+  
+  // Give the browser a moment to render it
+  textarea.focus();
+  textarea.select();
+  
+  let copied = false;
+  try {
+    copied = document.execCommand('copy');
+    console.log('Fallback copy result:', copied);
+  } catch (e) {
+    console.error('Fallback copy error:', e);
+    copied = false;
+  }
+  
+  // Clean up
+  document.body.removeChild(textarea);
+  return copied;
 }
 
 function renderReceipts(items){
   allReceipts = items;
   const canEdit = Number(currentUser?.permissions?.can_edit_receipts || 0) === 1;
+  const canResetSent = canEdit;
   document.querySelectorAll('.adminOnly').forEach(el => el.classList.toggle('hidden', !canEdit));
   const body = document.getElementById('receiptBody');
-  body.innerHTML = items.map(r => {
-    const editBtns = canEdit ? `<button type="button" onclick="editReceipt(${r.id})">Redigera</button><button type="button" class="secondary" onclick="deleteReceipt(${r.id})">Radera</button>` : '';
-    return `<tr>
-      <td>${r.id}</td>
+  const list = Array.isArray(items) ? items : [];
+  body.innerHTML = list.map(r => {
+    const editBtns = canEdit ? `<div class="table-actions"><button type="button" class="edit-btn" onclick="editReceipt(${r.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteReceipt(${r.id})">Radera</button></div>` : '';
+    const stylingText = r.styling_parts === '' ? '0' : r.styling_parts;
+    const performanceText = r.performance_parts === '' ? '0' : r.performance_parts;
+    const stylingCount = Number(r.styling_parts || 0);
+    const performanceCount = Number(r.performance_parts || 0);
+    const workTypeHeading = (String(r.work_type || 'Typ av Arbete').trim() || 'Typ av Arbete')
+      .split('&')
+      .map(part => part.trim())
+      .filter(Boolean)
+      .map(part => {
+        if (part === 'Styling' && Number.isFinite(stylingCount) && stylingCount > 1) return `${part} x${stylingCount}`;
+        if (part === 'Prestanda' && Number.isFinite(performanceCount) && performanceCount > 1) return `${part} x${performanceCount}`;
+        return part;
+      })
+      .join(' & ');
+    const orderComment = String(r.order_comment || '').trim();
+    const copyLines = [
+      '━━━━━━━━━━━━━━━━━━━',
+      `📋 Benny's Arbetsorder #${r.id}`,
+      `🔧 Typ av jobb - ${workTypeHeading || '-'}`,
+      `🚗 Nummerplåt - ${String(r.plate || '').trim() || '-'}`,
+    ];
+    if (orderComment) {
+      copyLines.push('');
+      copyLines.push(`📝 Referens - ${orderComment}`);
+    }
+    copyLines.push('━━━━━━━━━━━━━━━━━━━');
+    const copyText = `${copyLines.join('\n')}\n`;
+    const isSent = Number(r.is_sent) === 1;
+    const encodedCopy = encodeURIComponent(copyText);
+    const copyBtn = isSent
+      ? '<button type="button" class="secondary" disabled>Kopiera</button>'
+      : `<button type="button" onclick="copyWorkOrder(&quot;${encodedCopy}&quot;, this)">Kopiera</button>`;
+    const workOrderActions = [copyBtn];
+    if (isSent) {
+      workOrderActions.push('<span class="sent-badge">Skickad</span>');
+      if (canResetSent) {
+        workOrderActions.push(`<button type="button" class="secondary" onclick="resetReceiptSent(${r.id})">Återställ</button>`);
+      }
+    } else {
+      workOrderActions.push(`<button type="button" class="secondary" onclick="markReceiptSent(${r.id})">Markera som skickad</button>`);
+    }
+    const rowClass = isSent ? ' class="sent-receipt"' : '';
+    const discountPercent = Number(r.discount_percent || 0);
+    const percentText = Number.isFinite(discountPercent) ? (discountPercent % 1 === 0 ? discountPercent.toFixed(0) : discountPercent.toFixed(1)) : '0';
+    const hasDiscount = (r.discount_name && String(r.discount_name).trim() !== '') || discountPercent > 0;
+    const discountLabel = hasDiscount ? `${r.discount_name ? `${esc(r.discount_name)} ` : ''}(${percentText}%)` : '-';
+    const detailRowId = `receipt-details-${r.id}`;
+    const detailCols = canEdit ? 6 : 5;
+    return `<tr${rowClass}>
       <td>${esc(r.mechanic_name)}</td>
       <td>${esc(r.work_type)}</td>
-      <td>${r.styling_parts === '' ? '-' : r.styling_parts}</td>
-      <td>${r.performance_parts === '' ? '-' : r.performance_parts}</td>
-      <td>${esc(r.customer)}</td>
-      <td>${esc(r.plate)}</td>
       <td>${Number(r.amount).toFixed(2)}</td>
-      <td><button type="button" onclick="navigator.clipboard.writeText('${esc(r.work_order)}')">Kopiera</button></td>
+      <td><button type="button" class="secondary receipt-toggle-btn" aria-expanded="false" aria-controls="${detailRowId}" onclick="toggleReceiptDetails(this, ${r.id})">Visa</button></td>
+      <td><div class="workorder-controls">${workOrderActions.join('')}</div></td>
       ${canEdit ? `<td>${editBtns}</td>` : ''}
+    </tr>
+    <tr id="${detailRowId}" class="receipt-details-row hidden${isSent ? ' sent-receipt' : ''}">
+      <td colspan="${detailCols}">
+        <div class="receipt-details-box">
+          <div class="receipt-detail-item"><strong>Styling</strong><span>${stylingText === '0' ? '-' : stylingText}</span></div>
+          <div class="receipt-detail-item"><strong>Prestanda</strong><span>${performanceText === '0' ? '-' : performanceText}</span></div>
+          <div class="receipt-detail-item"><strong>Kund</strong><span>${esc(r.customer)}</span></div>
+          <div class="receipt-detail-item"><strong>Regnummer</strong><span>${esc(r.plate)}</span></div>
+          <div class="receipt-detail-item"><strong>Referens</strong><span>${esc(r.order_comment || '-')}</span></div>
+          <div class="receipt-detail-item"><strong>Rabatt</strong><span>${discountLabel}</span></div>
+        </div>
+      </td>
     </tr>`;
   }).join('');
 }
 
+function toggleReceiptDetails(button, id){
+  const detailRow = document.getElementById(`receipt-details-${id}`);
+  if (!detailRow) return;
+  const willShow = detailRow.classList.contains('hidden');
+  detailRow.classList.toggle('hidden', !willShow);
+  button.textContent = willShow ? 'Dölj' : 'Visa';
+  button.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+}
 function renderCustomers(items){
   const body = document.getElementById('customerBody');
-  body.innerHTML = items.map(c => `<tr><td>${esc(c.customer_name)}</td><td>${esc(c.phone || '-')}</td></tr>`).join('');
+  if (!body) return;
+  const rows = Array.isArray(items) ? items : [];
+  window.customerList = rows;
+  window.customerLookup = {};
+  body.innerHTML = rows.map(c => {
+    const name = (c.customer_name || '').trim();
+    const percentVal = Number(c.discount_percent || 0);
+    const percentLabel = percentVal % 1 === 0 ? percentVal.toFixed(0) : percentVal.toFixed(1);
+    const discountLabel = c.discount_name ? `${esc(c.discount_name)} (${percentLabel}%)` : '-';
+    if (name) {
+      window.customerLookup[name.toLowerCase()] = {
+        discount_preset_id: c.discount_preset_id,
+        discount_name: c.discount_name,
+        discount_percent: Number(c.discount_percent || 0),
+      };
+    }
+    const actions = Number(c.id) > 0
+      ? `<div class="table-actions"><button type="button" class="edit-btn" onclick="editCustomer(${c.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteCustomer(${c.id})">Radera</button></div>`
+      : '<span class="small">-</span>';
+    return `<tr><td>${esc(name)}</td><td>${esc(c.phone || '-')}</td><td>${discountLabel}</td><td>${actions}</td></tr>`;
+  }).join('');
+  updateCustomerSuggestions(rows);
+  applyCustomerDiscountIfAny();
 }
-
 function renderVehicles(items){
   const body = document.getElementById('vehicleBody');
-  body.innerHTML = items.map(v => `<tr><td>${esc(v.plate)}</td><td>${esc(v.vehicle_model)}</td></tr>`).join('');
+  if (!body) return;
+  const rows = Array.isArray(items) ? items : [];
+  window.vehicleList = rows;
+  body.innerHTML = rows.map(v => {
+    const actions = Number(v.id) > 0
+      ? `<div class="table-actions"><button type="button" class="edit-btn" onclick="editVehicle(${v.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteVehicle(${v.id})">Radera</button></div>`
+      : '<span class="small">-</span>';
+    return `<tr><td>${esc(v.plate)}</td><td>${esc(v.vehicle_model)}</td><td>${actions}</td></tr>`;
+  }).join('');
+  updateVehicleSuggestions(rows);
+}
+function renderPayrollEntries(items){
+  const body = document.getElementById('payrollBody');
+  if (!body) return;
+  const rows = Array.isArray(items) ? items : [];
+  window.payrollEntries = rows;
+  if (rows.length === 0) {
+    body.innerHTML = '<tr><td colspan="4" class="small">Inga utbetalningar registrerade ännu.</td></tr>';
+    return;
+  }
+  body.innerHTML = rows.map(entry => `<tr>
+      <td>${esc(entry.payee_name)}</td>
+      <td>${Number(entry.amount || 0).toFixed(2)} kr</td>
+      <td>${formatDateDisplay(entry.pay_date)}</td>
+      <td>${Number(entry.id) > 0 ? `<div class="table-actions"><button type="button" class="edit-btn" onclick="editPayrollEntry(${entry.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deletePayrollEntry(${entry.id})">Radera</button></div>` : '<span class="small">-</span>'}</td>
+    </tr>`).join('');
+}
+function editCustomer(id){
+  const record = (window.customerList || []).find(c => Number(c.id) === Number(id));
+  if (!record) return;
+  document.getElementById('customerId').value = record.id || '';
+  document.getElementById('customerNameReg').value = record.customer_name || '';
+  document.getElementById('customerPhoneReg').value = record.phone || '';
+  const presetSelect = document.getElementById('customerDiscountPreset');
+  if (presetSelect) {
+    const presetId = record.discount_preset_id ? String(record.discount_preset_id) : '';
+    presetSelect.value = presetId && window.discountPresetLookup[presetId] ? presetId : '';
+  }
+  showMessage(`Redigerar kund: ${record.customer_name || ''}`);
+}
+function editVehicle(id){
+  const record = (window.vehicleList || []).find(v => Number(v.id) === Number(id));
+  if (!record) return;
+  document.getElementById('vehicleId').value = record.id || '';
+  document.getElementById('vehiclePlateReg').value = record.plate || '';
+  document.getElementById('vehicleModelReg').value = record.vehicle_model || '';
+  showMessage(`Redigerar fordon: ${record.plate || ''}`);
+}
+function editPayrollEntry(id){
+  const record = (window.payrollEntries || []).find(entry => Number(entry.id) === Number(id));
+  if (!record) return;
+  document.getElementById('payrollId').value = record.id || '';
+  document.getElementById('payrollName').value = record.payee_name || '';
+  document.getElementById('payrollAmount').value = Number(record.amount || 0).toFixed(2);
+  document.getElementById('payrollDate').value = record.pay_date || '';
+  const btn = document.getElementById('savePayrollBtn');
+  if (btn) btn.textContent = 'Uppdatera utbetalning';
+  showMessage(`Redigerar lön: ${record.payee_name || ''}`);
+}
+function resetCustomerForm(){
+  document.getElementById('customerId').value = '';
+  document.getElementById('customerNameReg').value = '';
+  document.getElementById('customerPhoneReg').value = '';
+  const presetSelect = document.getElementById('customerDiscountPreset');
+  if (presetSelect) presetSelect.value = '';
+}
+function resetVehicleForm(){
+  document.getElementById('vehicleId').value = '';
+  document.getElementById('vehiclePlateReg').value = '';
+  document.getElementById('vehicleModelReg').value = '';
+}
+function resetPayrollForm(){
+  document.getElementById('payrollId').value = '';
+  document.getElementById('payrollName').value = '';
+  document.getElementById('payrollAmount').value = '';
+  document.getElementById('payrollDate').value = '';
+  const btn = document.getElementById('savePayrollBtn');
+  if (btn) btn.textContent = 'Registrera utbetalning';
+}
+async function deleteCustomer(id){
+  if (!confirm('Radera denna kund?')) return;
+  try {
+    await api('api_delete_customer', 'POST', { id });
+    if (String(document.getElementById('customerId').value || '') === String(id)) {
+      resetCustomerForm();
+    }
+    showMessage('Kund raderad.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+}
+async function deleteVehicle(id){
+  if (!confirm('Radera detta fordon?')) return;
+  try {
+    await api('api_delete_vehicle', 'POST', { id });
+    if (String(document.getElementById('vehicleId').value || '') === String(id)) {
+      resetVehicleForm();
+    }
+    showMessage('Fordon raderat.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+}
+async function deletePayrollEntry(id){
+  if (!confirm('Radera denna löneutbetalning?')) return;
+  try {
+    await api('api_delete_payroll_entry', 'POST', { id });
+    if (String(document.getElementById('payrollId').value || '') === String(id)) {
+      resetPayrollForm();
+    }
+    showMessage('Löneutbetalning raderad.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+}
+function renderDiscountPresets(list){
+  const body = document.getElementById('discountBody');
+  if (!body) return;
+  const rows = Array.isArray(list) ? list : [];
+  const canManageDiscounts = hasPermission('can_manage_prices');
+  if (rows.length === 0) {
+    body.innerHTML = `<tr><td colspan="3" class="small">${canManageDiscounts ? 'Inga rabatter skapade ännu.' : 'Inga rabatter att visa.'}</td></tr>`;
+    return;
+  }
+  body.innerHTML = rows.map(p => {
+    const percent = Number(p.percent || 0);
+    const percentText = percent % 1 === 0 ? percent.toFixed(0) : percent.toFixed(1);
+    const actions = canManageDiscounts
+      ? `<div class="table-actions"><button type="button" class="edit-btn" onclick="editDiscountPreset(${p.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteDiscountPreset(${p.id})">Radera</button></div>`
+      : '<span class="small">-</span>';
+    return `<tr>
+      <td>${esc(p.name)}</td>
+      <td>${percentText}%</td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join('');
+}
+function renderTopMechanics(items){
+  const chart = document.getElementById('topMechanicsChart');
+  if (!chart) return;
+  const list = Array.isArray(items) ? items : [];
+  if (list.length === 0) {
+    chart.innerHTML = '<div class="small">Ingen data ännu.</div>';
+    return;
+  }
+  const maxSales = Math.max(1, ...list.map(i => Number(i.total_sales || 0)));
+  const maxCount = Math.max(1, ...list.map(i => Number(i.receipt_count || 0)));
+  const ease = (ratio) => {
+    const clamped = Math.max(0, Math.min(1, ratio));
+    return Math.pow(clamped, 1.4);
+  };
+  chart.innerHTML = list.map(i => {
+    const sales = Number(i.total_sales || 0);
+    const count = Number(i.receipt_count || 0);
+    const salesPct = ease(maxSales === 0 ? 0 : (sales / maxSales)) * 100;
+    const countPct = ease(maxCount === 0 ? 0 : (count / maxCount)) * 100;
+    return `<div class="bar-row">
+      <div class="bar-row-header">
+        <strong>${esc(i.mechanic_name)}</strong>
+        <div class="bar-row-meta">
+          <span>${count} fakturor</span>
+          <span>${formatCurrency(sales)}</span>
+        </div>
+      </div>
+      <div class="bar-columns">
+        <div class="bar-column">
+          <span class="bar-column-label">Fakturor</span>
+          <div class="bar-vertical"><div class="bar-vertical-fill count" style="height:${countPct}%"></div></div>
+          <span class="bar-column-value">${count.toLocaleString('sv-SE')}</span>
+        </div>
+        <div class="bar-column">
+          <span class="bar-column-label">Belopp</span>
+          <div class="bar-vertical"><div class="bar-vertical-fill sales" style="height:${salesPct}%"></div></div>
+          <span class="bar-column-value">${formatCurrency(sales)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderAdminUsers(items){
+  const body = document.getElementById('adminUserBody');
+  if (!body) return;
+  const rows = Array.isArray(items) ? items : [];
+  body.innerHTML = rows.map(u => `<tr>
+      <td>${esc(u.personnummer)}</td>
+      <td>${esc(u.full_name)}</td>
+      <td>${esc(u.rank_name)}</td>
+      <td><div class="table-actions"><button type="button" class="edit-btn" onclick="editAdminUser(${u.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteAdminUser(${u.id})">Radera</button></div></td>
+    </tr>`).join('');
+}
+function renderEconomyChart(stats){
+  const pie = document.getElementById('economyPie');
+  const valueEl = document.getElementById('economyPieValue');
+  const legend = document.getElementById('economyLegend');
+  if (!pie || !valueEl || !legend) return;
+
+  const slices = [
+    { key: 'sales', label: 'Intäkter', value: Number(stats?.sales ?? 0), color: '#66f3d8' },
+    { key: 'expenses', label: 'Utgifter', value: Number(stats?.expenses ?? 0), color: '#ff6f91' },
+    { key: 'profit', label: 'Vinst', value: Number(stats?.profit ?? 0), color: '#ffd166' },
+  ].map(slice => ({ ...slice, magnitude: Math.max(0, Math.abs(slice.value)) }));
+  const totalMagnitude = slices.reduce((sum, slice) => sum + slice.magnitude, 0);
+
+  const centerLabel = valueEl.querySelector('span');
+  const centerValue = valueEl.querySelector('strong');
+  if (centerLabel) centerLabel.textContent = 'Netto';
+  if (centerValue) centerValue.textContent = formatCurrency(stats?.profit ?? 0);
+
+  if (totalMagnitude === 0) {
+    pie.style.setProperty('--pie-gradient', 'conic-gradient(#182433 0deg, #182433 360deg)');
+    legend.innerHTML = '<div class="small">Ingen ekonomi registrerad än.</div>';
+    return;
+  }
+
+  let currentDeg = 0;
+  const gradientParts = [];
+  const lastActiveIndex = slices.reduce((last, slice, idx) => slice.magnitude > 0 ? idx : last, -1);
+  slices.forEach((slice, index) => {
+    if (slice.magnitude === 0) return;
+    const start = currentDeg;
+    const sliceDeg = (slice.magnitude / totalMagnitude) * 360;
+    currentDeg += sliceDeg;
+    const end = index === lastActiveIndex ? 360 : currentDeg;
+    gradientParts.push(`${slice.color} ${start}deg ${end}deg`);
+  });
+  if (gradientParts.length === 0) {
+    pie.style.setProperty('--pie-gradient', 'conic-gradient(#182433 0deg, #182433 360deg)');
+  } else {
+    pie.style.setProperty('--pie-gradient', `conic-gradient(${gradientParts.join(', ')})`);
+  }
+
+  legend.innerHTML = slices.map(slice => {
+    const faded = slice.magnitude === 0 ? ' style="opacity:0.5"' : '';
+    return `<div class="economy-legend-item"${faded}>
+      <div class="economy-legend-left">
+        <span class="economy-legend-dot" style="background:${slice.color}"></span>
+        <span class="economy-legend-label">${esc(slice.label)}</span>
+      </div>
+      <span class="economy-legend-value">${formatCurrency(slice.value)}</span>
+    </div>`;
+  }).join('');
+}
+function editAdminUser(id){
+  const list = Array.isArray(window.adminUsers) ? window.adminUsers : [];
+  const user = list.find(u => Number(u.id) === Number(id));
+  if (!user) return;
+  document.getElementById('adminUserId').value = user.id;
+  document.getElementById('adminUserPersonnummer').value = user.personnummer;
+  document.getElementById('adminUserFullName').value = user.full_name;
+  document.getElementById('adminUserPassword').value = '';
+  document.getElementById('adminUserRank').value = user.rank_id || '';
+}
+async function deleteAdminUser(id){
+  if (!confirm('Radera denna användare?')) return;
+  try {
+    await api('api_delete_user', 'POST', {id});
+    showMessage('Användare raderad.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+}
+function renderRankOptions(){
+  const sel = document.getElementById('adminUserRank');
+  if (!sel) return;
+  const rows = Array.isArray(allRanks) ? allRanks : [];
+  sel.innerHTML = rows.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
+}
+function renderRanks(items){
+  const body = document.getElementById('rankBody');
+  if (!body) return;
+  const rows = Array.isArray(items) ? items : [];
+  const canToggle = Number(currentUser?.permissions?.can_manage_users || 0) === 1;
+  const icon = (flag, key, label, rankId) => {
+    const active = Number(flag) === 1;
+    const symbol = active ? '&#10003;' : '&ndash;';
+    const stateLabel = active ? 'Tillåten' : 'Inte tillåten';
+    const title = canToggle
+      ? `${label}: ${stateLabel}. Klicka för att ändra.`
+      : `${label}: ${stateLabel}.`;
+    const classes = `bool-chip ${active ? 'bool-chip-yes' : 'bool-chip-no'}`;
+    if (!canToggle) {
+      return `<span class="${classes}" title="${title}">${symbol}</span>`;
+    }
+    return `<button type="button" class="${classes}" title="${title}" onclick="toggleRankPermission(${rankId}, '${key}')">${symbol}</button>`;
+  };
+  body.innerHTML = rows.map(r => {
+    const permCells = rankPermissionMeta.map(meta => `<td>${icon(r[meta.key], meta.key, meta.label, r.id)}</td>`).join('');
+    return `<tr>
+      <td>${esc(r.name)}</td>
+      ${permCells}
+      <td><div class="table-actions"><button type="button" class="edit-btn" onclick="editRank(${r.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteRank(${r.id})">Radera</button></div></td>
+    </tr>`;
+  }).join('');
+}
+function updateCustomerSuggestions(items){
+  const list = document.getElementById('customerSuggestions');
+  if (!list) return;
+  const names = Array.from(new Set((items || []).map(c => (c.customer_name || '').trim()).filter(Boolean)));
+  list.innerHTML = names.map(name => `<option value="${esc(name)}"></option>`).join('');
+}
+
+function updateVehicleSuggestions(items){
+  const list = document.getElementById('plateSuggestions');
+  const plates = Array.from(new Set((items || []).map(v => (v.plate || '').trim()).filter(Boolean)));
+  list.innerHTML = plates.map(plate => `<option value="${esc(plate)}"></option>`).join('');
 }
 
 function renderServices(items){
+  window.allServices = items || [];
   const body = document.getElementById('serviceBody');
-  body.innerHTML = items.map(s => `<tr><td>${esc(s.service_name)}</td><td>${Number(s.sale_price).toFixed(2)}</td><td>${Number(s.expense_cost).toFixed(2)}</td><td>${Number(s.is_active)===1?'Ja':'Nej'}</td></tr>`).join('');
+  const categorySuggestions = document.getElementById('serviceCategorySuggestions');
+  const categoryFilter = document.getElementById('serviceCategoryFilter');
+  const categories = Array.from(new Set((items || []).map(s => normalizeServiceCategoryName(s.service_category)).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'sv'));
+  if (categorySuggestions) {
+    categorySuggestions.innerHTML = categories.map(category => `<option value="${esc(category)}"></option>`).join('');
+  }
+  let activeFilter = '';
+  if (categoryFilter) {
+    const previous = categoryFilter.value;
+    const options = ['<option value="">Alla kategorier</option>'].concat(categories.map(category => `<option value="${esc(category)}">${esc(category)}</option>`));
+    categoryFilter.innerHTML = options.join('');
+    if (previous && categories.includes(previous)) {
+      categoryFilter.value = previous;
+      activeFilter = previous;
+    }
+  }
+  const visibleItems = activeFilter
+    ? (items || []).filter(s => normalizeServiceCategoryName(s.service_category) === activeFilter)
+    : (items || []);
+
+  body.innerHTML = visibleItems.map(s => {
+    const dropdownText = Number(s.has_dropdown)===1?'Ja':'Nej';
+    const category = normalizeServiceCategoryName(s.service_category);
+    return `<tr>
+      <td>${esc(s.service_name)}</td>
+      <td>${esc(category)}</td>
+      <td>${Number(s.sale_price).toFixed(2)}</td>
+      <td>${Number(s.expense_cost).toFixed(2)}</td>
+      <td>${Number(s.is_active)===1?'Ja':'Nej'}</td>
+      <td>${dropdownText}</td>
+      <td><div class="table-actions"><button type="button" class="edit-btn" onclick="editService(${s.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteService(${s.id})">Radera</button></div></td>
+    </tr>`;
+  }).join('');
+  if (!visibleItems.length) {
+    body.innerHTML = '<tr><td colspan="7" class="small">Inga tjänster matchar valt filter.</td></tr>';
+  }
 }
 
-function renderAdminUsers(items){
-  const body = document.getElementById('adminUserBody');
-  body.innerHTML = items.map(u => `<tr><td>${u.id}</td><td>${esc(u.personnummer)}</td><td>${esc(u.full_name)}</td><td>${esc(u.rank_name)}</td></tr>`).join('');
+function updateServicePrices(services){
+  renderServiceOptions(services);
 }
 
-function renderTopMechanics(items){
-  const chart = document.getElementById('topMechanicsChart');
-  const max = Math.max(1, ...items.map(i => Number(i.total_sales || 0)));
-  chart.innerHTML = items.map(i => {
-    const val = Number(i.total_sales || 0);
-    const pct = (val / max) * 100;
-    return `<div class="bar-row"><div>${esc(i.mechanic_name)}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><div>${val.toFixed(0)} kr</div></div>`;
-  }).join('') || '<div class="small">Ingen data ännu.</div>';
+function renderServiceOptions(services){
+  const container = document.getElementById('serviceOptions');
+  if (!container) return;
+  const active = (services || []).filter(s => Number(s.is_active) === 1);
+  window.serviceOptionLookup = {};
+  active.forEach(s => { window.serviceOptionLookup[String(s.id)] = s; });
+
+  if (active.length === 0) {
+    container.innerHTML = '<div class="small">Inga aktiva tjänster i prislistan.</div>';
+    window.selectedServices = [];
+    updateReceiptAmount();
+    updateServiceCardOrientation();
+    return;
+  }
+
+  const categoryGroups = active.reduce((acc, service) => {
+    const categoryName = normalizeServiceCategoryName(service.service_category);
+    const categoryKey = normalizeServiceCategoryKey(categoryName);
+    if (!acc[categoryKey]) {
+      acc[categoryKey] = { name: categoryName, items: [] };
+    }
+    acc[categoryKey].items.push(service);
+    return acc;
+  }, {});
+
+  const sortedGroups = Object.values(categoryGroups).sort((a, b) => {
+    const priorityDiff = getServiceCategorySortPriority(a.name) - getServiceCategorySortPriority(b.name);
+    if (priorityDiff !== 0) return priorityDiff;
+    return a.name.localeCompare(b.name, 'sv');
+  });
+  const renderServiceCard = (service) => {
+    const checkboxId = `serviceChoice_${service.id}`;
+    const qtyId = `serviceQty_${service.id}`;
+    const price = Number(service.sale_price || 0).toFixed(2);
+    const allowQty = Number(service.has_dropdown) === 1;
+    const qtyControl = allowQty
+      ? `<label class="service-qty" for="${qtyId}">Antal
+        <input type="number" min="1" value="1" id="${qtyId}" class="service-qty-input" data-service-id="${service.id}" disabled />
+      </label>`
+      : '<span class="service-qty service-qty-static">Antal: 1</span>';
+    const dataAttrs = allowQty ? `data-qty-input="${qtyId}" data-allow-qty="1"` : 'data-allow-qty="0"';
+    return `<div class="service-option">
+      <label for="${checkboxId}">
+        <input type="checkbox" id="${checkboxId}" class="service-choice" data-service-id="${service.id}" ${dataAttrs} />
+        <span>${esc(service.service_name)}</span>
+      </label>
+      <span class="service-price">${price} kr</span>
+      ${qtyControl}
+    </div>`;
+  };
+
+  container.innerHTML = sortedGroups.map(group => {
+    const cards = group.items
+      .sort((a, b) => String(a.service_name || '').localeCompare(String(b.service_name || ''), 'sv'))
+      .map(renderServiceCard)
+      .join('');
+    return `<section class="service-category-group">
+      <h4 class="service-category-title">${esc(group.name)}</h4>
+      <div class="service-category-items">${cards}</div>
+    </section>`;
+  }).join('');
+
+  container.querySelectorAll('.service-choice').forEach(chk => {
+    chk.addEventListener('change', () => {
+      const allowQty = chk.dataset.allowQty === '1';
+      if (allowQty) {
+        const qtyInput = document.getElementById(chk.dataset.qtyInput || '');
+        if (qtyInput) {
+          qtyInput.disabled = !chk.checked;
+          if (!chk.checked) {
+            qtyInput.value = '1';
+          }
+        }
+      }
+      updateReceiptAmount();
+    });
+  });
+
+  container.querySelectorAll('.service-qty-input').forEach(input => {
+    input.addEventListener('input', () => {
+      if (Number(input.value) < 1) {
+        input.value = '1';
+      }
+      updateReceiptAmount();
+    });
+  });
+
+  updateReceiptAmount();
+  updateServiceCardOrientation();
 }
 
-function renderRankOptions(){
-  const sel = document.getElementById('adminUserRank');
-  sel.innerHTML = allRanks.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
+function updateReceiptAmount(){
+  const choices = Array.from(document.querySelectorAll('.service-choice'));
+  const selections = [];
+  let total = 0;
+  let totalExpense = 0;
+  choices.forEach(chk => {
+    if (!chk.checked) return;
+    const serviceId = chk.dataset.serviceId;
+    const service = window.serviceOptionLookup?.[serviceId];
+    if (!service) return;
+    const allowQty = chk.dataset.allowQty === '1';
+    const qtyInput = allowQty && chk.dataset.qtyInput ? document.getElementById(chk.dataset.qtyInput) : null;
+    let qty = allowQty ? Number(qtyInput?.value || 1) : 1;
+    if (!Number.isFinite(qty) || qty <= 0) qty = 1;
+    const price = Number(service.sale_price || 0);
+    const expense = Number(service.expense_cost || 0);
+    total += qty * price;
+    totalExpense += qty * expense;
+    selections.push({ id: serviceId, name: service.service_name, category: normalizeServiceCategoryName(service.service_category), qty, price, expense, allowQty });
+  });
+
+  window.selectedServices = selections;
+  window.currentReceiptExpenseTotal = totalExpense;
+  window.currentReceiptGrossTotal = total;
+  const preset = getSelectedDiscountPreset();
+  const discountPercent = preset ? Math.min(100, Math.max(0, Number(preset.percent || 0))) : 0;
+  let discountedTotal = total;
+  if (discountPercent > 0) {
+    discountedTotal = total * (1 - discountPercent / 100);
+  }
+  if (discountedTotal < 0) discountedTotal = 0;
+  window.currentReceiptDiscount = preset ? { id: preset.id, name: preset.name, percent: discountPercent } : null;
+  const amountEl = document.getElementById('amount');
+  if (amountEl) {
+    amountEl.value = discountedTotal.toFixed(2);
+  }
+  updateDiscountInfo();
+}
+
+function editService(id){
+  const s = (window.allServices || []).find(x => Number(x.id) === Number(id));
+  if (!s) return;
+  document.getElementById('serviceId').value = s.id;
+  document.getElementById('serviceName').value = s.service_name;
+  document.getElementById('serviceSalePrice').value = Number(s.sale_price).toFixed(2);
+  document.getElementById('serviceExpenseCost').value = Number(s.expense_cost).toFixed(2);
+  document.getElementById('serviceIsActive').value = Number(s.is_active)===1 ? '1' : '0';
+  document.getElementById('serviceHasDropdown').value = Number(s.has_dropdown)===1 ? '1' : '0';
+  document.getElementById('serviceCategory').value = normalizeServiceCategoryName(s.service_category);
+  document.getElementById('priceForm').classList.remove('hidden');
+}
+
+async function deleteService(id){
+  if (!confirm('Radera denna tjänst?')) return;
+  try {
+    await api('api_delete_service_price', 'POST', {id});
+    showMessage('Tjänst raderad.');
+    await refresh();
+  } catch (e) { showMessage(e.message); }
+}
+
+function editRank(id){
+  const r = allRanks.find(x => Number(x.id) === Number(id));
+  if (!r) return;
+  document.getElementById('rankId').value = r.id;
+  document.getElementById('rankName').value = r.name;
+  showMessage(`Redigerar ${r.name}. Använd tabellen för behörigheter.`);
+}
+
+async function toggleRankPermission(rankId, permissionKey){
+  const canManageUsers = Number(currentUser?.permissions?.can_manage_users || 0) === 1;
+  if (!canManageUsers) {
+    showMessage('Du saknar behörighet att ändra ranker.');
+    return;
+  }
+  const target = allRanks.find(r => Number(r.id) === Number(rankId));
+  if (!target) {
+    showMessage('Kunde inte hitta ranken.');
+    return;
+  }
+  if (!permissionKey || !(permissionKey in target)) return;
+  const meta = rankPermissionMeta.find(meta => meta.key === permissionKey);
+  const toggledValue = Number(target[permissionKey]) === 1 ? 0 : 1;
+  const asBool = (key) => key === permissionKey ? toggledValue === 1 : Number(target[key]) === 1;
+  try {
+    await api('api_save_rank', 'POST', {
+      id: target.id,
+      name: target.name,
+      can_view_admin: asBool('can_view_admin'),
+      can_manage_users: asBool('can_manage_users'),
+      can_manage_prices: asBool('can_manage_prices'),
+      can_edit_receipts: asBool('can_edit_receipts'),
+      can_view_customers: asBool('can_view_customers'),
+      can_view_vehicles: asBool('can_view_vehicles'),
+      can_view_prices: asBool('can_view_prices'),
+    });
+    const permLabel = meta?.label || permissionKey;
+    showMessage(`${permLabel} ${toggledValue === 1 ? 'aktiverad' : 'inaktiverad'} för ${target.name}.`);
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+}
+
+function editDiscountPreset(id){
+  const preset = (window.discountPresets || []).find(p => Number(p.id) === Number(id));
+  if (!preset) return;
+  document.getElementById('discountId').value = preset.id;
+  document.getElementById('discountName').value = preset.name;
+  document.getElementById('discountPercent').value = Number(preset.percent || 0);
+}
+
+async function deleteDiscountPreset(id){
+  if (!confirm('Ta bort denna rabatt?')) return;
+  try {
+    await api('api_delete_discount_preset', 'POST', { id });
+    showMessage('Rabatt raderad.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+}
+
+async function deleteRank(id){
+  if (!confirm('Radera denna rank? Användare får ingen rank.')) return;
+  try {
+    await api('api_delete_rank', 'POST', {id});
+    showMessage('Rank raderad.');
+    await refresh();
+  } catch (e) { showMessage(e.message); }
 }
 
 async function refresh(){
@@ -354,33 +3712,100 @@ async function refresh(){
       loginView.classList.remove('hidden');
       appView.classList.add('hidden');
       logoutBtn.classList.add('hidden');
+        document.body.classList.add('login-mode');
+      currentSection = 'receipts';
+      closeMobileNavMenu();
+      syncMobileNavState();
+        exitLayoutEditMode(true);
+        layoutLoadedOnce = false;
+        layoutState = buildDefaultLayoutState();
+        collectLayoutCards();
+        layoutCardState = buildDefaultCardLayoutState();
+        layoutSources = {
+          global: {
+            sections: deepCloneLayout(layoutState),
+            cards: deepCloneLayout(layoutCardState),
+          },
+          local: null,
+        };
+        layoutActiveScope = 'global';
+        layoutActiveCardKey = null;
+        document.body.classList.remove('layout-ready', 'layout-stack-mode');
+        updateLayoutButtonAvailability(false);
+        updateLayoutScopeControls();
       return;
     }
-
     currentUser = me.user;
-    mechanicInput.value = `${currentUser.full_name} (${currentUser.rank_name})`;
-    loginView.classList.add('hidden');
-    appView.classList.remove('hidden');
-    logoutBtn.classList.remove('hidden');
+      mechanicInput.value = currentUser.full_name || '';
+      loginView.classList.add('hidden');
+      appView.classList.remove('hidden');
+      logoutBtn.classList.remove('hidden');
+      document.body.classList.remove('login-mode');
+
+    await loadLayoutFromServer();
+    updateLayoutButtonAvailability(true);
 
     const canViewAdmin = Number(currentUser.permissions?.can_view_admin || 0) === 1;
     const canManagePrices = Number(currentUser.permissions?.can_manage_prices || 0) === 1;
     const canManageUsers = Number(currentUser.permissions?.can_manage_users || 0) === 1;
+    const canEditReceipts = Number(currentUser.permissions?.can_edit_receipts || 0) === 1;
+    const canViewCustomers = Number(currentUser.permissions?.can_view_customers || 0) === 1;
+    const canViewVehicles = Number(currentUser.permissions?.can_view_vehicles || 0) === 1;
+    const canViewPrices = Number(currentUser.permissions?.can_view_prices || 0) === 1;
+    const canSeePrices = canViewPrices || canManagePrices;
+    const canViewPayroll = canViewAdmin;
+
+    // Only allow editing the amount field if the user has explicit permission
+    const amountEl = document.getElementById('amount');
+    if (amountEl) {
+      amountEl.readOnly = !canEditReceipts;
+      amountEl.classList.toggle('readonly', !canEditReceipts);
+      amountEl.classList.toggle('editable', canEditReceipts);
+    }
 
     document.getElementById('tabAdmin').classList.toggle('hidden', !canViewAdmin);
+    document.getElementById('tabPayroll').classList.toggle('hidden', !canViewPayroll);
+    document.getElementById('tabCustomers').classList.toggle('hidden', !canViewCustomers);
+    document.getElementById('tabVehicles').classList.toggle('hidden', !canViewVehicles);
+    document.getElementById('tabPrices').classList.toggle('hidden', !canSeePrices);
+    updateMobileTabAvailability();
     document.getElementById('priceForm').classList.toggle('hidden', !canManagePrices);
+    ['discountName','discountPercent','saveDiscountPresetBtn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = !canManagePrices;
+    });
+    if (!canViewCustomers) customersSection.classList.add('hidden');
+    if (!canViewVehicles) vehiclesSection.classList.add('hidden');
+    if (!canSeePrices) pricesSection.classList.add('hidden');
+    if (!canViewPayroll) payrollSection.classList.add('hidden');
+    if (!canViewAdmin) adminSection.classList.add('hidden');
 
-    const [receiptData, customerData, vehicleData, serviceData] = await Promise.all([
+    const [receiptData, serviceData, discountData, payrollData] = await Promise.all([
       api('api_receipts'),
-      api('api_customers'),
-      api('api_vehicles'),
-      api('api_service_prices')
+      api('api_service_prices'),
+      api('api_discount_presets'),
+      canViewPayroll ? api('api_payroll_entries') : Promise.resolve({ entries: [] })
     ]);
 
     renderReceipts(receiptData.receipts || []);
-    renderCustomers(customerData.customers || []);
-    renderVehicles(vehicleData.vehicles || []);
     renderServices(serviceData.services || []);
+    updateServicePrices(serviceData.services || []);
+    setDiscountPresetOptions(discountData.discounts || []);
+    renderPayrollEntries(payrollData.entries || []);
+
+    if (canViewCustomers) {
+      const customerData = await api('api_customers');
+      renderCustomers(customerData.customers || []);
+    } else {
+      renderCustomers([]);
+    }
+
+    if (canViewVehicles) {
+      const vehicleData = await api('api_vehicles');
+      renderVehicles(vehicleData.vehicles || []);
+    } else {
+      renderVehicles([]);
+    }
 
     if (canViewAdmin) {
       const adminData = await api('api_admin_summary');
@@ -388,50 +3813,251 @@ async function refresh(){
       document.getElementById('statExpenses').textContent = `${Number(adminData.stats.expenses).toFixed(2)} SEK`;
       document.getElementById('statProfit').textContent = `${Number(adminData.stats.profit).toFixed(2)} SEK`;
       document.getElementById('statReceipts').textContent = adminData.stats.receipt_count;
+      const payrollTotal = Number(adminData.stats.payroll_total || 0);
+      document.getElementById('statPayroll').textContent = `${payrollTotal.toFixed(2)} SEK`;
+      const lastPayDate = adminData.stats.last_payroll_date;
+      const lastLabel = lastPayDate ? `Senaste utbetalning: ${formatDateDisplay(lastPayDate)}` : 'Senaste utbetalning: -';
+      const payrollLastEl = document.getElementById('statPayrollLast');
+      if (payrollLastEl) payrollLastEl.textContent = lastLabel;
       renderTopMechanics(adminData.top_mechanics || []);
-      renderAdminUsers(adminData.users || []);
+      renderEconomyChart(adminData.stats || {});
+      window.adminUsers = adminData.users || [];
+      renderAdminUsers(window.adminUsers || []);
+      renderDiscountPresets(window.discountPresets || []);
     }
 
     if (canManageUsers) {
       const rankData = await api('api_ranks');
       allRanks = rankData.ranks || [];
       renderRankOptions();
+      renderRanks(allRanks);
     }
+
+    collectLayoutCards();
+    refreshStoredLayoutCaches();
+    syncCardLayoutStateWithRegistry(true);
+    applyCardLayoutStyles();
+    attachInputAutosize();
+
+    if (!canViewSection(currentSection)) {
+      currentSection = 'receipts';
+    }
+    showSection(currentSection);
   } catch (e) {
     showMessage(e.message);
   }
 }
 
-document.getElementById('tabReceipts').onclick = () => showSection('receipts');
-document.getElementById('tabCustomers').onclick = () => showSection('customers');
-document.getElementById('tabVehicles').onclick = () => showSection('vehicles');
-document.getElementById('tabPrices').onclick = () => showSection('prices');
-document.getElementById('tabAdmin').onclick = () => showSection('admin');
+if (mobileNavToggle && mobileNavMenu) {
+  mobileNavToggle.addEventListener('click', () => {
+    const willOpen = mobileNavMenu.classList.contains('hidden');
+    mobileNavMenu.classList.toggle('hidden', !willOpen);
+    mobileNavToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    if (willOpen) {
+      syncMobileNavState();
+    }
+  });
+  mobileNavMenu.addEventListener('click', event => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const actionButton = target.closest('button');
+    if (!actionButton) return;
+    const nextSection = actionButton.dataset.section || '';
+    if (nextSection) {
+      showSection(nextSection);
+    }
+    closeMobileNavMenu();
+  });
+  document.addEventListener('click', event => {
+    if (!(event.target instanceof Node)) return;
+    if (!mobileTabNav?.contains(event.target)) {
+      closeMobileNavMenu();
+    }
+  });
+}
+if (layoutModeBtn) {
+  layoutModeBtn.addEventListener('click', async () => {
+    if (layoutIsEditing) {
+      requestExitLayoutMode();
+    } else {
+      await enterLayoutEditMode();
+    }
+  });
+}
+if (layoutSaveBtn) {
+  layoutSaveBtn.addEventListener('click', saveLayoutChanges);
+}
+if (layoutResetBtn) {
+  layoutResetBtn.addEventListener('click', resetLayoutOnServer);
+}
+if (layoutExitBtn) {
+  layoutExitBtn.addEventListener('click', requestExitLayoutMode);
+}
+if (layoutPanelSelect) {
+  layoutPanelSelect.addEventListener('change', event => {
+    const key = event.target.value || currentSection;
+    currentSection = key;
+    setActiveLayoutKey(key, true);
+  });
+}
+if (layoutWidthInput) {
+  layoutWidthInput.addEventListener('change', () => handleLayoutDimensionInput('w'));
+}
+if (layoutHeightInput) {
+  layoutHeightInput.addEventListener('change', () => handleLayoutDimensionInput('h'));
+}
+if (layoutFillWidthBtn) {
+  layoutFillWidthBtn.addEventListener('click', fillWidthForActivePanel);
+}
+if (layoutFillHeightBtn) {
+  layoutFillHeightBtn.addEventListener('click', fillHeightForActivePanel);
+}
+if (layoutCardSelect) {
+  layoutCardSelect.addEventListener('change', event => {
+    const key = event.target.value || '';
+    setActiveLayoutCardKey(key || null, true);
+  });
+}
+if (layoutCardWidthInput) {
+  layoutCardWidthInput.addEventListener('change', () => handleLayoutCardDimensionInput('w'));
+}
+if (layoutCardHeightInput) {
+  layoutCardHeightInput.addEventListener('change', () => handleLayoutCardDimensionInput('h'));
+}
+if (layoutCardFillWidthBtn) {
+  layoutCardFillWidthBtn.addEventListener('click', fillCardWidthForActiveCard);
+}
+if (layoutCardFillHeightBtn) {
+  layoutCardFillHeightBtn.addEventListener('click', fillCardHeightForActiveCard);
+}
+if (layoutScopeSelect) {
+  layoutScopeSelect.addEventListener('change', event => {
+    const nextScope = event.target.value === 'global' ? 'global' : 'local';
+    if (nextScope === layoutActiveScope) return;
+    if (nextScope === 'global' && !hasPermission('can_view_admin')) {
+      event.target.value = 'local';
+      showMessage('Endast ägare kan redigera den globala layouten.');
+      return;
+    }
+    if (layoutIsEditing && layoutDirty) {
+      const confirmSwitch = confirm('Om du byter lagring för layouten försvinner osparade ändringar. Vill du fortsätta?');
+      if (!confirmSwitch) {
+        event.target.value = layoutActiveScope;
+        return;
+      }
+      if (layoutSnapshotBeforeEdit) {
+        restoreLayoutSnapshot(layoutSnapshotBeforeEdit);
+      }
+      setLayoutDirty(false);
+    }
+    applyLayoutScope(nextScope);
+    if (layoutIsEditing) {
+      layoutSnapshotBeforeEdit = captureLayoutSnapshot();
+    }
+    if (hasPermission('can_view_admin')) {
+      saveScopePreference(nextScope);
+    }
+    showMessage(nextScope === 'global'
+      ? 'Du redigerar nu den globala layouten.'
+      : 'Du redigerar nu din personliga layout.');
+  });
+}
+if (layoutPresetBtn) {
+  layoutPresetBtn.addEventListener('click', () => {
+    const selectedPreset = layoutPresetSelect?.value || DEFAULT_LAYOUT_PRESET_KEY;
+    applyPresetToCurrentScope(selectedPreset);
+  });
+}
+populateLayoutPresetSelect();
 
-document.getElementById('loginBtn').onclick = async () => {
+const discountSelectEl = document.getElementById('discountPresetSelect');
+if (discountSelectEl) {
+  discountSelectEl.addEventListener('change', () => {
+    window.discountSelectionReason = 'manual';
+    updateReceiptAmount();
+  });
+}
+
+const customerInputEl = document.getElementById('customer');
+if (customerInputEl) {
+  customerInputEl.addEventListener('change', applyCustomerDiscountIfAny);
+  customerInputEl.addEventListener('blur', applyCustomerDiscountIfAny);
+}
+
+const personnummerInput = document.getElementById('personnummer');
+const passwordInput = document.getElementById('password');
+
+const attemptLogin = async () => {
   try {
     await api('api_login', 'POST', {
-      personnummer: document.getElementById('personnummer').value,
-      password: document.getElementById('password').value,
+      personnummer: personnummerInput.value,
+      password: passwordInput.value,
     });
     showMessage('Inloggad.');
+    // mark this tab as logged in so reloads keep the session
+    sessionStorage.setItem('benny_logged_in', '1');
     await refresh();
   } catch (e) {
     showMessage(e.message);
   }
 };
 
+document.getElementById('loginBtn').onclick = attemptLogin;
+
+const handleLoginEnterKey = (event) => {
+  if (event.key !== 'Enter') return;
+  const hasPersonnummer = personnummerInput.value.trim().length > 0;
+  const hasPassword = passwordInput.value.trim().length > 0;
+  if (!hasPersonnummer || !hasPassword) return;
+  event.preventDefault();
+  attemptLogin();
+};
+
+personnummerInput.addEventListener('keydown', handleLoginEnterKey);
+passwordInput.addEventListener('keydown', handleLoginEnterKey);
+
+const serviceCategoryFilterEl = document.getElementById('serviceCategoryFilter');
+if (serviceCategoryFilterEl) {
+  serviceCategoryFilterEl.addEventListener('change', () => {
+    renderServices(window.allServices || []);
+  });
+}
+
 document.getElementById('saveBtn').onclick = async () => {
   try {
+    const selections = window.selectedServices || [];
+    if (selections.length === 0) {
+      showMessage('Välj minst en tjänst innan du sparar kvittot.');
+      return;
+    }
+
+    const summary = selections.map(sel => sel.qty > 1 ? `${sel.qty} x ${sel.name}` : sel.name);
+    const workType = summary.join(' + ') || 'Tjänst';
+
+    const findCategoryQty = (targetCategory) => {
+      const targetKey = normalizeServiceCategoryKey(targetCategory);
+      const qty = selections
+        .filter(sel => normalizeServiceCategoryKey(sel.category) === targetKey)
+        .reduce((sum, sel) => sum + (Number(sel.qty) || 0), 0);
+      return qty > 0 ? qty : '';
+    };
+    const stylingPayload = findCategoryQty('styling');
+    const performancePayload = findCategoryQty('prestanda');
+
+    const discountMeta = window.currentReceiptDiscount || null;
     await api('api_create_receipt', 'POST', {
-      work_type: document.getElementById('workType').value,
-      styling_parts: document.getElementById('stylingParts').value,
-      performance_parts: document.getElementById('performanceParts').value,
+      work_type: workType,
+      styling_parts: stylingPayload,
+      performance_parts: performancePayload,
       amount: document.getElementById('amount').value,
       customer: document.getElementById('customer').value,
       plate: document.getElementById('plate').value,
+      order_comment: document.getElementById('orderComment').value,
+      expense_total: Number(window.currentReceiptExpenseTotal || 0),
+      discount_name: discountMeta?.name || '',
+      discount_percent: discountMeta?.percent || 0,
     });
-    showMessage('Kvitto sparat.');
+    showMessage('Kvitto sparat: ' + workType);
     await refresh();
   } catch (e) {
     showMessage(e.message);
@@ -441,10 +4067,13 @@ document.getElementById('saveBtn').onclick = async () => {
 document.getElementById('saveCustomerBtn').onclick = async () => {
   try {
     await api('api_create_customer', 'POST', {
+      id: Number(document.getElementById('customerId').value || 0),
       customer_name: document.getElementById('customerNameReg').value,
       phone: document.getElementById('customerPhoneReg').value,
+      discount_preset_id: Number(document.getElementById('customerDiscountPreset').value || 0),
     });
     showMessage('Kund sparad.');
+    resetCustomerForm();
     await refresh();
   } catch (e) {
     showMessage(e.message);
@@ -454,10 +4083,30 @@ document.getElementById('saveCustomerBtn').onclick = async () => {
 document.getElementById('saveVehicleBtn').onclick = async () => {
   try {
     await api('api_create_vehicle', 'POST', {
+      id: Number(document.getElementById('vehicleId').value || 0),
       plate: document.getElementById('vehiclePlateReg').value,
       vehicle_model: document.getElementById('vehicleModelReg').value,
     });
     showMessage('Fordon sparat.');
+    resetVehicleForm();
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+};
+
+document.getElementById('savePayrollBtn').onclick = async () => {
+  try {
+    const payload = {
+      id: Number(document.getElementById('payrollId').value || 0),
+      payee_name: document.getElementById('payrollName').value,
+      amount: Number(document.getElementById('payrollAmount').value || 0),
+      pay_date: document.getElementById('payrollDate').value,
+    };
+    await api('api_create_payroll_entry', 'POST', payload);
+    showMessage(payload.id > 0 ? 'Löneutbetalning uppdaterad.' : 'Löneutbetalning registrerad.');
+    playCoinClinkSound();
+    resetPayrollForm();
     await refresh();
   } catch (e) {
     showMessage(e.message);
@@ -467,12 +4116,18 @@ document.getElementById('saveVehicleBtn').onclick = async () => {
 document.getElementById('saveServiceBtn').onclick = async () => {
   try {
     await api('api_save_service_price', 'POST', {
+      id: Number(document.getElementById('serviceId').value || 0),
       service_name: document.getElementById('serviceName').value,
       sale_price: document.getElementById('serviceSalePrice').value,
       expense_cost: document.getElementById('serviceExpenseCost').value,
       is_active: Number(document.getElementById('serviceIsActive').value),
+      has_dropdown: Number(document.getElementById('serviceHasDropdown').value || 0),
+      service_category: document.getElementById('serviceCategory').value,
     });
     showMessage('Tjänst sparad.');
+    document.getElementById('serviceId').value = '';
+    document.getElementById('serviceHasDropdown').value = '0';
+    document.getElementById('serviceCategory').value = '';
     await refresh();
   } catch (e) {
     showMessage(e.message);
@@ -496,14 +4151,36 @@ document.getElementById('saveAdminUserBtn').onclick = async () => {
 
 document.getElementById('saveRankBtn').onclick = async () => {
   try {
+    const rankId = Number(document.getElementById('rankId').value || 0);
+    const existing = allRanks.find(r => Number(r.id) === rankId);
+    const permissions = {};
+    rankPermissionMeta.forEach(meta => {
+      permissions[meta.key] = existing ? Number(existing[meta.key]) === 1 : false;
+    });
     await api('api_save_rank', 'POST', {
+      id: rankId,
       name: document.getElementById('rankName').value,
-      can_view_admin: document.getElementById('rankCanViewAdmin').checked,
-      can_manage_users: document.getElementById('rankCanManageUsers').checked,
-      can_manage_prices: document.getElementById('rankCanManagePrices').checked,
-      can_edit_receipts: document.getElementById('rankCanEditReceipts').checked,
+      ...permissions,
     });
     showMessage('Rank sparad.');
+    document.getElementById('rankId').value = '';
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+};
+
+document.getElementById('saveDiscountPresetBtn').onclick = async () => {
+  try {
+    await api('api_save_discount_preset', 'POST', {
+      id: Number(document.getElementById('discountId').value || 0),
+      name: document.getElementById('discountName').value,
+      percent: Number(document.getElementById('discountPercent').value || 0),
+    });
+    showMessage('Rabatt sparad.');
+    document.getElementById('discountId').value = '';
+    document.getElementById('discountName').value = '';
+    document.getElementById('discountPercent').value = '';
     await refresh();
   } catch (e) {
     showMessage(e.message);
@@ -530,11 +4207,37 @@ async function editReceipt(id){
   const performance_parts = prompt('Prestanda-delar (tomt tillåt)', r.performance_parts === '' ? '' : r.performance_parts);
   const amount = prompt('Summa', r.amount);
   const customer = prompt('Kund', r.customer);
-  const plate = prompt('Regplåt (ABC-123)', r.plate);
+  const plate = prompt('Regnummer (ABC-123 eller ABC-12A)', r.plate);
+  const order_comment = prompt('Kommentar / Referens (valfritt)', r.order_comment || '');
+  const discountNameInput = prompt('Rabattnamn (tomt för ingen)', r.discount_name || '');
+  const discountPercentInput = prompt('Rabatt i % (0-100)', Number(r.discount_percent || 0));
+  const discountPercent = discountPercentInput === null || discountPercentInput === '' ? r.discount_percent : Number(discountPercentInput);
 
   try {
-    await api('api_update_receipt', 'POST', { id, work_type, styling_parts, performance_parts, amount, customer, plate });
+    await api('api_update_receipt', 'POST', { id, work_type, styling_parts, performance_parts, amount, customer, plate, order_comment: order_comment ?? r.order_comment, discount_name: discountNameInput ?? r.discount_name, discount_percent: Number.isFinite(discountPercent) ? discountPercent : r.discount_percent });
     showMessage('Kvitto uppdaterat.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+}
+
+async function markReceiptSent(id){
+  try {
+    await api('api_mark_receipt_sent', 'POST', { id, is_sent: 1 });
+    showMessage('Kvitto markerat som skickat.');
+    playReceiptPrintedSound();
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+}
+
+async function resetReceiptSent(id){
+  if (!confirm('Återställ skickad-status för detta kvitto?')) return;
+  try {
+    await api('api_mark_receipt_sent', 'POST', { id, is_sent: 0 });
+    showMessage('Skickad-status återställd.');
     await refresh();
   } catch (e) {
     showMessage(e.message);
@@ -543,12 +4246,76 @@ async function editReceipt(id){
 
 logoutBtn.onclick = async () => {
   await api('api_logout', 'POST');
+  // clear tab login marker so a reload requires login
+  sessionStorage.removeItem('benny_logged_in');
   await refresh();
 };
 
 window.deleteReceipt = deleteReceipt;
 window.editReceipt = editReceipt;
-refresh();
+window.markReceiptSent = markReceiptSent;
+window.resetReceiptSent = resetReceiptSent;
+window.toggleReceiptDetails = toggleReceiptDetails;
+window.editAdminUser = editAdminUser;
+window.deleteAdminUser = deleteAdminUser;
+window.editDiscountPreset = editDiscountPreset;
+window.deleteDiscountPreset = deleteDiscountPreset;
+window.editCustomer = editCustomer;
+window.editVehicle = editVehicle;
+window.deleteCustomer = deleteCustomer;
+window.deleteVehicle = deleteVehicle;
+window.editPayrollEntry = editPayrollEntry;
+window.deletePayrollEntry = deletePayrollEntry;
+updateMobileTabAvailability();
+closeMobileNavMenu();
+// If this tab previously logged in (sessionStorage), keep the session across reloads.
+// sessionStorage is cleared when the tab/window is closed, satisfying the "require login after close" requirement.
+if (sessionStorage.getItem('benny_logged_in') === '1') {
+  refresh();
+} else {
+  // show login view by default
+  loginView.classList.remove('hidden');
+  appView.classList.add('hidden');
+  document.body.classList.add('login-mode');
+}
+
+// attach input formatting handlers
+initScalePresetSelector();
+attachFormatting();
+attachInputAutosize();
 </script>
+  <script>
+// ...flytta hela script-innehållet hit...
+  </script>
 </body>
 </html>
+<script>
+/* === HARD DISABLE LAYOUT ENGINE (no absolute, no overlap) === */
+(function disableLayoutForever(){
+  const kill = () => {
+    // stoppa layout-lägen
+    document.body.classList.remove('layout-ready', 'layout-edit-mode');
+    document.body.classList.add('layout-stack-mode');
+
+    // rensa inline-styles som layoutmotorn kan ha satt
+    document.querySelectorAll('.layout-section, .layout-card').forEach(el => {
+      el.style.position = '';
+      el.style.left = '';
+      el.style.top = '';
+      el.style.width = '';
+      el.style.height = '';
+      el.style.transform = '';
+    });
+  };
+
+  // kör direkt och efter att ev. app initat
+  kill();
+  window.addEventListener('load', kill);
+  setTimeout(kill, 50);
+  setTimeout(kill, 250);
+  setTimeout(kill, 800);
+
+  // om något script försöker toggla layout senare
+  window.addEventListener('resize', kill);
+})();
+</script>
