@@ -995,12 +995,19 @@ button:hover{
 }
 
 .layout-canvas > .layout-section{
-  display:flex !important;
   flex-direction:column !important;
   gap:16px;
   flex:0 0 min(980px, 92vw) !important;
   width:min(980px, 92vw) !important;
   max-width:min(980px, 92vw) !important;
+}
+
+.layout-canvas > .layout-section:not(.hidden){
+  display:flex !important;
+}
+
+.layout-canvas > .layout-section.hidden{
+  display:none !important;
 }
 
 @media (max-width: 1200px){
