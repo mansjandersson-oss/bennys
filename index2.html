@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Benny's Motorworks</title>
+  <title>Redline Performance</title>
   
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="login-mode">
   <div class="wrap">
     <div class="top">
-      <img src="logo.png" alt="Benny's Motorworks" class="logo" />
+      <img src="logo.png" alt="Redline Performance" class="logo" />
       <div class="top-right">
         <div id="mobileTabNav" class="mobile-tab-nav">
           <button id="mobileNavToggle" type="button" class="secondary mobile-nav-toggle" aria-label="Öppna meny" aria-expanded="false">
@@ -604,7 +604,7 @@ const SCALE_PRESETS = {
   '3840x2160': { label: '4K (3840×2160)', width: 3840, height: 2160 },
 };
 const DEFAULT_SCALE_PRESET = '1920x1080';
-const SCALE_STORAGE_KEY = 'benny_ui_scale_preset';
+const SCALE_STORAGE_KEY = 'redline_ui_scale_preset';
 const SCALE_BASE_WIDTH = 1536;
 const SCALE_MIN_FACTOR = 0.45;
 const SCALE_MAX_FACTOR = 1.3;
@@ -635,8 +635,8 @@ if (defaultLayoutSourceHydrated) {
   layoutCardState = deepCloneLayout(defaultLayoutSourceHydrated.cards);
 }
 
-const LOCAL_LAYOUT_KEY_PREFIX = 'benny_layout_local_';
-const LOCAL_LAYOUT_SCOPE_PREF_PREFIX = 'benny_layout_scope_pref_';
+const LOCAL_LAYOUT_KEY_PREFIX = 'redline_layout_local_';
+const LOCAL_LAYOUT_SCOPE_PREF_PREFIX = 'redline_layout_scope_pref_';
 
 let layoutSources = {
   global: cloneLayoutSource(defaultLayoutSourceHydrated) || {
@@ -3035,7 +3035,7 @@ function renderReceipts(items){
     const orderComment = String(r.order_comment || '').trim();
     const copyLines = [
       '━━━━━━━━━━━━━━━━━━━',
-      `📋 Benny's Arbetsorder #${r.id}`,
+      `📋 Redline Performance Arbetsorder #${r.id}`,
       `🔧 Typ av jobb - ${workTypeHeading || '-'}`,
       `🚗 Nummerplåt - ${String(r.plate || '').trim() || '-'}`,
     ];
@@ -3995,7 +3995,7 @@ const attemptLogin = async () => {
     });
     showMessage('Inloggad.');
     // mark this tab as logged in so reloads keep the session
-    sessionStorage.setItem('benny_logged_in', '1');
+    sessionStorage.setItem('redline_logged_in', '1');
     await refresh();
   } catch (e) {
     showMessage(e.message);
@@ -4247,7 +4247,7 @@ async function resetReceiptSent(id){
 logoutBtn.onclick = async () => {
   await api('api_logout', 'POST');
   // clear tab login marker so a reload requires login
-  sessionStorage.removeItem('benny_logged_in');
+  sessionStorage.removeItem('redline_logged_in');
   await refresh();
 };
 
@@ -4270,7 +4270,7 @@ updateMobileTabAvailability();
 closeMobileNavMenu();
 // If this tab previously logged in (sessionStorage), keep the session across reloads.
 // sessionStorage is cleared when the tab/window is closed, satisfying the "require login after close" requirement.
-if (sessionStorage.getItem('benny_logged_in') === '1') {
+if (sessionStorage.getItem('redline_logged_in') === '1') {
   refresh();
 } else {
   // show login view by default
