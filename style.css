@@ -563,7 +563,7 @@ tr.sent-receipt{ opacity:0.82; }
 
 /* Receipt section fine-tuning (kept from your file) */
 #receiptsSection .service-main{ gap:8px; }
-#receiptsSection .receipt-top-grid{ grid-template-columns: 1fr minmax(260px, 320px); align-items:start; gap:16px; }
+#receiptsSection .receipt-top-grid{ grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); align-items:start; gap:16px; }
 #receiptsSection .receipt-fields{ display:flex; flex-direction:column; gap:8px; }
 #receiptsSection .receipt-fields > .row{
   grid-template-columns:repeat(2, minmax(220px, 1fr));
@@ -575,7 +575,8 @@ tr.sent-receipt{ opacity:0.82; }
 #receiptsSection .receipt-fields > .row label input,
 #receiptsSection .receipt-fields > .row label select{
   margin-bottom:4px;
-  max-width:280px;
+  width:100%;
+  max-width:none;
 }
 
 #receiptsSection .receipt-side{
@@ -735,7 +736,7 @@ body.layout-stack-mode .layout-card-drag-handle,
   .service-form-grid{ grid-template-columns: 1fr; }
   .service-main{ align-items:center; }
   .service-side{ width:100%; max-width:420px; }
-  #receiptsSection .receipt-top-grid{ grid-template-columns: 1fr minmax(260px, 320px); align-items:start; gap:16px; }
+  #receiptsSection .receipt-top-grid{ grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); align-items:start; gap:16px; }
   #receiptsSection .receipt-side{
   position: static;
   width: min(320px, 100%);
@@ -838,7 +839,7 @@ body.layout-stack-mode .layout-card-drag-handle,
 #receiptsSection .admin-columns,
 #receiptsSection .service-form-grid{
   display: grid !important;
-  grid-template-columns: 1fr 1.15fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
@@ -856,12 +857,18 @@ body.layout-stack-mode .layout-card-drag-handle,
   border: 1px solid rgba(255,255,255,0.10);
 }
 
-/* Knapp + inputs i save-box fullbredd */
-#receiptsSection .receipt-side input,
-#receiptsSection .receipt-side button,
-#receiptsSection #saveBtn{
+/* Inputs fullbredd i save-box */
+#receiptsSection .receipt-side input{
   width: 100% !important;
   max-width: 100% !important;
+}
+
+/* Spara kvitto-knappen ska inte vara överdrivet lång */
+#receiptsSection .receipt-side button,
+#receiptsSection #saveBtn{
+  width: min(260px, 100%) !important;
+  max-width: min(260px, 100%) !important;
+  align-self: center;
 }
 
 /* ===== Tabeller mer Redline (tight + tydligt) ===== */
@@ -982,4 +989,36 @@ button:hover{
 #adminSection .card{
   height: auto !important;
   min-height: 0 !important;
+}
+/* ===== Force horizontal side-by-side layout across the site ===== */
+.layout-canvas{
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  align-items:flex-start !important;
+  gap:18px !important;
+  overflow-x:auto !important;
+  overflow-y:visible !important;
+  padding-bottom:4px;
+}
+
+.layout-canvas > .layout-section{
+  flex-direction:column !important;
+  gap:16px;
+  min-width:min(980px, 92vw) !important;
+}
+
+/* När endast en sektion visas: låt den fylla ut bredden åt höger */
+.layout-canvas > .layout-section:not(.hidden){
+  display:flex !important;
+  flex:1 1 auto !important;
+  width:100% !important;
+  max-width:none !important;
+}
+
+.layout-canvas > .layout-section.hidden{
+  display:none !important;
+}
+
+@media (max-width: 1200px){
+  .layout-canvas{ grid-template-columns:none !important; }
 }
