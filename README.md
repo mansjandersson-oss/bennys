@@ -10,7 +10,7 @@ Ingen lokal app-launcher, inga batch/shell-startscript.
 - Kopiera arbetsorder (`Redline Performance Arbetsorder - 00000`)
 - Kundregister (namn + telefon)
 - Fordonsdatabas (regplåt + modell)
-- SQLite lagring i `data/bennys.sqlite`
+- JSON-lagring per tabell i `data/json/*.json`
 
 ## Kör sidan
 Starta bara en vanlig PHP-server i projektmappen:
