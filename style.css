@@ -997,13 +997,15 @@ button:hover{
 .layout-canvas > .layout-section{
   flex-direction:column !important;
   gap:16px;
-  flex:0 0 min(980px, 92vw) !important;
-  width:min(980px, 92vw) !important;
-  max-width:min(980px, 92vw) !important;
+  min-width:min(980px, 92vw) !important;
 }
 
+/* När endast en sektion visas: låt den fylla ut bredden åt höger */
 .layout-canvas > .layout-section:not(.hidden){
   display:flex !important;
+  flex:1 1 auto !important;
+  width:100% !important;
+  max-width:none !important;
 }
 
 .layout-canvas > .layout-section.hidden{
