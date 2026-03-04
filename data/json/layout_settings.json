@@ -1,0 +1,11 @@
+{
+    "next_id": 2,
+    "rows": [
+        {
+            "layout_key": "global_sections",
+            "config_json": "{\"receipts\":{\"x\":0,\"y\":0,\"w\":2084,\"h\":1202,\"z\":17},\"customers\":{\"x\":0,\"y\":0,\"w\":2049,\"h\":2049,\"z\":23},\"vehicles\":{\"x\":0,\"y\":0,\"w\":2084,\"h\":2048,\"z\":25},\"prices\":{\"x\":0,\"y\":0,\"w\":2015,\"h\":1548,\"z\":31},\"payroll\":{\"x\":8,\"y\":11,\"w\":2084,\"h\":975,\"z\":36},\"admin\":{\"x\":0,\"y\":3,\"w\":2084,\"h\":2400,\"z\":46},\"card::receipts__skapa-kvitto\":{\"x\":24,\"y\":24,\"w\":887,\"h\":837,\"z\":18},\"card::receipts__registrerade-kvitton\":{\"x\":918,\"y\":24,\"w\":1142,\"h\":837,\"z\":19},\"card::customers__kundregister\":{\"x\":24,\"y\":24,\"w\":350,\"h\":365,\"z\":9},\"card::customers__kunder\":{\"x\":379,\"y\":24,\"w\":1646,\"h\":1006,\"z\":11},\"card::vehicles__fordonsdatabas\":{\"x\":24,\"y\":24,\"w\":347,\"h\":291,\"z\":4},\"card::vehicles__sparade-fordon\":{\"x\":371,\"y\":24,\"w\":1665,\"h\":951,\"z\":7},\"card::prices__prislista\":{\"x\":24,\"y\":24,\"w\":1967,\"h\":1500,\"z\":3},\"card::payroll__lonhantering\":{\"x\":24,\"y\":24,\"w\":420,\"h\":405,\"z\":4},\"card::payroll__lonehistorik\":{\"x\":443,\"y\":24,\"w\":1617,\"h\":927,\"z\":6},\"card::admin__adminpanel\":{\"x\":24,\"y\":24,\"w\":875,\"h\":794,\"z\":30},\"card::admin__rabatter\":{\"x\":899,\"y\":24,\"w\":1150,\"h\":794,\"z\":34},\"card::admin__skapa-uppdatera-anvandare\":{\"x\":24,\"y\":818,\"w\":875,\"h\":1304,\"z\":26},\"card::admin__ranker\":{\"x\":899,\"y\":818,\"w\":1161,\"h\":1304,\"z\":25},\"_metaPresetVersion\":\"20260220A\"}",
+            "updated_at": "2026-03-03 23:25:41",
+            "id": 1
+        }
+    ]
+}
