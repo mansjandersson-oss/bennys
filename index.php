@@ -282,6 +282,75 @@ function ensure_unique_vehicle(array $rows, int $selfId, string $plate): void
     }
 }
 
+function find_discount_preset_id_by_name(JsonDb $db, string $discountName): ?int
+{
+    $needle = trim(mb_strtolower($discountName, 'UTF-8'));
+    if ($needle === '') {
+        return null;
+    }
+    foreach ($db->rows('discount_presets') as $preset) {
+        $name = trim(mb_strtolower((string) ($preset['name'] ?? ''), 'UTF-8'));
+        if ($name !== '' && $name === $needle) {
+            return (int) ($preset['id'] ?? 0) ?: null;
+        }
+    }
+    return null;
+}
+
+function upsert_customer_from_receipt(JsonDb $db, string $customerName, string $customerPersonnummer, ?int $discountPresetId): void
+{
+    $name = trim($customerName);
+    if ($name === '') {
+        return;
+    }
+    $pnr = normalize_personnummer($customerPersonnummer);
+    $rows = $db->rows('customer_registry');
+
+    foreach ($rows as &$customer) {
+        $samePnr = $pnr !== '' && normalize_personnummer((string) ($customer['personnummer'] ?? '')) === $pnr;
+        $sameName = normalize_customer_name_key((string) ($customer['customer_name'] ?? '')) === normalize_customer_name_key($name);
+        if (!$samePnr && !$sameName) {
+            continue;
+        }
+        $customer['customer_name'] = $name;
+        if ($pnr !== '') {
+            $customer['personnummer'] = $pnr;
+        }
+        if ($discountPresetId !== null) {
+            $customer['discount_preset_id'] = $discountPresetId;
+        }
+        $db->setRows('customer_registry', $rows);
+        return;
+    }
+    unset($customer);
+
+    $db->insert('customer_registry', [
+        'customer_name' => $name,
+        'personnummer' => $pnr !== '' ? $pnr : null,
+        'phone' => '',
+        'discount_preset_id' => $discountPresetId,
+        'created_at' => now_iso(),
+    ]);
+}
+
+function upsert_vehicle_from_receipt(JsonDb $db, string $plate): void
+{
+    $normalized = normalize_plate($plate);
+    if ($normalized === '' || !is_valid_plate($normalized)) {
+        return;
+    }
+    foreach ($db->rows('vehicle_registry') as $vehicle) {
+        if (normalize_plate((string) ($vehicle['plate'] ?? '')) === $normalized) {
+            return;
+        }
+    }
+    $db->insert('vehicle_registry', [
+        'plate' => $normalized,
+        'vehicle_model' => 'Okänd modell',
+        'created_at' => now_iso(),
+    ]);
+}
+
 function log_activity(JsonDb $db, array $user, string $actionType, string $entityType, ?int $entityId, string $description, ?array $meta = null): void
 {
     $db->insert('activity_log', [
@@ -584,6 +653,10 @@ if ($action === 'api_create_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    $discountName = trim((string) ($d['discount_name'] ?? ''));
+    $customerName = trim((string) ($d['customer'] ?? ''));
+    $customerPersonnummer = normalize_personnummer((string) ($d['customer_personnummer'] ?? ''));
+
     $inserted = $db->insert('receipts', [
         'mechanic' => $validMechanic,
         'work_type' => trim((string) ($d['work_type'] ?? '')),
@@ -591,15 +664,20 @@ if ($action === 'api_create_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         'performance_parts' => ($d['performance_parts'] === '' || $d['performance_parts'] === null) ? '' : (int) $d['performance_parts'],
         'amount' => (float) ($d['amount'] ?? 0),
         'expense_total' => (float) ($d['expense_total'] ?? 0),
-        'discount_name' => trim((string) ($d['discount_name'] ?? '')),
+        'discount_name' => $discountName,
         'discount_percent' => (float) ($d['discount_percent'] ?? 0),
-        'customer' => trim((string) ($d['customer'] ?? '')),
-        'customer_personnummer' => normalize_personnummer((string) ($d['customer_personnummer'] ?? '')),
+        'customer' => $customerName,
+        'customer_personnummer' => $customerPersonnummer,
         'plate' => $plate,
         'order_comment' => trim((string) ($d['order_comment'] ?? '')),
         'created_at' => now_iso(),
         'is_sent' => 0,
     ]);
+
+    $discountPresetId = find_discount_preset_id_by_name($db, $discountName);
+    upsert_customer_from_receipt($db, $customerName, $customerPersonnummer, $discountPresetId);
+    upsert_vehicle_from_receipt($db, $plate);
+
     log_activity($db, $user, 'receipt_created', 'receipt', (int) $inserted['id'], 'Kvitto skapades.');
     json_response(['ok' => true]);
 }

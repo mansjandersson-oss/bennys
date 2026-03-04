@@ -3069,6 +3069,8 @@ function renderReceipts(items){
       copyLines.push('');
       copyLines.push(`📝 Referens - ${orderComment}`);
     }
+    copyLines.push('');
+    copyLines.push(`👤 Skapad av - ${String(r.mechanic_name || r.mechanic || '').trim() || '-'}`);
     copyLines.push('━━━━━━━━━━━━━━━━━━━');
     const copyText = `${copyLines.join('\n')}\n`;
     const isSent = Number(r.is_sent) === 1;
