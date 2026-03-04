@@ -1,0 +1,15 @@
+{
+    "next_id": 3,
+    "rows": [
+        {
+            "name": "Familj",
+            "percent": 45,
+            "id": 1
+        },
+        {
+            "name": "Anställd",
+            "percent": 50,
+            "id": 2
+        }
+    ]
+}
