@@ -407,7 +407,7 @@ tr.sent-receipt{ opacity:0.82; }
 
 .admin-columns{
   display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(340px,1fr));
+  grid-template-columns:repeat(2, minmax(0,1fr));
   gap: clamp(16px,2vw,28px);
   margin-top:24px;
 }
@@ -1040,4 +1040,15 @@ button:hover{
 .layout-section-drop-indicator,
 .layout-card-drop-indicator {
   display: none !important;
+}
+
+/* Admin panels should use full available width on desktop */
+#adminSection .admin-columns{
+  width: 100%;
+}
+
+@media (max-width: 1200px){
+  #adminSection .admin-columns{
+    grid-template-columns: 1fr;
+  }
 }
