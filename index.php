@@ -424,6 +424,19 @@ if ($action === 'api_me' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     json_response(['ok' => true, 'user' => $user]);
 }
 
+if ($action === 'api_mechanics' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    $user = require_login();
+    $rows = $db->rows('users');
+    $mech = array_map(static fn($u) => [
+        'personnummer' => (string) ($u['personnummer'] ?? ''),
+        'full_name' => (string) ($u['full_name'] ?? ''),
+    ], $rows);
+    usort($mech, static fn($a, $b) => strcmp((string) ($a['full_name'] ?? ''), (string) ($b['full_name'] ?? '')));
+    $self = (string) ($user['personnummer'] ?? '');
+    usort($mech, static fn($a, $b) => ((string) ($a['personnummer'] ?? '') === $self ? -1 : (((string) ($b['personnummer'] ?? '') === $self) ? 1 : 0)));
+    json_response(['ok' => true, 'mechanics' => $mech]);
+}
+
 if ($action === 'api_service_prices' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     require_login();
     $rows = $db->rows('service_prices');
@@ -560,8 +573,19 @@ if ($action === 'api_create_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $plate = normalize_plate((string) ($d['plate'] ?? ''));
     if (!is_valid_plate($plate)) json_response(['ok' => false, 'error' => 'Ogiltigt registreringsnummer.'], 422);
 
+    $selectedMechanic = trim((string) ($d['mechanic'] ?? ''));
+    $validMechanic = (string) ($user['personnummer'] ?? '');
+    if ($selectedMechanic !== '') {
+        foreach ($db->rows('users') as $candidateMechanic) {
+            if ((string) ($candidateMechanic['personnummer'] ?? '') === $selectedMechanic) {
+                $validMechanic = $selectedMechanic;
+                break;
+            }
+        }
+    }
+
     $inserted = $db->insert('receipts', [
-        'mechanic' => (string) ($user['personnummer'] ?? ''),
+        'mechanic' => $validMechanic,
         'work_type' => trim((string) ($d['work_type'] ?? '')),
         'styling_parts' => ($d['styling_parts'] === '' || $d['styling_parts'] === null) ? '' : (int) $d['styling_parts'],
         'performance_parts' => ($d['performance_parts'] === '' || $d['performance_parts'] === null) ? '' : (int) $d['performance_parts'],

@@ -115,7 +115,7 @@
                 <div class="receipt-fields">
                   <div class="row">
                     <label>Mekaniker
-                      <input id="mechanic" readonly />
+                      <select id="mechanic"></select>
                     </label>
                     <label>Kund
                       <input id="customer" list="customerSuggestions" placeholder="Kund eller företag" />
@@ -133,7 +133,7 @@
                       </select>
                     </label>
                   </div>
-                  <div class="row single-field-row">
+                  <div class="row">
                     <label>Kommentar "frivillig"
                       <input id="orderComment" placeholder="Valfri kommentar" />
                     </label>
@@ -924,6 +924,37 @@ function canViewSection(sectionName){
       return hasPermission('can_view_admin');
     default:
       return true;
+  }
+}
+
+const mechanicDirectory = [];
+
+function setMechanicOptions(list){
+  if (!mechanicInput) return;
+  const source = Array.isArray(list) ? list : [];
+  mechanicDirectory.length = 0;
+  source.forEach(item => {
+    const personnummer = String(item.personnummer || '').trim();
+    const fullName = String(item.full_name || '').trim();
+    if (!personnummer || !fullName) return;
+    mechanicDirectory.push({ personnummer, full_name: fullName });
+  });
+
+  const currentPersonnummer = String(currentUser?.personnummer || '').trim();
+  mechanicDirectory.sort((a, b) => {
+    if (a.personnummer === currentPersonnummer) return -1;
+    if (b.personnummer === currentPersonnummer) return 1;
+    return a.full_name.localeCompare(b.full_name, 'sv');
+  });
+
+  mechanicInput.innerHTML = mechanicDirectory
+    .map(m => `<option value="${esc(m.personnummer)}">${esc(m.full_name)}</option>`)
+    .join('');
+
+  if (currentPersonnummer && mechanicDirectory.some(m => m.personnummer === currentPersonnummer)) {
+    mechanicInput.value = currentPersonnummer;
+  } else if (mechanicDirectory.length > 0) {
+    mechanicInput.value = mechanicDirectory[0].personnummer;
   }
 }
 
@@ -3736,7 +3767,7 @@ async function refresh(){
       return;
     }
     currentUser = me.user;
-      mechanicInput.value = currentUser.full_name || '';
+      setMechanicOptions([{ personnummer: currentUser.personnummer, full_name: currentUser.full_name }]);
       loginView.classList.add('hidden');
       appView.classList.remove('hidden');
       logoutBtn.classList.remove('hidden');
@@ -3780,12 +3811,15 @@ async function refresh(){
     if (!canViewPayroll) payrollSection.classList.add('hidden');
     if (!canViewAdmin) adminSection.classList.add('hidden');
 
-    const [receiptData, serviceData, discountData, payrollData] = await Promise.all([
+    const [receiptData, serviceData, discountData, payrollData, mechanicData] = await Promise.all([
       api('api_receipts'),
       api('api_service_prices'),
       api('api_discount_presets'),
-      canViewPayroll ? api('api_payroll_entries') : Promise.resolve({ entries: [] })
+      canViewPayroll ? api('api_payroll_entries') : Promise.resolve({ entries: [] }),
+      api('api_mechanics')
     ]);
+
+    setMechanicOptions(mechanicData.mechanics || []);
 
     renderReceipts(receiptData.receipts || []);
     renderServices(serviceData.services || []);
@@ -4046,6 +4080,7 @@ document.getElementById('saveBtn').onclick = async () => {
 
     const discountMeta = window.currentReceiptDiscount || null;
     await api('api_create_receipt', 'POST', {
+      mechanic: document.getElementById('mechanic').value,
       work_type: workType,
       styling_parts: stylingPayload,
       performance_parts: performancePayload,

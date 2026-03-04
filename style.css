@@ -412,7 +412,7 @@ tr.sent-receipt{ opacity:0.82; }
   margin-top:24px;
 }
 .admin-columns > .card{ margin-bottom:0; }
-.admin-user-card, .admin-rank-card{ grid-column:1 / -1; }
+.admin-rank-card{ grid-column:1 / -1; }
 
 .bar-row{
   padding:18px;
@@ -726,6 +726,7 @@ body.layout-stack-mode .layout-card-drag-handle,
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px){
+  .admin-user-card{ grid-column:1 / -1; }
   :root{ --page-scale-factor: 1; }
   .wrap{ width: min(100%, 2200px); padding:14px; }
   .top{ justify-content:center; align-items:center; }
@@ -861,30 +862,6 @@ body.layout-stack-mode .layout-card-drag-handle,
 #receiptsSection .receipt-side input{
   width: 100% !important;
   max-width: 100% !important;
-}
-
-/* Spara kvitto-knappen ska inte vara överdrivet lång */
-#receiptsSection .receipt-side button,
-#receiptsSection #saveBtn{
-  width: min(260px, 100%) !important;
-  max-width: min(260px, 100%) !important;
-  align-self: center;
-}
-
-/* Spara kvitto-knappen ska inte vara överdrivet lång */
-#receiptsSection .receipt-side button,
-#receiptsSection #saveBtn{
-  width: min(260px, 100%) !important;
-  max-width: min(260px, 100%) !important;
-  align-self: center;
-}
-
-/* Spara kvitto-knappen ska inte vara överdrivet lång */
-#receiptsSection .receipt-side button,
-#receiptsSection #saveBtn{
-  width: min(260px, 100%) !important;
-  max-width: min(260px, 100%) !important;
-  align-self: center;
 }
 
 /* Spara kvitto-knappen ska inte vara överdrivet lång */
