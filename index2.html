@@ -3600,6 +3600,37 @@ function renderServiceOptions(services){
   updateServiceCardOrientation();
 }
 
+function resetReceiptForm(){
+  const customerEl = document.getElementById('customer');
+  const plateEl = document.getElementById('plate');
+  const orderCommentEl = document.getElementById('orderComment');
+  const discountSelect = document.getElementById('discountPresetSelect');
+
+  if (customerEl) customerEl.value = '';
+  if (plateEl) plateEl.value = '';
+  if (orderCommentEl) orderCommentEl.value = '';
+  if (discountSelect) {
+    discountSelect.value = '';
+    window.discountSelectionReason = null;
+  }
+
+  document.querySelectorAll('.service-choice').forEach(chk => {
+    chk.checked = false;
+    const qtyId = chk.dataset?.qtyInput || '';
+    const qtyInput = qtyId ? document.getElementById(qtyId) : null;
+    if (qtyInput) {
+      qtyInput.value = '1';
+      qtyInput.disabled = true;
+    }
+  });
+
+  window.selectedServices = [];
+  window.currentReceiptExpenseTotal = 0;
+  window.currentReceiptGrossTotal = 0;
+  window.currentReceiptDiscount = null;
+  updateReceiptAmount();
+}
+
 function updateReceiptAmount(){
   const choices = Array.from(document.querySelectorAll('.service-choice'));
   const selections = [];
@@ -4090,6 +4121,7 @@ document.getElementById('saveBtn').onclick = async () => {
       discount_percent: discountMeta?.percent || 0,
     });
     showMessage('Kvitto sparat: ' + workType);
+    resetReceiptForm();
     await refresh();
   } catch (e) {
     showMessage(e.message);
