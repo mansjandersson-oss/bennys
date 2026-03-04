@@ -12,7 +12,7 @@
   --input-pad-horiz: clamp(10px,1.2vw,12px);
   --input-font: 1rem;
   --control-height: calc(var(--input-font) + 2 * var(--input-pad-vert) + 2px);
-  --page-scale-factor: 1;
+  --page-scale-factor: 0.85;
 
   /* palette */
   --bg-0: #070707;
