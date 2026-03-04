@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Benny's Motorworks</title>
+  <title>Redline Performance</title>
   
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="login-mode">
   <div class="wrap">
     <div class="top">
-      <img src="logo.png" alt="Benny's Motorworks" class="logo" />
+      <img src="logo.png" alt="Redline Performance" class="logo" />
       <div class="top-right">
         <div id="mobileTabNav" class="mobile-tab-nav">
           <button id="mobileNavToggle" type="button" class="secondary mobile-nav-toggle" aria-label="Öppna meny" aria-expanded="false">
@@ -115,7 +115,7 @@
                 <div class="receipt-fields">
                   <div class="row">
                     <label>Mekaniker
-                      <input id="mechanic" readonly />
+                      <select id="mechanic"></select>
                     </label>
                     <label>Kund
                       <input id="customer" list="customerSuggestions" placeholder="Kund eller företag" />
@@ -133,7 +133,7 @@
                       </select>
                     </label>
                   </div>
-                  <div class="row single-field-row">
+                  <div class="row">
                     <label>Kommentar "frivillig"
                       <input id="orderComment" placeholder="Valfri kommentar" />
                     </label>
@@ -604,7 +604,7 @@ const SCALE_PRESETS = {
   '3840x2160': { label: '4K (3840×2160)', width: 3840, height: 2160 },
 };
 const DEFAULT_SCALE_PRESET = '1920x1080';
-const SCALE_STORAGE_KEY = 'benny_ui_scale_preset';
+const SCALE_STORAGE_KEY = 'redline_ui_scale_preset';
 const SCALE_BASE_WIDTH = 1536;
 const SCALE_MIN_FACTOR = 0.45;
 const SCALE_MAX_FACTOR = 1.3;
@@ -635,8 +635,8 @@ if (defaultLayoutSourceHydrated) {
   layoutCardState = deepCloneLayout(defaultLayoutSourceHydrated.cards);
 }
 
-const LOCAL_LAYOUT_KEY_PREFIX = 'benny_layout_local_';
-const LOCAL_LAYOUT_SCOPE_PREF_PREFIX = 'benny_layout_scope_pref_';
+const LOCAL_LAYOUT_KEY_PREFIX = 'redline_layout_local_';
+const LOCAL_LAYOUT_SCOPE_PREF_PREFIX = 'redline_layout_scope_pref_';
 
 let layoutSources = {
   global: cloneLayoutSource(defaultLayoutSourceHydrated) || {
@@ -924,6 +924,37 @@ function canViewSection(sectionName){
       return hasPermission('can_view_admin');
     default:
       return true;
+  }
+}
+
+const mechanicDirectory = [];
+
+function setMechanicOptions(list){
+  if (!mechanicInput) return;
+  const source = Array.isArray(list) ? list : [];
+  mechanicDirectory.length = 0;
+  source.forEach(item => {
+    const personnummer = String(item.personnummer || '').trim();
+    const fullName = String(item.full_name || '').trim();
+    if (!personnummer || !fullName) return;
+    mechanicDirectory.push({ personnummer, full_name: fullName });
+  });
+
+  const currentPersonnummer = String(currentUser?.personnummer || '').trim();
+  mechanicDirectory.sort((a, b) => {
+    if (a.personnummer === currentPersonnummer) return -1;
+    if (b.personnummer === currentPersonnummer) return 1;
+    return a.full_name.localeCompare(b.full_name, 'sv');
+  });
+
+  mechanicInput.innerHTML = mechanicDirectory
+    .map(m => `<option value="${esc(m.personnummer)}">${esc(m.full_name)}</option>`)
+    .join('');
+
+  if (currentPersonnummer && mechanicDirectory.some(m => m.personnummer === currentPersonnummer)) {
+    mechanicInput.value = currentPersonnummer;
+  } else if (mechanicDirectory.length > 0) {
+    mechanicInput.value = mechanicDirectory[0].personnummer;
   }
 }
 
@@ -3035,7 +3066,7 @@ function renderReceipts(items){
     const orderComment = String(r.order_comment || '').trim();
     const copyLines = [
       '━━━━━━━━━━━━━━━━━━━',
-      `📋 Benny's Arbetsorder #${r.id}`,
+      `📋 Redline Performance Arbetsorder #${r.id}`,
       `🔧 Typ av jobb - ${workTypeHeading || '-'}`,
       `🚗 Nummerplåt - ${String(r.plate || '').trim() || '-'}`,
     ];
@@ -3736,7 +3767,7 @@ async function refresh(){
       return;
     }
     currentUser = me.user;
-      mechanicInput.value = currentUser.full_name || '';
+      setMechanicOptions([{ personnummer: currentUser.personnummer, full_name: currentUser.full_name }]);
       loginView.classList.add('hidden');
       appView.classList.remove('hidden');
       logoutBtn.classList.remove('hidden');
@@ -3780,12 +3811,15 @@ async function refresh(){
     if (!canViewPayroll) payrollSection.classList.add('hidden');
     if (!canViewAdmin) adminSection.classList.add('hidden');
 
-    const [receiptData, serviceData, discountData, payrollData] = await Promise.all([
+    const [receiptData, serviceData, discountData, payrollData, mechanicData] = await Promise.all([
       api('api_receipts'),
       api('api_service_prices'),
       api('api_discount_presets'),
-      canViewPayroll ? api('api_payroll_entries') : Promise.resolve({ entries: [] })
+      canViewPayroll ? api('api_payroll_entries') : Promise.resolve({ entries: [] }),
+      api('api_mechanics')
     ]);
+
+    setMechanicOptions(mechanicData.mechanics || []);
 
     renderReceipts(receiptData.receipts || []);
     renderServices(serviceData.services || []);
@@ -3995,7 +4029,7 @@ const attemptLogin = async () => {
     });
     showMessage('Inloggad.');
     // mark this tab as logged in so reloads keep the session
-    sessionStorage.setItem('benny_logged_in', '1');
+    sessionStorage.setItem('redline_logged_in', '1');
     await refresh();
   } catch (e) {
     showMessage(e.message);
@@ -4046,6 +4080,7 @@ document.getElementById('saveBtn').onclick = async () => {
 
     const discountMeta = window.currentReceiptDiscount || null;
     await api('api_create_receipt', 'POST', {
+      mechanic: document.getElementById('mechanic').value,
       work_type: workType,
       styling_parts: stylingPayload,
       performance_parts: performancePayload,
@@ -4247,7 +4282,7 @@ async function resetReceiptSent(id){
 logoutBtn.onclick = async () => {
   await api('api_logout', 'POST');
   // clear tab login marker so a reload requires login
-  sessionStorage.removeItem('benny_logged_in');
+  sessionStorage.removeItem('redline_logged_in');
   await refresh();
 };
 
@@ -4270,7 +4305,7 @@ updateMobileTabAvailability();
 closeMobileNavMenu();
 // If this tab previously logged in (sessionStorage), keep the session across reloads.
 // sessionStorage is cleared when the tab/window is closed, satisfying the "require login after close" requirement.
-if (sessionStorage.getItem('benny_logged_in') === '1') {
+if (sessionStorage.getItem('redline_logged_in') === '1') {
   refresh();
 } else {
   // show login view by default
