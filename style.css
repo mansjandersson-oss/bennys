@@ -887,6 +887,14 @@ body.layout-stack-mode .layout-card-drag-handle,
   align-self: center;
 }
 
+/* Spara kvitto-knappen ska inte vara överdrivet lång */
+#receiptsSection .receipt-side button,
+#receiptsSection #saveBtn{
+  width: min(260px, 100%) !important;
+  max-width: min(260px, 100%) !important;
+  align-self: center;
+}
+
 /* ===== Tabeller mer Redline (tight + tydligt) ===== */
 table{
   border-collapse: separate;
@@ -1046,3 +1054,13 @@ button:hover{
   display:none !important;
 }
 
+
+/* Hide legacy layout drag/resize handles (prevents bottom "Kvitton..." button) */
+.layout-drag-handle,
+.layout-card-drag-handle,
+.layout-resize-handle,
+.layout-card-resize-handle,
+.layout-section-drop-indicator,
+.layout-card-drop-indicator {
+  display: none !important;
+}
