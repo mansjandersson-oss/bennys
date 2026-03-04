@@ -1052,3 +1052,28 @@ button:hover{
     grid-template-columns: 1fr;
   }
 }
+
+/* Center logo in top panel while keeping controls on the right */
+.top{
+  justify-content: center;
+}
+.top-right{
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@media (max-width: 900px){
+  .top-right{
+    position: static;
+    right: auto;
+    top: auto;
+    transform: none;
+  }
+}
+
+/* Resolution selector removed globally */
+.scale-select-wrap{
+  display:none !important;
+}
