@@ -3006,6 +3006,72 @@ function copyWorkOrder(encodedText, btn) {
     markFailure();
   }
 }
+
+function buildCustomerInvoiceCopyText(receiptId){
+  const selectedReceipt = (allReceipts || []).find(x => Number(x.id) === Number(receiptId));
+  if (!selectedReceipt) return '';
+
+  const customerKey = String(selectedReceipt.customer || '').trim().toLocaleLowerCase('sv-SE');
+  const hasCustomer = customerKey !== '';
+  const relatedReceipts = (allReceipts || [])
+    .filter(row => {
+      if (Number(row.is_sent || 0) === 1) return false;
+      const rowCustomerKey = String(row.customer || '').trim().toLocaleLowerCase('sv-SE');
+      if (hasCustomer) return rowCustomerKey === customerKey;
+      return Number(row.id) === Number(selectedReceipt.id);
+    })
+    .sort((a, b) => Number(a.id) - Number(b.id));
+
+  if (relatedReceipts.length === 0) return '';
+
+  const customerLabel = String(selectedReceipt.customer || '').trim() || '-';
+  const invoiceTitle = relatedReceipts.length > 1
+    ? `📋 Redline Performance Samlingsfaktura (${relatedReceipts.length} kvitton)`
+    : '📋 Redline Performance Arbetsorder';
+
+  const lines = [
+    '━━━━━━━━━━━━━━━━━━━',
+    invoiceTitle,
+    `👤 Kund - ${customerLabel}`,
+    '━━━━━━━━━━━━━━━━━━━',
+  ];
+
+  let grandTotal = 0;
+  relatedReceipts.forEach((row, idx) => {
+    const rowAmount = Number(row.amount || 0);
+    grandTotal += rowAmount;
+    const rowComment = String(row.order_comment || '').trim();
+    lines.push(`#${row.id} · ${String(row.work_type || '').trim() || '-'}`);
+    lines.push(`🚗 ${String(row.plate || '').trim() || '-'}`);
+    if (rowComment) {
+      lines.push(`📝 ${rowComment}`);
+    }
+    lines.push(`💰 ${rowAmount.toFixed(2)} kr`);
+    if (idx < relatedReceipts.length - 1) {
+      lines.push('');
+    }
+  });
+
+  if (relatedReceipts.length > 1) {
+    lines.push('━━━━━━━━━━━━━━━━━━━');
+    lines.push(`Totalsumma: ${grandTotal.toFixed(2)} kr`);
+  }
+
+  lines.push('');
+  lines.push(`👤 Skapad av - ${String(selectedReceipt.mechanic_name || selectedReceipt.mechanic || '').trim() || '-'}`);
+  lines.push('━━━━━━━━━━━━━━━━━━━');
+  return `${lines.join('\n')}\n`;
+}
+
+function copyReceiptWorkOrder(receiptId, btn){
+  const text = buildCustomerInvoiceCopyText(receiptId);
+  if (!text) {
+    showMessage('Inget att kopiera för detta kvitto.');
+    return;
+  }
+  copyWorkOrder(encodeURIComponent(text), btn);
+}
+
 function fallbackCopy(text) {
   const textarea = document.createElement('textarea');
   textarea.value = text;
@@ -3046,38 +3112,10 @@ function renderReceipts(items){
     const editBtns = canEdit ? `<div class="table-actions"><button type="button" class="edit-btn" onclick="editReceipt(${r.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteReceipt(${r.id})">Radera</button></div>` : '';
     const stylingText = r.styling_parts === '' ? '0' : r.styling_parts;
     const performanceText = r.performance_parts === '' ? '0' : r.performance_parts;
-    const stylingCount = Number(r.styling_parts || 0);
-    const performanceCount = Number(r.performance_parts || 0);
-    const workTypeHeading = (String(r.work_type || 'Typ av Arbete').trim() || 'Typ av Arbete')
-      .split('&')
-      .map(part => part.trim())
-      .filter(Boolean)
-      .map(part => {
-        if (part === 'Styling' && Number.isFinite(stylingCount) && stylingCount > 1) return `${part} x${stylingCount}`;
-        if (part === 'Prestanda' && Number.isFinite(performanceCount) && performanceCount > 1) return `${part} x${performanceCount}`;
-        return part;
-      })
-      .join(' & ');
-    const orderComment = String(r.order_comment || '').trim();
-    const copyLines = [
-      '━━━━━━━━━━━━━━━━━━━',
-      `📋 Redline Performance Arbetsorder #${r.id}`,
-      `🔧 Typ av jobb - ${workTypeHeading || '-'}`,
-      `🚗 Nummerplåt - ${String(r.plate || '').trim() || '-'}`,
-    ];
-    if (orderComment) {
-      copyLines.push('');
-      copyLines.push(`📝 Referens - ${orderComment}`);
-    }
-    copyLines.push('');
-    copyLines.push(`👤 Skapad av - ${String(r.mechanic_name || r.mechanic || '').trim() || '-'}`);
-    copyLines.push('━━━━━━━━━━━━━━━━━━━');
-    const copyText = `${copyLines.join('\n')}\n`;
     const isSent = Number(r.is_sent) === 1;
-    const encodedCopy = encodeURIComponent(copyText);
     const copyBtn = isSent
       ? '<button type="button" class="secondary" disabled>Kopiera</button>'
-      : `<button type="button" onclick="copyWorkOrder(&quot;${encodedCopy}&quot;, this)">Kopiera</button>`;
+      : `<button type="button" onclick="copyReceiptWorkOrder(${r.id}, this)">Kopiera</button>`;
     const workOrderActions = [copyBtn];
     if (isSent) {
       workOrderActions.push('<span class="sent-badge">Skickad</span>');
