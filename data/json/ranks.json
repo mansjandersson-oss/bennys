@@ -1,0 +1,27 @@
+{
+    "next_id": 3,
+    "rows": [
+        {
+            "name": "Ägare",
+            "can_view_admin": 1,
+            "can_manage_users": 1,
+            "can_manage_prices": 1,
+            "can_edit_receipts": 1,
+            "can_view_customers": 1,
+            "can_view_vehicles": 1,
+            "can_view_prices": 1,
+            "id": 1
+        },
+        {
+            "name": "Anställd",
+            "can_view_admin": 0,
+            "can_manage_users": 0,
+            "can_manage_prices": 0,
+            "can_edit_receipts": 0,
+            "can_view_customers": 1,
+            "can_view_vehicles": 1,
+            "can_view_prices": 1,
+            "id": 2
+        }
+    ]
+}
