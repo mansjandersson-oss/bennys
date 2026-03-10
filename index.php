@@ -738,7 +738,6 @@ if ($action === 'api_mark_receipt_sent' && $_SERVER['REQUEST_METHOD'] === 'POST'
 
 if ($action === 'api_customers' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     require_login();
-    require_permission('can_view_customers');
     $rows = $db->rows('customer_registry');
     usort($rows, static fn($a, $b) => strcmp((string) ($a['customer_name'] ?? ''), (string) ($b['customer_name'] ?? '')));
     json_response(['ok' => true, 'customers' => $rows]);
