@@ -1,4 +1,4 @@
-# Benny's Motorworks (Minimal hemsida)
+# Redline Performance (Minimal hemsida)
 
 Ren hemsida med **minimal PHP** + **HTML/JS**.
 Ingen lokal app-launcher, inga batch/shell-startscript.
@@ -7,10 +7,10 @@ Ingen lokal app-launcher, inga batch/shell-startscript.
 - Inloggning med personnummer + lösenord
 - Skapa kvitto
 - Lista kvitton
-- Kopiera arbetsorder (`Benny's Arbetsorder - 00000`)
+- Kopiera arbetsorder (`Redline Performance Arbetsorder - 00000`)
 - Kundregister (namn + telefon)
 - Fordonsdatabas (regplåt + modell)
-- SQLite lagring i `data/bennys.sqlite`
+- JSON-lagring per tabell i `data/json/*.json`
 
 ## Kör sidan
 Starta bara en vanlig PHP-server i projektmappen:
@@ -21,6 +21,24 @@ php -S 127.0.0.1:8000
 
 Öppna sedan:
 - `http://127.0.0.1:8000/index.php`
+
+
+## Discord webhook för kvitton (valfritt)
+Du kan automatiskt posta varje nytt kvitto till Discord och få tillbaka en text som frontend kopierar till urklipp.
+
+1. Skapa en Discord webhook i din kanal.
+2. Sätt webhook via **Admin → Discord webhook (Admin)** i appen (kräver användarhantering-behörighet), eller använd miljövariabeln `DISCORD_RECEIPT_WEBHOOK_URL`.
+
+Exempel:
+
+```bash
+DISCORD_RECEIPT_WEBHOOK_URL="https://discord.com/api/webhooks/..." php -S 127.0.0.1:8000
+```
+
+När ett kvitto sparas:
+- backend postar kvittotext till webhooken (`wait=true`)
+- svaret returneras till frontend
+- frontend försöker kopiera svarstexten till urklipp automatiskt
 
 ## Demo-konton
 - `19900101-1234 / motor123`
