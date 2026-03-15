@@ -366,6 +366,17 @@
             </div>
           </div>
 
+          <div class="card">
+            <h2>Discord webhook (Admin)</h2>
+            <p class="small">Används för notiser när anställda skapas/uppdateras och för kvitto-webhook.</p>
+            <div class="row">
+              <label>Webhook URL
+                <input id="adminDiscordWebhookUrl" placeholder="https://discord.com/api/webhooks/..." />
+              </label>
+            </div>
+            <button id="saveDiscordWebhookBtn" type="button">Spara webhook</button>
+          </div>
+
           <div class="card admin-user-card">
             <h2>Skapa / uppdatera användare</h2>
             <div class="row">
@@ -3871,6 +3882,10 @@ async function refresh(){
       const el = document.getElementById(id);
       if (el) el.disabled = !canManagePrices;
     });
+    ['adminDiscordWebhookUrl','saveDiscordWebhookBtn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = !canManageUsers;
+    });
     if (!canViewCustomers) customersSection.classList.add('hidden');
     if (!canViewVehicles) vehiclesSection.classList.add('hidden');
     if (!canSeePrices) pricesSection.classList.add('hidden');
@@ -3923,10 +3938,18 @@ async function refresh(){
     }
 
     if (canManageUsers) {
-      const rankData = await api('api_ranks');
+      const [rankData, webhookData] = await Promise.all([
+        api('api_ranks'),
+        api('api_admin_webhook_get')
+      ]);
       allRanks = rankData.ranks || [];
       renderRankOptions();
       renderRanks(allRanks);
+      const webhookInput = document.getElementById('adminDiscordWebhookUrl');
+      if (webhookInput) webhookInput.value = webhookData.webhook_url || '';
+    } else {
+      const webhookInput = document.getElementById('adminDiscordWebhookUrl');
+      if (webhookInput) webhookInput.value = '';
     }
 
     collectLayoutCards();
@@ -4141,7 +4164,7 @@ document.getElementById('saveBtn').onclick = async () => {
     const performancePayload = findCategoryQty('prestanda');
 
     const discountMeta = window.currentReceiptDiscount || null;
-    await api('api_create_receipt', 'POST', {
+    const createResult = await api('api_create_receipt', 'POST', {
       mechanic: document.getElementById('mechanic').value,
       work_type: workType,
       styling_parts: stylingPayload,
@@ -4154,7 +4177,31 @@ document.getElementById('saveBtn').onclick = async () => {
       discount_name: discountMeta?.name || '',
       discount_percent: discountMeta?.percent || 0,
     });
-    showMessage('Kvitto sparat: ' + workType);
+
+    const discordReplyText = String(createResult?.discord_reply_text || '').trim();
+    const discordEnabled = Boolean(createResult?.discord_webhook_enabled);
+    const discordSent = Boolean(createResult?.discord_webhook_sent);
+    const discordError = String(createResult?.discord_error || '').trim();
+
+    if (discordReplyText) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(discordReplyText);
+        } catch (e) {
+          fallbackCopy(discordReplyText);
+        }
+      } else {
+        fallbackCopy(discordReplyText);
+      }
+    }
+
+    if (discordEnabled && discordSent && discordReplyText) {
+      showMessage('Kvitto sparat och Discord-svar kopierat till urklipp.');
+    } else if (discordEnabled && !discordSent) {
+      showMessage('Kvitto sparat, men Discord webhook misslyckades: ' + (discordError || 'okänt fel'));
+    } else {
+      showMessage('Kvitto sparat: ' + workType);
+    }
     resetReceiptForm();
     await refresh();
   } catch (e) {
@@ -4226,6 +4273,18 @@ document.getElementById('saveServiceBtn').onclick = async () => {
     document.getElementById('serviceId').value = '';
     document.getElementById('serviceHasDropdown').value = '0';
     document.getElementById('serviceCategory').value = '';
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+};
+
+document.getElementById('saveDiscordWebhookBtn').onclick = async () => {
+  try {
+    await api('api_admin_webhook_save', 'POST', {
+      webhook_url: document.getElementById('adminDiscordWebhookUrl').value,
+    });
+    showMessage('Discord webhook sparad.');
     await refresh();
   } catch (e) {
     showMessage(e.message);

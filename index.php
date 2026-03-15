@@ -38,6 +38,7 @@ const TABLES = [
     'payroll_entries',
     'activity_log',
     'layout_settings',
+    'app_settings',
 ];
 
 final class JsonDb
@@ -195,6 +196,147 @@ function normalize_layout_payload(array $layoutRaw): array
 function now_iso(): string
 {
     return date('Y-m-d H:i:s');
+}
+
+
+function get_app_setting(JsonDb $db, string $settingKey, string $default = ''): string
+{
+    foreach ($db->rows('app_settings') as $row) {
+        if ((string) ($row['setting_key'] ?? '') !== $settingKey) continue;
+        return (string) ($row['setting_value'] ?? '');
+    }
+    return $default;
+}
+
+function set_app_setting(JsonDb $db, string $settingKey, string $settingValue): void
+{
+    $rows = $db->rows('app_settings');
+    foreach ($rows as &$row) {
+        if ((string) ($row['setting_key'] ?? '') !== $settingKey) continue;
+        $row['setting_value'] = $settingValue;
+        $row['updated_at'] = now_iso();
+        $db->setRows('app_settings', $rows);
+        return;
+    }
+    unset($row);
+
+    $db->insert('app_settings', [
+        'setting_key' => $settingKey,
+        'setting_value' => $settingValue,
+        'updated_at' => now_iso(),
+    ]);
+}
+
+function discord_webhook_url(JsonDb $db): string
+{
+    $saved = trim(get_app_setting($db, 'discord_receipt_webhook', ''));
+    if ($saved !== '') {
+        return $saved;
+    }
+    return trim((string) getenv('DISCORD_RECEIPT_WEBHOOK_URL'));
+}
+
+function build_receipt_discord_copy_text(array $receipt, array $user): string
+{
+    $receiptId = (int) ($receipt['id'] ?? 0);
+    $workType = trim((string) ($receipt['work_type'] ?? ''));
+    $plate = trim((string) ($receipt['plate'] ?? ''));
+    $customer = trim((string) ($receipt['customer'] ?? ''));
+    $amount = number_format((float) ($receipt['amount'] ?? 0), 2, '.', '');
+    $reference = trim((string) ($receipt['order_comment'] ?? ''));
+    $mechanic = trim((string) ($user['full_name'] ?? ''));
+
+    $lines = [
+        '━━━━━━━━━━━━━━━━━━━',
+        "📋 Redline Performance Arbetsorder #{$receiptId}",
+        '🔧 Typ av jobb - ' . ($workType !== '' ? $workType : '-'),
+        '👤 Kund - ' . ($customer !== '' ? $customer : '-'),
+        '🚗 Nummerplåt - ' . ($plate !== '' ? $plate : '-'),
+        "💰 Summa - {$amount} kr",
+    ];
+
+    if ($reference !== '') {
+        $lines[] = '📝 Referens - ' . $reference;
+    }
+
+    $lines[] = '👤 Skapad av - ' . ($mechanic !== '' ? $mechanic : '-');
+    $lines[] = '━━━━━━━━━━━━━━━━━━━';
+    return implode("\n", $lines);
+}
+
+function send_receipt_to_discord(JsonDb $db, array $receipt, array $user): array
+{
+    $url = discord_webhook_url($db);
+    if ($url === '') {
+        return ['enabled' => false, 'sent' => false, 'reply_text' => '', 'error' => ''];
+    }
+
+    $copyText = build_receipt_discord_copy_text($receipt, $user);
+    $endpoint = str_contains($url, '?') ? ($url . '&wait=true') : ($url . '?wait=true');
+    $payload = ['content' => $copyText];
+
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'POST',
+            'header' => "Content-Type: application/json\r\n",
+            'content' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+            'timeout' => 6,
+            'ignore_errors' => true,
+        ],
+    ]);
+
+    $responseRaw = @file_get_contents($endpoint, false, $context);
+    $statusCode = 0;
+    $headers = $http_response_header ?? [];
+    if (is_array($headers) && isset($headers[0]) && preg_match('/\s(\d{3})\s/', (string) $headers[0], $m)) {
+        $statusCode = (int) $m[1];
+    }
+
+    if ($responseRaw === false || $statusCode < 200 || $statusCode >= 300) {
+        $error = $responseRaw === false ? 'Webhook-anrop misslyckades.' : 'Webhook svarade med HTTP ' . $statusCode . '.';
+        return ['enabled' => true, 'sent' => false, 'reply_text' => $copyText, 'error' => $error];
+    }
+
+    $decoded = json_decode((string) $responseRaw, true);
+    $replyText = is_array($decoded) ? trim((string) ($decoded['content'] ?? '')) : '';
+    if ($replyText === '') {
+        $replyText = $copyText;
+    }
+
+    return ['enabled' => true, 'sent' => true, 'reply_text' => $replyText, 'error' => ''];
+}
+
+function send_admin_user_event_to_discord(JsonDb $db, array $actor, array $targetUser, string $eventType, string $rankName): void
+{
+    $url = discord_webhook_url($db);
+    if ($url === '') return;
+
+    $actorName = trim((string) ($actor['full_name'] ?? ''));
+    $targetName = trim((string) ($targetUser['full_name'] ?? ''));
+    $targetPnr = trim((string) ($targetUser['personnummer'] ?? ''));
+    $eventLabel = $eventType === 'created' ? 'Ny anställd skapad' : 'Anställd uppdaterad';
+
+    $content = implode("\n", [
+        '🛠️ Redline Performance - Admin uppdatering',
+        "Händelse: {$eventLabel}",
+        'Anställd: ' . ($targetName !== '' ? $targetName : '-'),
+        'Personnummer: ' . ($targetPnr !== '' ? $targetPnr : '-'),
+        'Roll: ' . ($rankName !== '' ? $rankName : '-'),
+        'Utfört av: ' . ($actorName !== '' ? $actorName : '-'),
+    ]);
+
+    $endpoint = str_contains($url, '?') ? ($url . '&wait=false') : ($url . '?wait=false');
+    $payload = ['content' => $content];
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'POST',
+            'header' => "Content-Type: application/json\r\n",
+            'content' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+            'timeout' => 6,
+            'ignore_errors' => true,
+        ],
+    ]);
+    @file_get_contents($endpoint, false, $context);
 }
 
 function session_user(): array
@@ -679,7 +821,15 @@ if ($action === 'api_create_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     upsert_vehicle_from_receipt($db, $plate);
 
     log_activity($db, $user, 'receipt_created', 'receipt', (int) $inserted['id'], 'Kvitto skapades.');
-    json_response(['ok' => true]);
+    $discordResult = send_receipt_to_discord($db, $inserted, $user);
+
+    json_response([
+        'ok' => true,
+        'discord_webhook_enabled' => (bool) ($discordResult['enabled'] ?? false),
+        'discord_webhook_sent' => (bool) ($discordResult['sent'] ?? false),
+        'discord_reply_text' => (string) ($discordResult['reply_text'] ?? ''),
+        'discord_error' => (string) ($discordResult['error'] ?? ''),
+    ]);
 }
 
 if ($action === 'api_update_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -925,6 +1075,31 @@ if ($action === 'api_delete_rank' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     json_response(['ok' => true]);
 }
 
+if ($action === 'api_admin_webhook_get' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    require_login();
+    require_permission('can_manage_users');
+    json_response([
+        'ok' => true,
+        'webhook_url' => discord_webhook_url($db),
+        'has_saved_webhook' => trim(get_app_setting($db, 'discord_receipt_webhook', '')) !== '',
+    ]);
+}
+
+if ($action === 'api_admin_webhook_save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $user = require_login();
+    require_permission('can_manage_users');
+    $d = read_json_input();
+    $webhookUrl = trim((string) ($d['webhook_url'] ?? ''));
+
+    if ($webhookUrl !== '' && !preg_match('/^https:\/\/discord\.com\/api\/webhooks\/.+$/', $webhookUrl)) {
+        json_response(['ok' => false, 'error' => 'Ange en giltig Discord webhook-URL eller lämna tomt.'], 422);
+    }
+
+    set_app_setting($db, 'discord_receipt_webhook', $webhookUrl);
+    log_activity($db, $user, 'discord_webhook_saved', 'app_settings', null, 'Discord webhook uppdaterades.');
+    json_response(['ok' => true]);
+}
+
 if ($action === 'api_admin_summary' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     require_login();
     require_permission('can_view_admin');
@@ -986,7 +1161,7 @@ if ($action === 'api_admin_summary' && $_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 if ($action === 'api_admin_save_user' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    require_login();
+    $actor = require_login();
     require_permission('can_manage_users');
     $d = read_json_input();
     $id = (int) ($d['id'] ?? 0);
@@ -1001,6 +1176,7 @@ if ($action === 'api_admin_save_user' && $_SERVER['REQUEST_METHOD'] === 'POST') 
     $isAdmin = ((int) ($rank['can_view_admin'] ?? 0) === 1 && (int) ($rank['can_manage_users'] ?? 0) === 1) ? 1 : 0;
 
     $rows = $db->rows('users');
+    $rankName = (string) ($rank['name'] ?? '-');
     foreach ($rows as &$u) {
         if (($id > 0 && (int) $u['id'] === $id) || ($id <= 0 && (string) ($u['personnummer'] ?? '') === $personnummer)) {
             $u['personnummer'] = $personnummer;
@@ -1009,18 +1185,22 @@ if ($action === 'api_admin_save_user' && $_SERVER['REQUEST_METHOD'] === 'POST') 
             $u['rank_id'] = $rankId > 0 ? $rankId : null;
             $u['is_admin'] = $isAdmin;
             $db->setRows('users', $rows);
+            send_admin_user_event_to_discord($db, $actor, $u, 'updated', $rankName);
+            log_activity($db, $actor, 'admin_user_saved', 'user', (int) ($u['id'] ?? 0), 'Användare uppdaterades.', ['full_name' => $fullName, 'rank' => $rankName]);
             json_response(['ok' => true]);
         }
     }
     unset($u);
 
-    $db->insert('users', [
+    $insertedUser = $db->insert('users', [
         'personnummer' => $personnummer,
         'full_name' => $fullName,
         'password' => $password,
         'rank_id' => $rankId > 0 ? $rankId : null,
         'is_admin' => $isAdmin,
     ]);
+    send_admin_user_event_to_discord($db, $actor, $insertedUser, 'created', $rankName);
+    log_activity($db, $actor, 'admin_user_created', 'user', (int) ($insertedUser['id'] ?? 0), 'Användare skapades.', ['full_name' => $fullName, 'rank' => $rankName]);
     json_response(['ok' => true]);
 }
 
