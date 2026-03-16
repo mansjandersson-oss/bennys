@@ -339,6 +339,54 @@ function send_admin_user_event_to_discord(JsonDb $db, array $actor, array $targe
     @file_get_contents($endpoint, false, $context);
 }
 
+function discord_command_secret(): string
+{
+    return trim((string) getenv('DISCORD_COMMAND_SECRET'));
+}
+
+function parse_discord_receipt_command(string $command): array
+{
+    $trimmed = trim($command);
+    if ($trimmed === '') {
+        return ['ok' => false, 'error' => 'Kommandot är tomt.'];
+    }
+
+    $normalized = preg_replace('/^\/(kvitto|receipt)\s*/iu', '', $trimmed);
+    $parts = array_map('trim', explode(';', (string) $normalized));
+    if (count($parts) < 4) {
+        return ['ok' => false, 'error' => 'Format: /kvitto regnr;kund;jobb;summa;[kommentar];[mekaniker_pnr]'];
+    }
+
+    $plate = normalize_plate($parts[0] ?? '');
+    $customer = trim((string) ($parts[1] ?? ''));
+    $workType = trim((string) ($parts[2] ?? ''));
+    $amount = (float) str_replace(',', '.', (string) ($parts[3] ?? '0'));
+    $orderComment = trim((string) ($parts[4] ?? ''));
+    $mechanic = trim((string) ($parts[5] ?? ''));
+
+    if (!is_valid_plate($plate)) {
+        return ['ok' => false, 'error' => 'Ogiltigt regnummer i kommando.'];
+    }
+    if ($customer === '' || $workType === '') {
+        return ['ok' => false, 'error' => 'Kund och jobbtyp krävs i kommandot.'];
+    }
+    if (!is_finite($amount) || $amount <= 0) {
+        return ['ok' => false, 'error' => 'Summa måste vara större än 0.'];
+    }
+
+    return [
+        'ok' => true,
+        'payload' => [
+            'plate' => $plate,
+            'customer' => $customer,
+            'work_type' => $workType,
+            'amount' => $amount,
+            'order_comment' => $orderComment,
+            'mechanic' => $mechanic,
+        ],
+    ];
+}
+
 function session_user(): array
 {
     return [
@@ -776,6 +824,84 @@ if ($action === 'api_receipts' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     }
     unset($row);
     json_response(['ok' => true, 'receipts' => $rows]);
+}
+
+if ($action === 'api_discord_create_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $d = read_json_input();
+    $secret = trim((string) ($d['secret'] ?? ''));
+    $expected = discord_command_secret();
+    if ($expected === '' || !hash_equals($expected, $secret)) {
+        json_response(['ok' => false, 'error' => 'Ogiltig Discord-hemlighet.'], 403);
+    }
+
+    $payload = [];
+    if (isset($d['command']) && is_string($d['command'])) {
+        $parsed = parse_discord_receipt_command((string) $d['command']);
+        if (!(bool) ($parsed['ok'] ?? false)) {
+            json_response(['ok' => false, 'error' => (string) ($parsed['error'] ?? 'Ogiltigt kommando.')], 422);
+        }
+        $payload = (array) ($parsed['payload'] ?? []);
+    } else {
+        $payload = [
+            'plate' => normalize_plate((string) ($d['plate'] ?? '')),
+            'customer' => trim((string) ($d['customer'] ?? '')),
+            'work_type' => trim((string) ($d['work_type'] ?? '')),
+            'amount' => (float) ($d['amount'] ?? 0),
+            'order_comment' => trim((string) ($d['order_comment'] ?? '')),
+            'mechanic' => trim((string) ($d['mechanic'] ?? '')),
+        ];
+    }
+
+    $plate = normalize_plate((string) ($payload['plate'] ?? ''));
+    if (!is_valid_plate($plate)) json_response(['ok' => false, 'error' => 'Ogiltigt registreringsnummer.'], 422);
+
+    $customerName = trim((string) ($payload['customer'] ?? ''));
+    $workType = trim((string) ($payload['work_type'] ?? ''));
+    $amount = (float) ($payload['amount'] ?? 0);
+    if ($customerName === '' || $workType === '' || $amount <= 0) {
+        json_response(['ok' => false, 'error' => 'Kund, jobbtyp och summa måste anges.'], 422);
+    }
+
+    $selectedMechanic = trim((string) ($payload['mechanic'] ?? ''));
+    $validMechanic = '';
+    if ($selectedMechanic !== '') {
+        foreach ($db->rows('users') as $candidateMechanic) {
+            if ((string) ($candidateMechanic['personnummer'] ?? '') === $selectedMechanic) {
+                $validMechanic = $selectedMechanic;
+                break;
+            }
+        }
+    }
+    if ($validMechanic === '') {
+        $users = $db->rows('users');
+        $validMechanic = (string) (($users[0]['personnummer'] ?? '') ?: 'discord-bot');
+    }
+
+    $inserted = $db->insert('receipts', [
+        'mechanic' => $validMechanic,
+        'work_type' => $workType,
+        'styling_parts' => '',
+        'performance_parts' => '',
+        'amount' => $amount,
+        'expense_total' => (float) ($d['expense_total'] ?? 0),
+        'discount_name' => '',
+        'discount_percent' => 0,
+        'customer' => $customerName,
+        'customer_personnummer' => '',
+        'plate' => $plate,
+        'order_comment' => trim((string) ($payload['order_comment'] ?? '')),
+        'created_at' => now_iso(),
+        'is_sent' => 0,
+    ]);
+
+    upsert_customer_from_receipt($db, $customerName, '', null);
+    upsert_vehicle_from_receipt($db, $plate);
+
+    $systemActor = ['personnummer' => 'discord-bot', 'full_name' => 'Discord Bot'];
+    log_activity($db, $systemActor, 'receipt_created_discord', 'receipt', (int) $inserted['id'], 'Kvitto skapades via Discord-kommando.');
+
+    $reply = build_receipt_discord_copy_text($inserted, ['full_name' => 'Discord Bot']);
+    json_response(['ok' => true, 'receipt_id' => (int) $inserted['id'], 'reply_text' => $reply]);
 }
 
 if ($action === 'api_create_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {

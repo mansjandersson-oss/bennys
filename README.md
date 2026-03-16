@@ -40,6 +40,30 @@ När ett kvitto sparas:
 - svaret returneras till frontend
 - frontend försöker kopiera svarstexten till urklipp automatiskt
 
+
+### Skapa kvitto från Discord-kommando (webhook)
+Du kan låta en Discord-bot/webhook skapa kvitton via endpoint:
+`POST index.php?action=api_discord_create_receipt`
+
+Kräver miljövariabel:
+
+```bash
+DISCORD_COMMAND_SECRET="byt-denna-hemlighet" php -S 127.0.0.1:8000
+```
+
+Exempel payload med kommandoformat:
+
+```json
+{
+  "secret": "byt-denna-hemlighet",
+  "command": "/kvitto ABC123;Volvo AB;Service + Styling;2499;Akutjobb;19900101-1234"
+}
+```
+
+Format: `/kvitto regnr;kund;jobb;summa;[kommentar];[mekaniker_pnr]`
+
+Endpointen svarar med `receipt_id` och `reply_text` som kan skickas tillbaka i Discord.
+
 ## Demo-konton
 - `19900101-1234 / motor123`
 - `19920202-5678 / garage123`
