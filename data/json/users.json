@@ -1,0 +1,29 @@
+{
+    "next_id": 4,
+    "rows": [
+        {
+            "personnummer": "19900101-1234",
+            "full_name": "Stefan Örn",
+            "password": "motor123",
+            "rank_id": 1,
+            "is_admin": 1,
+            "id": 1
+        },
+        {
+            "personnummer": "19920202-5678",
+            "full_name": "Garage Anställd",
+            "password": "garage123",
+            "rank_id": 2,
+            "is_admin": 0,
+            "id": 2
+        },
+        {
+            "personnummer": "19950505-9012",
+            "full_name": "Benny Demo",
+            "password": "bennys123",
+            "rank_id": 2,
+            "is_admin": 0,
+            "id": 3
+        }
+    ]
+}
