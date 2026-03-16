@@ -1,0 +1,23 @@
+{
+    "next_id": 3,
+    "rows": [
+        {
+            "service_name": "Service",
+            "sale_price": 300,
+            "expense_cost": 120,
+            "is_active": 1,
+            "has_dropdown": 0,
+            "service_category": "Övrigt",
+            "id": 1
+        },
+        {
+            "service_name": "Reparation",
+            "sale_price": 1000,
+            "expense_cost": 500,
+            "is_active": 1,
+            "has_dropdown": 0,
+            "service_category": "Övrigt",
+            "id": 2
+        }
+    ]
+}
