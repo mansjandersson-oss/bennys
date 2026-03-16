@@ -236,6 +236,117 @@ function discord_webhook_url(JsonDb $db): string
     return trim((string) getenv('DISCORD_RECEIPT_WEBHOOK_URL'));
 }
 
+function discord_bot_token(): string
+{
+    return trim((string) getenv('DISCORD_BOT_TOKEN'));
+}
+
+function discord_bot_channel_id(): string
+{
+    return trim((string) getenv('DISCORD_BOT_CHANNEL_ID'));
+}
+
+function send_discord_message_via_bot(string $content, bool $waitForReply = true): array
+{
+    $token = discord_bot_token();
+    $channelId = discord_bot_channel_id();
+    if ($token === '' || $channelId === '') {
+        return ['enabled' => false, 'sent' => false, 'reply_text' => '', 'error' => ''];
+    }
+
+    $endpoint = 'https://discord.com/api/v10/channels/' . rawurlencode($channelId) . '/messages';
+    $payload = ['content' => $content];
+
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'POST',
+            'header' => "Content-Type: application/json\r\n"
+                . "Authorization: Bot {$token}\r\n",
+            'content' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+            'timeout' => 8,
+            'ignore_errors' => true,
+        ],
+    ]);
+
+    $responseRaw = @file_get_contents($endpoint, false, $context);
+    $statusCode = 0;
+    $headers = $http_response_header ?? [];
+    if (is_array($headers) && isset($headers[0]) && preg_match('/\s(\d{3})\s/', (string) $headers[0], $m)) {
+        $statusCode = (int) $m[1];
+    }
+
+    if ($responseRaw === false || $statusCode < 200 || $statusCode >= 300) {
+        $error = $responseRaw === false ? 'Discord bot-anrop misslyckades.' : 'Discord bot svarade med HTTP ' . $statusCode . '.';
+        return ['enabled' => true, 'sent' => false, 'reply_text' => $content, 'error' => $error];
+    }
+
+    if (!$waitForReply) {
+        return ['enabled' => true, 'sent' => true, 'reply_text' => '', 'error' => ''];
+    }
+
+    $decoded = json_decode((string) $responseRaw, true);
+    $replyText = is_array($decoded) ? trim((string) ($decoded['content'] ?? '')) : '';
+    if ($replyText === '') {
+        $replyText = $content;
+    }
+
+    return ['enabled' => true, 'sent' => true, 'reply_text' => $replyText, 'error' => ''];
+}
+
+function send_discord_message_via_webhook(JsonDb $db, string $content, bool $waitForReply = true): array
+{
+    $url = discord_webhook_url($db);
+    if ($url === '') {
+        return ['enabled' => false, 'sent' => false, 'reply_text' => '', 'error' => ''];
+    }
+
+    $endpoint = str_contains($url, '?') ? ($url . '&wait=' . ($waitForReply ? 'true' : 'false')) : ($url . '?wait=' . ($waitForReply ? 'true' : 'false'));
+    $payload = ['content' => $content];
+
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'POST',
+            'header' => "Content-Type: application/json\r\n",
+            'content' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+            'timeout' => 6,
+            'ignore_errors' => true,
+        ],
+    ]);
+
+    $responseRaw = @file_get_contents($endpoint, false, $context);
+    $statusCode = 0;
+    $headers = $http_response_header ?? [];
+    if (is_array($headers) && isset($headers[0]) && preg_match('/\s(\d{3})\s/', (string) $headers[0], $m)) {
+        $statusCode = (int) $m[1];
+    }
+
+    if ($responseRaw === false || $statusCode < 200 || $statusCode >= 300) {
+        $error = $responseRaw === false ? 'Webhook-anrop misslyckades.' : 'Webhook svarade med HTTP ' . $statusCode . '.';
+        return ['enabled' => true, 'sent' => false, 'reply_text' => $content, 'error' => $error];
+    }
+
+    if (!$waitForReply) {
+        return ['enabled' => true, 'sent' => true, 'reply_text' => '', 'error' => ''];
+    }
+
+    $decoded = json_decode((string) $responseRaw, true);
+    $replyText = is_array($decoded) ? trim((string) ($decoded['content'] ?? '')) : '';
+    if ($replyText === '') {
+        $replyText = $content;
+    }
+
+    return ['enabled' => true, 'sent' => true, 'reply_text' => $replyText, 'error' => ''];
+}
+
+function send_discord_message(JsonDb $db, string $content, bool $waitForReply = true): array
+{
+    $botResult = send_discord_message_via_bot($content, $waitForReply);
+    if ((bool) ($botResult['enabled'] ?? false)) {
+        return $botResult;
+    }
+    return send_discord_message_via_webhook($db, $content, $waitForReply);
+}
+
 function build_receipt_discord_copy_text(array $receipt, array $user): string
 {
     $receiptId = (int) ($receipt['id'] ?? 0);
@@ -266,51 +377,12 @@ function build_receipt_discord_copy_text(array $receipt, array $user): string
 
 function send_receipt_to_discord(JsonDb $db, array $receipt, array $user): array
 {
-    $url = discord_webhook_url($db);
-    if ($url === '') {
-        return ['enabled' => false, 'sent' => false, 'reply_text' => '', 'error' => ''];
-    }
-
     $copyText = build_receipt_discord_copy_text($receipt, $user);
-    $endpoint = str_contains($url, '?') ? ($url . '&wait=true') : ($url . '?wait=true');
-    $payload = ['content' => $copyText];
-
-    $context = stream_context_create([
-        'http' => [
-            'method' => 'POST',
-            'header' => "Content-Type: application/json\r\n",
-            'content' => json_encode($payload, JSON_UNESCAPED_UNICODE),
-            'timeout' => 6,
-            'ignore_errors' => true,
-        ],
-    ]);
-
-    $responseRaw = @file_get_contents($endpoint, false, $context);
-    $statusCode = 0;
-    $headers = $http_response_header ?? [];
-    if (is_array($headers) && isset($headers[0]) && preg_match('/\s(\d{3})\s/', (string) $headers[0], $m)) {
-        $statusCode = (int) $m[1];
-    }
-
-    if ($responseRaw === false || $statusCode < 200 || $statusCode >= 300) {
-        $error = $responseRaw === false ? 'Webhook-anrop misslyckades.' : 'Webhook svarade med HTTP ' . $statusCode . '.';
-        return ['enabled' => true, 'sent' => false, 'reply_text' => $copyText, 'error' => $error];
-    }
-
-    $decoded = json_decode((string) $responseRaw, true);
-    $replyText = is_array($decoded) ? trim((string) ($decoded['content'] ?? '')) : '';
-    if ($replyText === '') {
-        $replyText = $copyText;
-    }
-
-    return ['enabled' => true, 'sent' => true, 'reply_text' => $replyText, 'error' => ''];
+    return send_discord_message($db, $copyText, true);
 }
 
 function send_admin_user_event_to_discord(JsonDb $db, array $actor, array $targetUser, string $eventType, string $rankName): void
 {
-    $url = discord_webhook_url($db);
-    if ($url === '') return;
-
     $actorName = trim((string) ($actor['full_name'] ?? ''));
     $targetName = trim((string) ($targetUser['full_name'] ?? ''));
     $targetPnr = trim((string) ($targetUser['personnummer'] ?? ''));
@@ -325,18 +397,7 @@ function send_admin_user_event_to_discord(JsonDb $db, array $actor, array $targe
         'Utfört av: ' . ($actorName !== '' ? $actorName : '-'),
     ]);
 
-    $endpoint = str_contains($url, '?') ? ($url . '&wait=false') : ($url . '?wait=false');
-    $payload = ['content' => $content];
-    $context = stream_context_create([
-        'http' => [
-            'method' => 'POST',
-            'header' => "Content-Type: application/json\r\n",
-            'content' => json_encode($payload, JSON_UNESCAPED_UNICODE),
-            'timeout' => 6,
-            'ignore_errors' => true,
-        ],
-    ]);
-    @file_get_contents($endpoint, false, $context);
+    send_discord_message($db, $content, false);
 }
 
 function discord_command_secret(): string
