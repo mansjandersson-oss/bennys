@@ -1161,6 +1161,17 @@ if ($action === 'api_mark_receipt_sent' && $_SERVER['REQUEST_METHOD'] === 'POST'
 if ($action === 'api_customers' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     require_login();
     $rows = $db->rows('customer_registry');
+    $presetById = [];
+    foreach ($db->rows('discount_presets') as $preset) {
+        $presetById[(int) ($preset['id'] ?? 0)] = $preset;
+    }
+    foreach ($rows as &$row) {
+        $presetId = (int) ($row['discount_preset_id'] ?? 0);
+        $preset = $presetById[$presetId] ?? null;
+        $row['discount_name'] = (string) ($preset['name'] ?? '');
+        $row['discount_percent'] = (float) ($preset['percent'] ?? 0);
+    }
+    unset($row);
     usort($rows, static fn($a, $b) => strcmp((string) ($a['customer_name'] ?? ''), (string) ($b['customer_name'] ?? '')));
     json_response(['ok' => true, 'customers' => $rows]);
 }
