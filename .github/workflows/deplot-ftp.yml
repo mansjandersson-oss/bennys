@@ -26,7 +26,7 @@ jobs:
           protocol: ftp
 
           # Uploadar INNEHÅLLET i bennys/
-          local-dir: bennys/
+          local-dir: ./
 
           # Remote path på servern
           server-dir: ${{ secrets.FTP_REMOTE_DIR }}
