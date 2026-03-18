@@ -571,6 +571,32 @@ function ensure_discount_preset(JsonDb $db, string $name, float $percent): ?int
     return (int) ($inserted['id'] ?? 0) ?: null;
 }
 
+function customer_existing_discount_preset_id(JsonDb $db, string $customerName, string $customerPersonnummer = ''): ?int
+{
+    $nameKey = normalize_customer_name_key($customerName);
+    $pnr = normalize_personnummer($customerPersonnummer);
+    if ($nameKey === '' && $pnr === '') {
+        return null;
+    }
+
+    foreach ($db->rows('customer_registry') as $customer) {
+        $customerPnr = normalize_personnummer((string) ($customer['personnummer'] ?? ''));
+        $customerNameKey = normalize_customer_name_key((string) ($customer['customer_name'] ?? ''));
+        $samePnr = $pnr !== '' && $customerPnr !== '' && $pnr === $customerPnr;
+        $sameName = $nameKey !== '' && $customerNameKey !== '' && $nameKey === $customerNameKey;
+        if (!$samePnr && !$sameName) {
+            continue;
+        }
+
+        $presetId = (int) ($customer['discount_preset_id'] ?? 0);
+        if ($presetId > 0) {
+            return $presetId;
+        }
+    }
+
+    return null;
+}
+
 function customer_receipt_count(JsonDb $db, string $customerName, string $customerPersonnummer = ''): int
 {
     $nameKey = normalize_customer_name_key($customerName);
@@ -623,7 +649,8 @@ function determine_auto_discount_preset_id(JsonDb $db, string $customerName, str
     }
 
     $receiptCount = customer_receipt_count($db, $name, $customerPersonnummer);
-    if ($receiptCount > 15) {
+    $existingDiscountPresetId = customer_existing_discount_preset_id($db, $name, $customerPersonnummer);
+    if ($receiptCount > 15 && $existingDiscountPresetId === null) {
         return ensure_discount_preset($db, 'Stammis', 25);
     }
 
