@@ -159,6 +159,7 @@
                 <tr>
                   <th>Mekaniker</th>
                   <th>Arbete</th>
+                  <th>Kund</th>
                   <th>Belopp</th>
                   <th>Detaljer</th>
                   <th>Arbetsorder</th>
@@ -3197,10 +3198,11 @@ function renderReceipts(items){
     const hasDiscount = (r.discount_name && String(r.discount_name).trim() !== '') || discountPercent > 0;
     const discountLabel = hasDiscount ? `${r.discount_name ? `${esc(r.discount_name)} ` : ''}(${percentText}%)` : '-';
     const detailRowId = `receipt-details-${r.id}`;
-    const detailCols = canEdit ? 6 : 5;
+    const detailCols = canEdit ? 7 : 6;
     return `<tr${rowClass}>
       <td>#${Number(r.id)} · ${esc(r.mechanic_name)}</td>
       <td>${esc(r.work_type)}</td>
+      <td>${esc(r.customer || "-")}</td>
       <td>${Number(r.amount).toFixed(2)}</td>
       <td><button type="button" class="secondary receipt-toggle-btn" aria-expanded="false" aria-controls="${detailRowId}" onclick="toggleReceiptDetails(this, ${r.id})">Visa</button></td>
       <td><div class="workorder-controls">${workOrderActions.join('')}</div></td>
