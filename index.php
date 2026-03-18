@@ -548,6 +548,88 @@ function find_discount_preset_id_by_name(JsonDb $db, string $discountName): ?int
     return null;
 }
 
+function ensure_discount_preset(JsonDb $db, string $name, float $percent): ?int
+{
+    $desiredPercent = max(0, min(100, $percent));
+    $existing = find_discount_preset_id_by_name($db, $name);
+    if ($existing !== null) {
+        $rows = $db->rows('discount_presets');
+        foreach ($rows as &$preset) {
+            if ((int) ($preset['id'] ?? 0) !== (int) $existing) continue;
+            $preset['percent'] = $desiredPercent;
+            $db->setRows('discount_presets', $rows);
+            break;
+        }
+        unset($preset);
+        return $existing;
+    }
+
+    $inserted = $db->insert('discount_presets', [
+        'name' => trim($name),
+        'percent' => $desiredPercent,
+    ]);
+    return (int) ($inserted['id'] ?? 0) ?: null;
+}
+
+function customer_receipt_count(JsonDb $db, string $customerName, string $customerPersonnummer = ''): int
+{
+    $nameKey = normalize_customer_name_key($customerName);
+    $pnr = normalize_personnummer($customerPersonnummer);
+    if ($nameKey === '' && $pnr === '') {
+        return 0;
+    }
+
+    $count = 0;
+    foreach ($db->rows('receipts') as $row) {
+        $rowNameKey = normalize_customer_name_key((string) ($row['customer'] ?? ''));
+        $rowPnr = normalize_personnummer((string) ($row['customer_personnummer'] ?? ''));
+        $samePnr = $pnr !== '' && $rowPnr !== '' && $pnr === $rowPnr;
+        $sameName = $nameKey !== '' && $rowNameKey !== '' && $nameKey === $rowNameKey;
+        if ($samePnr || $sameName) {
+            $count++;
+        }
+    }
+
+    return $count;
+}
+
+function is_customer_employee(JsonDb $db, string $customerName, string $customerPersonnummer = ''): bool
+{
+    $nameKey = normalize_customer_name_key($customerName);
+    $pnr = normalize_personnummer($customerPersonnummer);
+
+    foreach ($db->rows('users') as $user) {
+        $userNameKey = normalize_customer_name_key((string) ($user['full_name'] ?? ''));
+        $userPnr = normalize_personnummer((string) ($user['personnummer'] ?? ''));
+        $samePnr = $pnr !== '' && $userPnr !== '' && $pnr === $userPnr;
+        $sameName = $nameKey !== '' && $userNameKey !== '' && $nameKey === $userNameKey;
+        if ($samePnr || $sameName) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function determine_auto_discount_preset_id(JsonDb $db, string $customerName, string $customerPersonnummer = ''): ?int
+{
+    $name = trim($customerName);
+    if ($name === '') {
+        return null;
+    }
+
+    if (is_customer_employee($db, $name, $customerPersonnummer)) {
+        return ensure_discount_preset($db, 'Anställd', 50);
+    }
+
+    $receiptCount = customer_receipt_count($db, $name, $customerPersonnummer);
+    if ($receiptCount > 15) {
+        return ensure_discount_preset($db, 'Stammis', 25);
+    }
+
+    return null;
+}
+
 function upsert_customer_from_receipt(JsonDb $db, string $customerName, string $customerPersonnummer, ?int $discountPresetId): void
 {
     $name = trim($customerName);
@@ -955,7 +1037,8 @@ if ($action === 'api_discord_create_receipt' && $_SERVER['REQUEST_METHOD'] === '
         'is_sent' => 0,
     ]);
 
-    upsert_customer_from_receipt($db, $customerName, '', null);
+    $autoDiscountPresetId = determine_auto_discount_preset_id($db, $customerName, '');
+    upsert_customer_from_receipt($db, $customerName, '', $autoDiscountPresetId);
     upsert_vehicle_from_receipt($db, $plate);
 
     $systemActor = ['personnummer' => 'discord-bot', 'full_name' => 'Discord Bot'];
@@ -1003,8 +1086,10 @@ if ($action === 'api_create_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         'is_sent' => 0,
     ]);
 
-    $discountPresetId = find_discount_preset_id_by_name($db, $discountName);
-    upsert_customer_from_receipt($db, $customerName, $customerPersonnummer, $discountPresetId);
+    $manualDiscountPresetId = find_discount_preset_id_by_name($db, $discountName);
+    $autoDiscountPresetId = determine_auto_discount_preset_id($db, $customerName, $customerPersonnummer);
+    $effectiveDiscountPresetId = $autoDiscountPresetId ?? $manualDiscountPresetId;
+    upsert_customer_from_receipt($db, $customerName, $customerPersonnummer, $effectiveDiscountPresetId);
     upsert_vehicle_from_receipt($db, $plate);
 
     log_activity($db, $user, 'receipt_created', 'receipt', (int) $inserted['id'], 'Kvitto skapades.');

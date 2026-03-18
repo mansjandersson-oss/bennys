@@ -70,6 +70,11 @@ Format: `/kvitto regnr;kund;jobb;summa;[kommentar];[mekaniker_pnr]`
 
 Endpointen svarar med `receipt_id` och `reply_text` som kan skickas tillbaka i Discord.
 
+## Automatiska rabatter
+- **Stammis**: Om en kund har fler än **15 kvitton** får kunden automatiskt rabattpreset **Stammis (25%)**.
+- **Anställd**: Om kundens namn/personnummer matchar en anställd användare får kunden automatiskt **Anställd (50%)**.
+- Anställd-rabatten har prioritet över Stammis-regeln.
+
 ## Demo-konton
 - `19900101-1234 / motor123`
 - `19920202-5678 / garage123`
