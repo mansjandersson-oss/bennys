@@ -1137,9 +1137,44 @@ button:hover{
     align-items: flex-start !important;
   }
 
-  input, select, textarea, button{
+  .row input,
+  .row select,
+  .row textarea,
+  #receiptsSection .receipt-side input,
+  #receiptsSection .receipt-side select,
+  #receiptsSection .receipt-side textarea,
+  .login-form input,
+  .login-form select,
+  .login-form textarea,
+  .login-form button,
+  #receiptsSection .table-actions button{
     width: 100% !important;
     max-width: 100% !important;
+  }
+
+  .service-category-items{
+    grid-template-columns: 1fr !important;
+  }
+
+  .service-option{
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  .service-option .service-price{
+    justify-self: start !important;
+    white-space: normal !important;
+  }
+
+  .service-option .service-qty{
+    grid-template-columns: 1fr auto !important;
+    width: 100% !important;
+  }
+
+  .service-option .service-qty input{
+    width: 88px !important;
+    min-width: 88px !important;
+    max-width: 88px !important;
   }
 
   .table-wrap{
@@ -1147,5 +1182,9 @@ button:hover{
     max-width: 100% !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
+  }
+
+  #receiptsSection .table-wrap > table{
+    min-width: 720px;
   }
 }
