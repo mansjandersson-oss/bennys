@@ -419,7 +419,7 @@ function parse_discord_receipt_command(string $command): array
     }
 
     $plate = normalize_plate($parts[0] ?? '');
-    $customer = trim((string) ($parts[1] ?? ''));
+    $customer = format_customer_name((string) ($parts[1] ?? ''));
     $workType = trim((string) ($parts[2] ?? ''));
     $amount = (float) str_replace(',', '.', (string) ($parts[3] ?? '0'));
     $orderComment = trim((string) ($parts[4] ?? ''));
@@ -541,6 +541,23 @@ function normalize_customer_name_key(string $name): string
 {
     $v = trim(mb_strtolower($name, 'UTF-8'));
     return preg_replace('/\s+/', ' ', $v) ?: '';
+}
+
+function format_customer_name(string $name): string
+{
+    $trimmed = trim($name);
+    if ($trimmed === '') {
+        return '';
+    }
+    $normalizedWhitespace = preg_replace('/\s+/u', ' ', $trimmed) ?: '';
+    if ($normalizedWhitespace === '') {
+        return '';
+    }
+    $allLower = $normalizedWhitespace === mb_strtolower($normalizedWhitespace, 'UTF-8');
+    if (!$allLower) {
+        return $normalizedWhitespace;
+    }
+    return mb_convert_case($normalizedWhitespace, MB_CASE_TITLE, 'UTF-8');
 }
 
 function ensure_unique_customer(array $rows, int $selfId, string $name, string $pnr): void
@@ -682,7 +699,7 @@ function is_customer_employee(JsonDb $db, string $customerName, string $customer
 
 function determine_auto_discount_preset_id(JsonDb $db, string $customerName, string $customerPersonnummer = ''): ?int
 {
-    $name = trim($customerName);
+    $name = format_customer_name($customerName);
     if ($name === '') {
         return null;
     }
@@ -702,7 +719,7 @@ function determine_auto_discount_preset_id(JsonDb $db, string $customerName, str
 
 function upsert_customer_from_receipt(JsonDb $db, string $customerName, string $customerPersonnummer, ?int $discountPresetId): void
 {
-    $name = trim($customerName);
+    $name = format_customer_name($customerName);
     if ($name === '') {
         return;
     }
@@ -809,9 +826,7 @@ function seed_if_empty(JsonDb $db): void
 {
     $ranks = $db->rows('ranks');
     if (count($ranks) === 0) {
-        $db->insert('ranks', ['name' => 'Ägare', 'can_view_admin' => 1, 'can_manage_users' => 1, 'can_manage_prices' => 1, 'can_edit_receipts' => 1, 'can_view_customers' => 1, 'can_view_vehicles' => 1, 'can_view_prices' => 1]);
-        $db->insert('ranks', ['name' => 'Anställd', 'can_view_admin' => 0, 'can_manage_users' => 0, 'can_manage_prices' => 0, 'can_edit_receipts' => 0, 'can_view_customers' => 1, 'can_view_vehicles' => 1, 'can_view_prices' => 1]);
-    }
+   }
 
     $ranks = $db->rows('ranks');
     $owner = null; $employee = null;
@@ -823,13 +838,15 @@ function seed_if_empty(JsonDb $db): void
     ensure_prospect_rank($db);
 
     $users = $db->rows('users');
-    if (count($users) === 0) {;
+    if (count($users) === 0) {
     }
 
     if (count($db->rows('discount_presets')) === 0) {
+
     }
 
     if (count($db->rows('service_prices')) === 0) {
+
     }
 
     if (count($db->rows('layout_settings')) === 0) {
@@ -1089,7 +1106,7 @@ if ($action === 'api_discord_create_receipt' && $_SERVER['REQUEST_METHOD'] === '
     } else {
         $payload = [
             'plate' => normalize_plate((string) ($d['plate'] ?? '')),
-            'customer' => trim((string) ($d['customer'] ?? '')),
+            'customer' => format_customer_name((string) ($d['customer'] ?? '')),
             'work_type' => trim((string) ($d['work_type'] ?? '')),
             'amount' => (float) ($d['amount'] ?? 0),
             'order_comment' => trim((string) ($d['order_comment'] ?? '')),
@@ -1100,7 +1117,7 @@ if ($action === 'api_discord_create_receipt' && $_SERVER['REQUEST_METHOD'] === '
     $plate = normalize_plate((string) ($payload['plate'] ?? ''));
     if (!is_valid_plate($plate)) json_response(['ok' => false, 'error' => 'Ogiltigt registreringsnummer.'], 422);
 
-    $customerName = trim((string) ($payload['customer'] ?? ''));
+    $customerName = format_customer_name((string) ($payload['customer'] ?? ''));
     $workType = trim((string) ($payload['work_type'] ?? ''));
     $amount = (float) ($payload['amount'] ?? 0);
     if ($customerName === '' || $workType === '' || $amount <= 0) {
@@ -1168,7 +1185,7 @@ if ($action === 'api_create_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $discountName = trim((string) ($d['discount_name'] ?? ''));
-    $customerName = trim((string) ($d['customer'] ?? ''));
+    $customerName = format_customer_name((string) ($d['customer'] ?? ''));
     $customerPersonnummer = normalize_personnummer((string) ($d['customer_personnummer'] ?? ''));
 
     $inserted = $db->insert('receipts', [
@@ -1220,7 +1237,7 @@ if ($action === 'api_update_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $r['styling_parts'] = ($d['styling_parts'] ?? '') === '' ? '' : (int) ($d['styling_parts'] ?? 0);
         $r['performance_parts'] = ($d['performance_parts'] ?? '') === '' ? '' : (int) ($d['performance_parts'] ?? 0);
         $r['amount'] = (float) ($d['amount'] ?? $r['amount'] ?? 0);
-        $r['customer'] = trim((string) ($d['customer'] ?? $r['customer'] ?? ''));
+        $r['customer'] = format_customer_name((string) ($d['customer'] ?? $r['customer'] ?? ''));
         $r['plate'] = $plate;
         $r['order_comment'] = trim((string) ($d['order_comment'] ?? $r['order_comment'] ?? ''));
         $r['discount_name'] = trim((string) ($d['discount_name'] ?? $r['discount_name'] ?? ''));
@@ -1283,7 +1300,7 @@ if ($action === 'api_create_customer' && $_SERVER['REQUEST_METHOD'] === 'POST') 
     require_permission('can_view_customers');
     $d = read_json_input();
     $id = (int) ($d['id'] ?? 0);
-    $name = trim((string) ($d['customer_name'] ?? ''));
+    $name = format_customer_name((string) ($d['customer_name'] ?? ''));
     if ($name === '') json_response(['ok' => false, 'error' => 'Kundnamn krävs.'], 422);
     $pnr = normalize_personnummer((string) ($d['personnummer'] ?? ''));
     $rows = $db->rows('customer_registry');

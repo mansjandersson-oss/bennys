@@ -76,7 +76,7 @@ body{
   }
 }
 
-.hidden{ display:none; }
+.hidden{ display:none !important; }
 
 @supports not (zoom: 1){
   body { overflow-x: hidden; }
