@@ -679,6 +679,18 @@ tr.sent-receipt{ opacity:0.82; }
 }
 .login-form label input{ width:100%; max-width:320px; }
 .login-form button{ width:100%; max-width:320px; }
+.login-form .text-link-btn{
+  width:auto;
+  max-width:none;
+  background:transparent;
+  border:none;
+  color: var(--silver);
+  text-decoration: underline;
+  cursor:pointer;
+  padding:0;
+  height:auto;
+  min-height:0;
+}
 .login-mode .login-form input{ text-align:center; }
 /* =========================================
    LAYOUT SYSTEM (RESTORE)

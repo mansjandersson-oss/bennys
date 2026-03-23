@@ -83,9 +83,11 @@ Endpointen svarar med `receipt_id` och `reply_text` som kan skickas tillbaka i D
 ## API-endpoints (används av frontend)
 - `GET index.php?action=api_me`
 - `POST index.php?action=api_login`
+- `POST index.php?action=api_register_user`
 - `POST index.php?action=api_logout`
 - `GET index.php?action=api_receipts`
 - `POST index.php?action=api_create_receipt`
+- `POST index.php?action=api_admin_approve_user`
 
 Design/layout ändras i `index2.html`.
 Backend/API ligger i `index.php`.

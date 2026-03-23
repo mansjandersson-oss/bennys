@@ -486,6 +486,49 @@ function rank_permissions(?array $rank): array
     return $out;
 }
 
+function user_is_approved(array $user): bool
+{
+    if (!array_key_exists('is_approved', $user)) {
+        return true;
+    }
+    return (int) ($user['is_approved'] ?? 1) === 1;
+}
+
+function find_rank_id_by_name(JsonDb $db, string $rankName): ?int
+{
+    $needle = trim(mb_strtolower($rankName, 'UTF-8'));
+    if ($needle === '') {
+        return null;
+    }
+    foreach ($db->rows('ranks') as $rank) {
+        $name = trim(mb_strtolower((string) ($rank['name'] ?? ''), 'UTF-8'));
+        if ($name === $needle) {
+            return (int) ($rank['id'] ?? 0) ?: null;
+        }
+    }
+    return null;
+}
+
+function ensure_prospect_rank(JsonDb $db): int
+{
+    $existingId = find_rank_id_by_name($db, 'Prospect');
+    if ($existingId !== null) {
+        return $existingId;
+    }
+
+    $inserted = $db->insert('ranks', [
+        'name' => 'Prospect',
+        'can_view_admin' => 0,
+        'can_manage_users' => 0,
+        'can_manage_prices' => 0,
+        'can_edit_receipts' => 0,
+        'can_view_customers' => 0,
+        'can_view_vehicles' => 0,
+        'can_view_prices' => 0,
+    ]);
+    return (int) ($inserted['id'] ?? 0);
+}
+
 function find_by_id(array $rows, int $id): ?array
 {
     foreach ($rows as $row) {
@@ -777,21 +820,16 @@ function seed_if_empty(JsonDb $db): void
         if (($r['name'] ?? '') === 'Anställd') $employee = $r;
     }
 
+    ensure_prospect_rank($db);
+
     $users = $db->rows('users');
-    if (count($users) === 0) {
-        $db->insert('users', ['personnummer' => '19900101-1234', 'full_name' => 'Stefan Örn', 'password' => 'motor123', 'rank_id' => (int) ($owner['id'] ?? 0), 'is_admin' => 1]);
-        $db->insert('users', ['personnummer' => '19920202-5678', 'full_name' => 'Garage Anställd', 'password' => 'garage123', 'rank_id' => (int) ($employee['id'] ?? 0), 'is_admin' => 0]);
-        $db->insert('users', ['personnummer' => '19950505-9012', 'full_name' => 'Benny Demo', 'password' => 'bennys123', 'rank_id' => (int) ($employee['id'] ?? 0), 'is_admin' => 0]);
+    if (count($users) === 0) {;
     }
 
     if (count($db->rows('discount_presets')) === 0) {
-        $db->insert('discount_presets', ['name' => 'Familj', 'percent' => 45]);
-        $db->insert('discount_presets', ['name' => 'Anställd', 'percent' => 50]);
     }
 
     if (count($db->rows('service_prices')) === 0) {
-        $db->insert('service_prices', ['service_name' => 'Service', 'sale_price' => 300, 'expense_cost' => 120, 'is_active' => 1, 'has_dropdown' => 0, 'service_category' => 'Övrigt']);
-        $db->insert('service_prices', ['service_name' => 'Reparation', 'sale_price' => 1000, 'expense_cost' => 500, 'is_active' => 1, 'has_dropdown' => 0, 'service_category' => 'Övrigt']);
     }
 
     if (count($db->rows('layout_settings')) === 0) {
@@ -827,6 +865,9 @@ if ($action === 'api_login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$foundUser || (string) ($foundUser['password'] ?? '') !== $password) {
         json_response(['ok' => false, 'error' => 'Fel personnummer eller lösenord.'], 401);
     }
+    if (!user_is_approved($foundUser)) {
+        json_response(['ok' => false, 'error' => 'Kontot väntar på admin-godkännande.'], 403);
+    }
 
     $rank = find_by_id($db->rows('ranks'), (int) ($foundUser['rank_id'] ?? 0));
     $permissions = rank_permissions($rank);
@@ -838,6 +879,40 @@ if ($action === 'api_login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $_SESSION['permissions'] = $permissions;
 
     json_response(['ok' => true]);
+}
+
+if ($action === 'api_register_user' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $d = read_json_input();
+    $personnummer = trim((string) ($d['personnummer'] ?? ''));
+    $fullName = trim((string) ($d['full_name'] ?? ''));
+    $password = trim((string) ($d['password'] ?? ''));
+    if ($personnummer === '' || $fullName === '' || $password === '') {
+        json_response(['ok' => false, 'error' => 'Personnummer, namn och lösenord måste anges.'], 422);
+    }
+
+    $users = $db->rows('users');
+    foreach ($users as $u) {
+        if ((string) ($u['personnummer'] ?? '') !== $personnummer) {
+            continue;
+        }
+        if (user_is_approved($u)) {
+            json_response(['ok' => false, 'error' => 'Ett konto med detta personnummer finns redan.'], 422);
+        }
+        json_response(['ok' => false, 'error' => 'En ansökan finns redan och väntar på godkännande.'], 422);
+    }
+
+    $prospectRankId = ensure_prospect_rank($db);
+    $insertedUser = $db->insert('users', [
+        'personnummer' => $personnummer,
+        'full_name' => $fullName,
+        'password' => $password,
+        'rank_id' => $prospectRankId > 0 ? $prospectRankId : null,
+        'is_admin' => 0,
+        'is_approved' => 0,
+        'requested_at' => now_iso(),
+    ]);
+    log_activity($db, ['personnummer' => 'self-register', 'full_name' => $fullName], 'user_registration_requested', 'user', (int) ($insertedUser['id'] ?? 0), 'Ny inloggningsansökan skapades.');
+    json_response(['ok' => true, 'message' => 'Ansökan skickad. Vänta på admin-godkännande.']);
 }
 
 if ($action === 'api_logout' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -855,7 +930,7 @@ if ($action === 'api_me' && $_SERVER['REQUEST_METHOD'] === 'GET') {
 
 if ($action === 'api_mechanics' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     $user = require_login();
-    $rows = $db->rows('users');
+    $rows = array_values(array_filter($db->rows('users'), static fn($u) => user_is_approved((array) $u)));
     $mech = array_map(static fn($u) => [
         'personnummer' => (string) ($u['personnummer'] ?? ''),
         'full_name' => (string) ($u['full_name'] ?? ''),
@@ -1450,8 +1525,10 @@ if ($action === 'api_admin_summary' && $_SERVER['REQUEST_METHOD'] === 'GET') {
             'id' => (int) ($u['id'] ?? 0),
             'personnummer' => (string) ($u['personnummer'] ?? ''),
             'full_name' => (string) ($u['full_name'] ?? ''),
+            'password' => (string) ($u['password'] ?? ''),
             'rank_id' => (int) ($u['rank_id'] ?? 0),
             'rank_name' => $rankById[(int) ($u['rank_id'] ?? 0)] ?? '-',
+            'is_approved' => user_is_approved((array) $u) ? 1 : 0,
         ];
     }
 
@@ -1494,6 +1571,9 @@ if ($action === 'api_admin_save_user' && $_SERVER['REQUEST_METHOD'] === 'POST') 
             $u['password'] = $password;
             $u['rank_id'] = $rankId > 0 ? $rankId : null;
             $u['is_admin'] = $isAdmin;
+            if (!array_key_exists('is_approved', $u)) {
+                $u['is_approved'] = 1;
+            }
             $db->setRows('users', $rows);
             send_admin_user_event_to_discord($db, $actor, $u, 'updated', $rankName);
             log_activity($db, $actor, 'admin_user_saved', 'user', (int) ($u['id'] ?? 0), 'Användare uppdaterades.', ['full_name' => $fullName, 'rank' => $rankName]);
@@ -1508,10 +1588,37 @@ if ($action === 'api_admin_save_user' && $_SERVER['REQUEST_METHOD'] === 'POST') 
         'password' => $password,
         'rank_id' => $rankId > 0 ? $rankId : null,
         'is_admin' => $isAdmin,
+        'is_approved' => 1,
     ]);
     send_admin_user_event_to_discord($db, $actor, $insertedUser, 'created', $rankName);
     log_activity($db, $actor, 'admin_user_created', 'user', (int) ($insertedUser['id'] ?? 0), 'Användare skapades.', ['full_name' => $fullName, 'rank' => $rankName]);
     json_response(['ok' => true]);
+}
+
+if ($action === 'api_admin_approve_user' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $actor = require_login();
+    require_permission('can_manage_users');
+    $id = (int) (read_json_input()['id'] ?? 0);
+    if ($id <= 0) {
+        json_response(['ok' => false, 'error' => 'Ogiltigt användar-id.'], 422);
+    }
+
+    $rows = $db->rows('users');
+    foreach ($rows as &$u) {
+        if ((int) ($u['id'] ?? 0) !== $id) {
+            continue;
+        }
+        $u['is_approved'] = 1;
+        if ((int) ($u['rank_id'] ?? 0) <= 0) {
+            $u['rank_id'] = ensure_prospect_rank($db);
+        }
+        $db->setRows('users', $rows);
+        log_activity($db, $actor, 'admin_user_approved', 'user', $id, 'Användare godkändes av admin.');
+        json_response(['ok' => true]);
+    }
+    unset($u);
+
+    json_response(['ok' => false, 'error' => 'Användaren hittades inte.'], 404);
 }
 
 if ($action === 'api_delete_user' && $_SERVER['REQUEST_METHOD'] === 'POST') {

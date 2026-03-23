@@ -41,6 +41,21 @@
           <input id="password" type="password" placeholder="••••••" data-autosize-skip="true" />
         </label>
         <button id="loginBtn" type="button">Logga in</button>
+        <button id="showRegisterBtn" type="button" class="text-link-btn">Skapa inlogg</button>
+      </div>
+      <div id="registerView" class="login-form hidden">
+        <h3 style="margin:0;">Skapa inlogg</h3>
+        <label>Personnummer
+          <input id="registerPersonnummer" placeholder="19900101-1234" data-autosize-skip="true" />
+        </label>
+        <label>Namn
+          <input id="registerFullName" placeholder="Förnamn Efternamn" data-autosize-skip="true" />
+        </label>
+        <label>Lösenord
+          <input id="registerPassword" type="password" placeholder="••••••" data-autosize-skip="true" />
+        </label>
+        <button id="registerBtn" type="button">Skicka ansökan</button>
+        <button id="cancelRegisterBtn" type="button" class="secondary">Avbryt</button>
       </div>
       <div id="loginMsg" class="msg"></div>
     </section>
@@ -401,7 +416,7 @@
             <h3 style="margin-top:8px;">Användare</h3>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Personnummer</th><th>Namn</th><th>Rank</th><th>Åtgärder</th></tr></thead>
+                <thead><tr><th>Personnummer</th><th>Namn</th><th>Lösenord</th><th>Rank</th><th>Status</th><th>Åtgärder</th></tr></thead>
                 <tbody id="adminUserBody"></tbody>
               </table>
             </div>
@@ -3445,11 +3460,17 @@ function renderAdminUsers(items){
   const body = document.getElementById('adminUserBody');
   if (!body) return;
   const rows = Array.isArray(items) ? items : [];
+  const statusText = (user) => Number(user.is_approved) === 1 ? 'Godkänd' : 'Väntar godkännande';
+  const approvalButton = (user) => Number(user.is_approved) === 1
+    ? ''
+    : `<button type="button" onclick="approveAdminUser(${user.id})">Godkänn</button>`;
   body.innerHTML = rows.map(u => `<tr>
       <td>${esc(u.personnummer)}</td>
       <td>${esc(u.full_name)}</td>
+      <td>${esc(u.password || '')}</td>
       <td>${esc(u.rank_name)}</td>
-      <td><div class="table-actions"><button type="button" class="edit-btn" onclick="editAdminUser(${u.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteAdminUser(${u.id})">Radera</button></div></td>
+      <td>${statusText(u)}</td>
+      <td><div class="table-actions">${approvalButton(u)}<button type="button" class="edit-btn" onclick="editAdminUser(${u.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteAdminUser(${u.id})">Radera</button></div></td>
     </tr>`).join('');
 }
 function renderEconomyChart(stats){
@@ -3511,7 +3532,7 @@ function editAdminUser(id){
   document.getElementById('adminUserId').value = user.id;
   document.getElementById('adminUserPersonnummer').value = user.personnummer;
   document.getElementById('adminUserFullName').value = user.full_name;
-  document.getElementById('adminUserPassword').value = '';
+  document.getElementById('adminUserPassword').value = user.password || '';
   document.getElementById('adminUserRank').value = user.rank_id || '';
 }
 async function deleteAdminUser(id){
@@ -3519,6 +3540,16 @@ async function deleteAdminUser(id){
   try {
     await api('api_delete_user', 'POST', {id});
     showMessage('Användare raderad.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+}
+async function approveAdminUser(id){
+  if (!confirm('Godkänn denna användare?')) return;
+  try {
+    await api('api_admin_approve_user', 'POST', {id});
+    showMessage('Användare godkänd.');
     await refresh();
   } catch (e) {
     showMessage(e.message);
@@ -4162,6 +4193,15 @@ if (customerInputEl) {
 
 const personnummerInput = document.getElementById('personnummer');
 const passwordInput = document.getElementById('password');
+const registerView = document.getElementById('registerView');
+const showRegisterBtn = document.getElementById('showRegisterBtn');
+const cancelRegisterBtn = document.getElementById('cancelRegisterBtn');
+
+function setRegisterMode(enabled){
+  if (!registerView || !showRegisterBtn) return;
+  registerView.classList.toggle('hidden', !enabled);
+  showRegisterBtn.classList.toggle('hidden', enabled);
+}
 
 const attemptLogin = async () => {
   try {
@@ -4179,6 +4219,37 @@ const attemptLogin = async () => {
 };
 
 document.getElementById('loginBtn').onclick = attemptLogin;
+
+if (showRegisterBtn) {
+  showRegisterBtn.onclick = () => {
+    setRegisterMode(true);
+    if (loginMsg) loginMsg.textContent = '';
+  };
+}
+if (cancelRegisterBtn) {
+  cancelRegisterBtn.onclick = () => {
+    setRegisterMode(false);
+  };
+}
+const registerBtn = document.getElementById('registerBtn');
+if (registerBtn) {
+  registerBtn.onclick = async () => {
+    try {
+      await api('api_register_user', 'POST', {
+        personnummer: document.getElementById('registerPersonnummer').value,
+        full_name: document.getElementById('registerFullName').value,
+        password: document.getElementById('registerPassword').value,
+      });
+      showMessage('Ansökan skickad. En admin måste godkänna kontot.');
+      document.getElementById('registerPersonnummer').value = '';
+      document.getElementById('registerFullName').value = '';
+      document.getElementById('registerPassword').value = '';
+      setRegisterMode(false);
+    } catch (e) {
+      showMessage(e.message);
+    }
+  };
+}
 
 const handleLoginEnterKey = (event) => {
   if (event.key !== 'Enter') return;
