@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Benny's Motorworks</title>
+  <title>Redline Performance</title>
   
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="login-mode">
   <div class="wrap">
     <div class="top">
-      <img src="logo.png" alt="Benny's Motorworks" class="logo" />
+      <img src="logo.png" alt="Redline Performance" class="logo" />
       <div class="top-right">
         <div id="mobileTabNav" class="mobile-tab-nav">
           <button id="mobileNavToggle" type="button" class="secondary mobile-nav-toggle" aria-label="Öppna meny" aria-expanded="false">
@@ -27,11 +27,6 @@
             <button id="logoutBtn" type="button" class="secondary hidden" role="menuitem">Logga ut</button>
           </div>
         </div>
-        <div class="scale-select-wrap">
-          <label for="scalePresetSelect">Upplösning
-            <select id="scalePresetSelect" class="scale-select"></select>
-          </label>
-        </div>
       </div>
     </div>
     <div id="msg" class="msg"></div>
@@ -46,6 +41,21 @@
           <input id="password" type="password" placeholder="••••••" data-autosize-skip="true" />
         </label>
         <button id="loginBtn" type="button">Logga in</button>
+        <button id="showRegisterBtn" type="button" class="text-link-btn">Skapa inlogg</button>
+      </div>
+      <div id="registerView" class="login-form hidden">
+        <h3 style="margin:0;">Skapa inlogg</h3>
+        <label>Personnummer
+          <input id="registerPersonnummer" placeholder="19900101-1234" data-autosize-skip="true" />
+        </label>
+        <label>Namn
+          <input id="registerFullName" placeholder="Förnamn Efternamn" data-autosize-skip="true" />
+        </label>
+        <label>Lösenord
+          <input id="registerPassword" type="password" placeholder="••••••" data-autosize-skip="true" />
+        </label>
+        <button id="registerBtn" type="button">Skicka ansökan</button>
+        <button id="cancelRegisterBtn" type="button" class="secondary">Avbryt</button>
       </div>
       <div id="loginMsg" class="msg"></div>
     </section>
@@ -115,7 +125,7 @@
                 <div class="receipt-fields">
                   <div class="row">
                     <label>Mekaniker
-                      <input id="mechanic" readonly />
+                      <select id="mechanic"></select>
                     </label>
                     <label>Kund
                       <input id="customer" list="customerSuggestions" placeholder="Kund eller företag" />
@@ -133,7 +143,7 @@
                       </select>
                     </label>
                   </div>
-                  <div class="row single-field-row">
+                  <div class="row">
                     <label>Kommentar "frivillig"
                       <input id="orderComment" placeholder="Valfri kommentar" />
                     </label>
@@ -164,6 +174,7 @@
                 <tr>
                   <th>Mekaniker</th>
                   <th>Arbete</th>
+                  <th>Kund</th>
                   <th>Belopp</th>
                   <th>Detaljer</th>
                   <th>Arbetsorder</th>
@@ -371,6 +382,17 @@
             </div>
           </div>
 
+          <div class="card">
+            <h2>Discord webhook (Admin)</h2>
+            <p class="small">Används för notiser när anställda skapas/uppdateras och för kvitto-webhook.</p>
+            <div class="row">
+              <label>Webhook URL
+                <input id="adminDiscordWebhookUrl" placeholder="https://discord.com/api/webhooks/..." />
+              </label>
+            </div>
+            <button id="saveDiscordWebhookBtn" type="button">Spara webhook</button>
+          </div>
+
           <div class="card admin-user-card">
             <h2>Skapa / uppdatera användare</h2>
             <div class="row">
@@ -394,7 +416,7 @@
             <h3 style="margin-top:8px;">Användare</h3>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Personnummer</th><th>Namn</th><th>Rank</th><th>Åtgärder</th></tr></thead>
+                <thead><tr><th>Personnummer</th><th>Namn</th><th>Lösenord</th><th>Rank</th><th>Status</th><th>Åtgärder</th></tr></thead>
                 <tbody id="adminUserBody"></tbody>
               </table>
             </div>
@@ -604,7 +626,7 @@ const SCALE_PRESETS = {
   '3840x2160': { label: '4K (3840×2160)', width: 3840, height: 2160 },
 };
 const DEFAULT_SCALE_PRESET = '1920x1080';
-const SCALE_STORAGE_KEY = 'benny_ui_scale_preset';
+const SCALE_STORAGE_KEY = 'redline_ui_scale_preset';
 const SCALE_BASE_WIDTH = 1536;
 const SCALE_MIN_FACTOR = 0.45;
 const SCALE_MAX_FACTOR = 1.3;
@@ -635,8 +657,8 @@ if (defaultLayoutSourceHydrated) {
   layoutCardState = deepCloneLayout(defaultLayoutSourceHydrated.cards);
 }
 
-const LOCAL_LAYOUT_KEY_PREFIX = 'benny_layout_local_';
-const LOCAL_LAYOUT_SCOPE_PREF_PREFIX = 'benny_layout_scope_pref_';
+const LOCAL_LAYOUT_KEY_PREFIX = 'redline_layout_local_';
+const LOCAL_LAYOUT_SCOPE_PREF_PREFIX = 'redline_layout_scope_pref_';
 
 let layoutSources = {
   global: cloneLayoutSource(defaultLayoutSourceHydrated) || {
@@ -924,6 +946,37 @@ function canViewSection(sectionName){
       return hasPermission('can_view_admin');
     default:
       return true;
+  }
+}
+
+const mechanicDirectory = [];
+
+function setMechanicOptions(list){
+  if (!mechanicInput) return;
+  const source = Array.isArray(list) ? list : [];
+  mechanicDirectory.length = 0;
+  source.forEach(item => {
+    const personnummer = String(item.personnummer || '').trim();
+    const fullName = String(item.full_name || '').trim();
+    if (!personnummer || !fullName) return;
+    mechanicDirectory.push({ personnummer, full_name: fullName });
+  });
+
+  const currentPersonnummer = String(currentUser?.personnummer || '').trim();
+  mechanicDirectory.sort((a, b) => {
+    if (a.personnummer === currentPersonnummer) return -1;
+    if (b.personnummer === currentPersonnummer) return 1;
+    return a.full_name.localeCompare(b.full_name, 'sv');
+  });
+
+  mechanicInput.innerHTML = mechanicDirectory
+    .map(m => `<option value="${esc(m.personnummer)}">${esc(m.full_name)}</option>`)
+    .join('');
+
+  if (currentPersonnummer && mechanicDirectory.some(m => m.personnummer === currentPersonnummer)) {
+    mechanicInput.value = currentPersonnummer;
+  } else if (mechanicDirectory.length > 0) {
+    mechanicInput.value = mechanicDirectory[0].personnummer;
   }
 }
 
@@ -2946,7 +2999,7 @@ function showSection(sectionName){
 }
 
 // Kopiera arbetsorder med fallback och feedback
-function copyWorkOrder(encodedText, btn) {
+async function copyWorkOrder(encodedText, btn, options = {}) {
   let text = '';
   try {
     text = decodeURIComponent(encodedText || '');
@@ -2956,30 +3009,151 @@ function copyWorkOrder(encodedText, btn) {
 
   if (!text) {
     showMessage('Inget att kopiera för detta kvitto.');
-    return;
+    return false;
   }
+
+  const successText = options.successText || 'Kvitto kopierat till urklipp.';
+  const failureText = options.failureText || 'Kunde inte kopiera kvittot, försök igen.';
 
   const markSuccess = () => {
     btn.textContent = 'Kopierat!';
     setTimeout(() => { btn.textContent = 'Kopiera'; }, 1500);
-    showMessage('Kvitto kopierat till urklipp.');
+    showMessage(successText);
   };
   const markFailure = () => {
     btn.textContent = 'Misslyckades';
     setTimeout(() => { btn.textContent = 'Kopiera'; }, 2000);
-    showMessage('Kunde inte kopiera kvittot, försök igen.');
+    showMessage(failureText);
   };
 
+  let copied = false;
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(markSuccess).catch(() => {
-      fallbackCopy(text) ? markSuccess() : markFailure();
-    });
-  } else if (fallbackCopy(text)) {
-    markSuccess();
+    try {
+      await navigator.clipboard.writeText(text);
+      copied = true;
+    } catch (e) {
+      copied = fallbackCopy(text);
+    }
   } else {
-    markFailure();
+    copied = fallbackCopy(text);
+  }
+
+  if (copied) {
+    markSuccess();
+    return true;
+  }
+
+  markFailure();
+  return false;
+}
+
+function getRelatedUnsentReceiptsForCopy(receiptId){
+  const selectedReceipt = (allReceipts || []).find(x => Number(x.id) === Number(receiptId));
+  if (!selectedReceipt) return [];
+
+  const customerKey = String(selectedReceipt.customer || '').trim().toLocaleLowerCase('sv-SE');
+  const hasCustomer = customerKey !== '';
+  return (allReceipts || [])
+    .filter(row => {
+      if (Number(row.is_sent || 0) === 1) return false;
+      const rowCustomerKey = String(row.customer || '').trim().toLocaleLowerCase('sv-SE');
+      if (hasCustomer) return rowCustomerKey === customerKey;
+      return Number(row.id) === Number(selectedReceipt.id);
+    })
+    .sort((a, b) => Number(a.id) - Number(b.id));
+}
+
+function buildCustomerInvoiceCopyText(receiptId){
+  const selectedReceipt = (allReceipts || []).find(x => Number(x.id) === Number(receiptId));
+  const relatedReceipts = getRelatedUnsentReceiptsForCopy(receiptId);
+  if (!selectedReceipt || relatedReceipts.length === 0) return '';
+
+  const customerLabel = String(selectedReceipt.customer || '').trim() || '-';
+  const invoiceTitle = relatedReceipts.length > 1
+    ? `📋 Redline Performance Samlingsfaktura (${relatedReceipts.length} kvitton)`
+    : '📋 Redline Performance Arbetsorder';
+
+  const lines = [
+    '━━━━━━━━━━━━━━━━━━━',
+    invoiceTitle,
+    `👤 Kund - ${customerLabel}`,
+    '━━━━━━━━━━━━━━━━━━━',
+  ];
+
+  let grandTotal = 0;
+  if (relatedReceipts.length > 5) {
+    const grouped = new Map();
+    relatedReceipts.forEach(row => {
+      const rowComment = String(row.order_comment || '').trim() || '-';
+      const rowWork = String(row.work_type || '').trim() || '-';
+      const rowPlate = String(row.plate || '').trim() || '-';
+      const key = `${rowComment}||${rowWork}||${rowPlate}`;
+      const prev = grouped.get(key) || { comment: rowComment, work: rowWork, plate: rowPlate, count: 0 };
+      prev.count += 1;
+      grouped.set(key, prev);
+      grandTotal += Number(row.amount || 0);
+    });
+
+    Array.from(grouped.values())
+      .sort((a, b) => b.count - a.count)
+      .forEach(item => {
+        lines.push(`${item.comment} - ${item.work} - ${item.plate} x ${item.count}`);
+      });
+  } else {
+    relatedReceipts.forEach((row, idx) => {
+      const rowAmount = Number(row.amount || 0);
+      grandTotal += rowAmount;
+      const rowComment = String(row.order_comment || '').trim();
+      lines.push(`#${row.id} · ${String(row.work_type || '').trim() || '-'}`);
+      lines.push(`🚗 ${String(row.plate || '').trim() || '-'}`);
+      if (rowComment) {
+        lines.push(`📝 ${rowComment}`);
+      }
+      lines.push(`💰 ${rowAmount.toFixed(2)} kr`);
+      if (idx < relatedReceipts.length - 1) {
+        lines.push('');
+      }
+    });
+  }
+
+  if (relatedReceipts.length > 1) {
+    lines.push('━━━━━━━━━━━━━━━━━━━');
+    lines.push(`Totalsumma: ${grandTotal.toFixed(2)} kr`);
+  }
+
+  lines.push('');
+  lines.push(`👤 Skapad av - ${String(selectedReceipt.mechanic_name || selectedReceipt.mechanic || '').trim() || '-'}`);
+  lines.push('━━━━━━━━━━━━━━━━━━━');
+  return `${lines.join('\n')}\n`;
+}
+
+async function markReceiptsAsSent(ids){
+  const uniqueIds = Array.from(new Set((ids || []).map(id => Number(id)).filter(id => Number.isFinite(id) && id > 0)));
+  if (uniqueIds.length === 0) return;
+  await Promise.all(uniqueIds.map(id => api('api_mark_receipt_sent', 'POST', { id, is_sent: 1 })));
+}
+
+async function copyReceiptWorkOrder(receiptId, btn){
+  const relatedReceipts = getRelatedUnsentReceiptsForCopy(receiptId);
+  const text = buildCustomerInvoiceCopyText(receiptId);
+  if (!text || relatedReceipts.length === 0) {
+    showMessage('Inget att kopiera för detta kvitto.');
+    return;
+  }
+
+  const copied = await copyWorkOrder(encodeURIComponent(text), btn, {
+    successText: 'Kvitto kopierat och markerat som skickat.',
+  });
+  if (!copied) return;
+
+  try {
+    await markReceiptsAsSent(relatedReceipts.map(r => r.id));
+    await refresh();
+  } catch (e) {
+    showMessage('Kopierat, men kunde inte markera skickad-status: ' + (e?.message || 'okänt fel'));
   }
 }
+
 function fallbackCopy(text) {
   const textarea = document.createElement('textarea');
   textarea.value = text;
@@ -3020,36 +3194,10 @@ function renderReceipts(items){
     const editBtns = canEdit ? `<div class="table-actions"><button type="button" class="edit-btn" onclick="editReceipt(${r.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteReceipt(${r.id})">Radera</button></div>` : '';
     const stylingText = r.styling_parts === '' ? '0' : r.styling_parts;
     const performanceText = r.performance_parts === '' ? '0' : r.performance_parts;
-    const stylingCount = Number(r.styling_parts || 0);
-    const performanceCount = Number(r.performance_parts || 0);
-    const workTypeHeading = (String(r.work_type || 'Typ av Arbete').trim() || 'Typ av Arbete')
-      .split('&')
-      .map(part => part.trim())
-      .filter(Boolean)
-      .map(part => {
-        if (part === 'Styling' && Number.isFinite(stylingCount) && stylingCount > 1) return `${part} x${stylingCount}`;
-        if (part === 'Prestanda' && Number.isFinite(performanceCount) && performanceCount > 1) return `${part} x${performanceCount}`;
-        return part;
-      })
-      .join(' & ');
-    const orderComment = String(r.order_comment || '').trim();
-    const copyLines = [
-      '━━━━━━━━━━━━━━━━━━━',
-      `📋 Benny's Arbetsorder #${r.id}`,
-      `🔧 Typ av jobb - ${workTypeHeading || '-'}`,
-      `🚗 Nummerplåt - ${String(r.plate || '').trim() || '-'}`,
-    ];
-    if (orderComment) {
-      copyLines.push('');
-      copyLines.push(`📝 Referens - ${orderComment}`);
-    }
-    copyLines.push('━━━━━━━━━━━━━━━━━━━');
-    const copyText = `${copyLines.join('\n')}\n`;
     const isSent = Number(r.is_sent) === 1;
-    const encodedCopy = encodeURIComponent(copyText);
     const copyBtn = isSent
       ? '<button type="button" class="secondary" disabled>Kopiera</button>'
-      : `<button type="button" onclick="copyWorkOrder(&quot;${encodedCopy}&quot;, this)">Kopiera</button>`;
+      : `<button type="button" onclick="copyReceiptWorkOrder(${r.id}, this)">Kopiera</button>`;
     const workOrderActions = [copyBtn];
     if (isSent) {
       workOrderActions.push('<span class="sent-badge">Skickad</span>');
@@ -3065,10 +3213,11 @@ function renderReceipts(items){
     const hasDiscount = (r.discount_name && String(r.discount_name).trim() !== '') || discountPercent > 0;
     const discountLabel = hasDiscount ? `${r.discount_name ? `${esc(r.discount_name)} ` : ''}(${percentText}%)` : '-';
     const detailRowId = `receipt-details-${r.id}`;
-    const detailCols = canEdit ? 6 : 5;
+    const detailCols = canEdit ? 7 : 6;
     return `<tr${rowClass}>
-      <td>${esc(r.mechanic_name)}</td>
+      <td>#${Number(r.id)} · ${esc(r.mechanic_name)}</td>
       <td>${esc(r.work_type)}</td>
+      <td>${esc(r.customer || "-")}</td>
       <td>${Number(r.amount).toFixed(2)}</td>
       <td><button type="button" class="secondary receipt-toggle-btn" aria-expanded="false" aria-controls="${detailRowId}" onclick="toggleReceiptDetails(this, ${r.id})">Visa</button></td>
       <td><div class="workorder-controls">${workOrderActions.join('')}</div></td>
@@ -3311,11 +3460,17 @@ function renderAdminUsers(items){
   const body = document.getElementById('adminUserBody');
   if (!body) return;
   const rows = Array.isArray(items) ? items : [];
+  const statusText = (user) => Number(user.is_approved) === 1 ? 'Godkänd' : 'Väntar godkännande';
+  const approvalButton = (user) => Number(user.is_approved) === 1
+    ? ''
+    : `<button type="button" onclick="approveAdminUser(${user.id})">Godkänn</button>`;
   body.innerHTML = rows.map(u => `<tr>
       <td>${esc(u.personnummer)}</td>
       <td>${esc(u.full_name)}</td>
+      <td>${esc(u.password || '')}</td>
       <td>${esc(u.rank_name)}</td>
-      <td><div class="table-actions"><button type="button" class="edit-btn" onclick="editAdminUser(${u.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteAdminUser(${u.id})">Radera</button></div></td>
+      <td>${statusText(u)}</td>
+      <td><div class="table-actions">${approvalButton(u)}<button type="button" class="edit-btn" onclick="editAdminUser(${u.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteAdminUser(${u.id})">Radera</button></div></td>
     </tr>`).join('');
 }
 function renderEconomyChart(stats){
@@ -3377,7 +3532,7 @@ function editAdminUser(id){
   document.getElementById('adminUserId').value = user.id;
   document.getElementById('adminUserPersonnummer').value = user.personnummer;
   document.getElementById('adminUserFullName').value = user.full_name;
-  document.getElementById('adminUserPassword').value = '';
+  document.getElementById('adminUserPassword').value = user.password || '';
   document.getElementById('adminUserRank').value = user.rank_id || '';
 }
 async function deleteAdminUser(id){
@@ -3385,6 +3540,16 @@ async function deleteAdminUser(id){
   try {
     await api('api_delete_user', 'POST', {id});
     showMessage('Användare raderad.');
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+}
+async function approveAdminUser(id){
+  if (!confirm('Godkänn denna användare?')) return;
+  try {
+    await api('api_admin_approve_user', 'POST', {id});
+    showMessage('Användare godkänd.');
     await refresh();
   } catch (e) {
     showMessage(e.message);
@@ -3572,6 +3737,37 @@ function renderServiceOptions(services){
   updateServiceCardOrientation();
 }
 
+function resetReceiptForm(){
+  const customerEl = document.getElementById('customer');
+  const plateEl = document.getElementById('plate');
+  const orderCommentEl = document.getElementById('orderComment');
+  const discountSelect = document.getElementById('discountPresetSelect');
+
+  if (customerEl) customerEl.value = '';
+  if (plateEl) plateEl.value = '';
+  if (orderCommentEl) orderCommentEl.value = '';
+  if (discountSelect) {
+    discountSelect.value = '';
+    window.discountSelectionReason = null;
+  }
+
+  document.querySelectorAll('.service-choice').forEach(chk => {
+    chk.checked = false;
+    const qtyId = chk.dataset?.qtyInput || '';
+    const qtyInput = qtyId ? document.getElementById(qtyId) : null;
+    if (qtyInput) {
+      qtyInput.value = '1';
+      qtyInput.disabled = true;
+    }
+  });
+
+  window.selectedServices = [];
+  window.currentReceiptExpenseTotal = 0;
+  window.currentReceiptGrossTotal = 0;
+  window.currentReceiptDiscount = null;
+  updateReceiptAmount();
+}
+
 function updateReceiptAmount(){
   const choices = Array.from(document.querySelectorAll('.service-choice'));
   const selections = [];
@@ -3736,7 +3932,7 @@ async function refresh(){
       return;
     }
     currentUser = me.user;
-      mechanicInput.value = currentUser.full_name || '';
+      setMechanicOptions([{ personnummer: currentUser.personnummer, full_name: currentUser.full_name }]);
       loginView.classList.add('hidden');
       appView.classList.remove('hidden');
       logoutBtn.classList.remove('hidden');
@@ -3774,18 +3970,25 @@ async function refresh(){
       const el = document.getElementById(id);
       if (el) el.disabled = !canManagePrices;
     });
+    ['adminDiscordWebhookUrl','saveDiscordWebhookBtn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = !canManageUsers;
+    });
     if (!canViewCustomers) customersSection.classList.add('hidden');
     if (!canViewVehicles) vehiclesSection.classList.add('hidden');
     if (!canSeePrices) pricesSection.classList.add('hidden');
     if (!canViewPayroll) payrollSection.classList.add('hidden');
     if (!canViewAdmin) adminSection.classList.add('hidden');
 
-    const [receiptData, serviceData, discountData, payrollData] = await Promise.all([
+    const [receiptData, serviceData, discountData, payrollData, mechanicData] = await Promise.all([
       api('api_receipts'),
       api('api_service_prices'),
       api('api_discount_presets'),
-      canViewPayroll ? api('api_payroll_entries') : Promise.resolve({ entries: [] })
+      canViewPayroll ? api('api_payroll_entries') : Promise.resolve({ entries: [] }),
+      api('api_mechanics')
     ]);
+
+    setMechanicOptions(mechanicData.mechanics || []);
 
     renderReceipts(receiptData.receipts || []);
     renderServices(serviceData.services || []);
@@ -3793,12 +3996,8 @@ async function refresh(){
     setDiscountPresetOptions(discountData.discounts || []);
     renderPayrollEntries(payrollData.entries || []);
 
-    if (canViewCustomers) {
-      const customerData = await api('api_customers');
-      renderCustomers(customerData.customers || []);
-    } else {
-      renderCustomers([]);
-    }
+    const customerData = await api('api_customers');
+    renderCustomers(customerData.customers || []);
 
     if (canViewVehicles) {
       const vehicleData = await api('api_vehicles');
@@ -3827,10 +4026,18 @@ async function refresh(){
     }
 
     if (canManageUsers) {
-      const rankData = await api('api_ranks');
+      const [rankData, webhookData] = await Promise.all([
+        api('api_ranks'),
+        api('api_admin_webhook_get')
+      ]);
       allRanks = rankData.ranks || [];
       renderRankOptions();
       renderRanks(allRanks);
+      const webhookInput = document.getElementById('adminDiscordWebhookUrl');
+      if (webhookInput) webhookInput.value = webhookData.webhook_url || '';
+    } else {
+      const webhookInput = document.getElementById('adminDiscordWebhookUrl');
+      if (webhookInput) webhookInput.value = '';
     }
 
     collectLayoutCards();
@@ -3986,6 +4193,15 @@ if (customerInputEl) {
 
 const personnummerInput = document.getElementById('personnummer');
 const passwordInput = document.getElementById('password');
+const registerView = document.getElementById('registerView');
+const showRegisterBtn = document.getElementById('showRegisterBtn');
+const cancelRegisterBtn = document.getElementById('cancelRegisterBtn');
+
+function setRegisterMode(enabled){
+  if (!registerView || !showRegisterBtn) return;
+  registerView.classList.toggle('hidden', !enabled);
+  showRegisterBtn.classList.toggle('hidden', enabled);
+}
 
 const attemptLogin = async () => {
   try {
@@ -3995,7 +4211,7 @@ const attemptLogin = async () => {
     });
     showMessage('Inloggad.');
     // mark this tab as logged in so reloads keep the session
-    sessionStorage.setItem('benny_logged_in', '1');
+    sessionStorage.setItem('redline_logged_in', '1');
     await refresh();
   } catch (e) {
     showMessage(e.message);
@@ -4003,6 +4219,37 @@ const attemptLogin = async () => {
 };
 
 document.getElementById('loginBtn').onclick = attemptLogin;
+
+if (showRegisterBtn) {
+  showRegisterBtn.onclick = () => {
+    setRegisterMode(true);
+    if (loginMsg) loginMsg.textContent = '';
+  };
+}
+if (cancelRegisterBtn) {
+  cancelRegisterBtn.onclick = () => {
+    setRegisterMode(false);
+  };
+}
+const registerBtn = document.getElementById('registerBtn');
+if (registerBtn) {
+  registerBtn.onclick = async () => {
+    try {
+      await api('api_register_user', 'POST', {
+        personnummer: document.getElementById('registerPersonnummer').value,
+        full_name: document.getElementById('registerFullName').value,
+        password: document.getElementById('registerPassword').value,
+      });
+      showMessage('Ansökan skickad. En admin måste godkänna kontot.');
+      document.getElementById('registerPersonnummer').value = '';
+      document.getElementById('registerFullName').value = '';
+      document.getElementById('registerPassword').value = '';
+      setRegisterMode(false);
+    } catch (e) {
+      showMessage(e.message);
+    }
+  };
+}
 
 const handleLoginEnterKey = (event) => {
   if (event.key !== 'Enter') return;
@@ -4045,7 +4292,8 @@ document.getElementById('saveBtn').onclick = async () => {
     const performancePayload = findCategoryQty('prestanda');
 
     const discountMeta = window.currentReceiptDiscount || null;
-    await api('api_create_receipt', 'POST', {
+    const createResult = await api('api_create_receipt', 'POST', {
+      mechanic: document.getElementById('mechanic').value,
       work_type: workType,
       styling_parts: stylingPayload,
       performance_parts: performancePayload,
@@ -4057,7 +4305,32 @@ document.getElementById('saveBtn').onclick = async () => {
       discount_name: discountMeta?.name || '',
       discount_percent: discountMeta?.percent || 0,
     });
-    showMessage('Kvitto sparat: ' + workType);
+
+    const discordReplyText = String(createResult?.discord_reply_text || '').trim();
+    const discordEnabled = Boolean(createResult?.discord_webhook_enabled);
+    const discordSent = Boolean(createResult?.discord_webhook_sent);
+    const discordError = String(createResult?.discord_error || '').trim();
+
+    if (discordReplyText) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(discordReplyText);
+        } catch (e) {
+          fallbackCopy(discordReplyText);
+        }
+      } else {
+        fallbackCopy(discordReplyText);
+      }
+    }
+
+    if (discordEnabled && discordSent && discordReplyText) {
+      showMessage('Kvitto sparat och Discord-svar kopierat till urklipp.');
+    } else if (discordEnabled && !discordSent) {
+      showMessage('Kvitto sparat, men Discord webhook misslyckades: ' + (discordError || 'okänt fel'));
+    } else {
+      showMessage('Kvitto sparat: ' + workType);
+    }
+    resetReceiptForm();
     await refresh();
   } catch (e) {
     showMessage(e.message);
@@ -4128,6 +4401,18 @@ document.getElementById('saveServiceBtn').onclick = async () => {
     document.getElementById('serviceId').value = '';
     document.getElementById('serviceHasDropdown').value = '0';
     document.getElementById('serviceCategory').value = '';
+    await refresh();
+  } catch (e) {
+    showMessage(e.message);
+  }
+};
+
+document.getElementById('saveDiscordWebhookBtn').onclick = async () => {
+  try {
+    await api('api_admin_webhook_save', 'POST', {
+      webhook_url: document.getElementById('adminDiscordWebhookUrl').value,
+    });
+    showMessage('Discord webhook sparad.');
     await refresh();
   } catch (e) {
     showMessage(e.message);
@@ -4247,7 +4532,7 @@ async function resetReceiptSent(id){
 logoutBtn.onclick = async () => {
   await api('api_logout', 'POST');
   // clear tab login marker so a reload requires login
-  sessionStorage.removeItem('benny_logged_in');
+  sessionStorage.removeItem('redline_logged_in');
   await refresh();
 };
 
@@ -4270,7 +4555,7 @@ updateMobileTabAvailability();
 closeMobileNavMenu();
 // If this tab previously logged in (sessionStorage), keep the session across reloads.
 // sessionStorage is cleared when the tab/window is closed, satisfying the "require login after close" requirement.
-if (sessionStorage.getItem('benny_logged_in') === '1') {
+if (sessionStorage.getItem('redline_logged_in') === '1') {
   refresh();
 } else {
   // show login view by default
