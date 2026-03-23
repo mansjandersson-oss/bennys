@@ -823,20 +823,13 @@ function seed_if_empty(JsonDb $db): void
     ensure_prospect_rank($db);
 
     $users = $db->rows('users');
-    if (count($users) === 0) {
-        $db->insert('users', ['personnummer' => '19900101-1234', 'full_name' => 'Stefan Örn', 'password' => 'motor123', 'rank_id' => (int) ($owner['id'] ?? 0), 'is_admin' => 1, 'is_approved' => 1]);
-        $db->insert('users', ['personnummer' => '19920202-5678', 'full_name' => 'Garage Anställd', 'password' => 'garage123', 'rank_id' => (int) ($employee['id'] ?? 0), 'is_admin' => 0, 'is_approved' => 1]);
-        $db->insert('users', ['personnummer' => '19950505-9012', 'full_name' => 'Benny Demo', 'password' => 'bennys123', 'rank_id' => (int) ($employee['id'] ?? 0), 'is_admin' => 0, 'is_approved' => 1]);
+    if (count($users) === 0) {;
     }
 
     if (count($db->rows('discount_presets')) === 0) {
-        $db->insert('discount_presets', ['name' => 'Familj', 'percent' => 45]);
-        $db->insert('discount_presets', ['name' => 'Anställd', 'percent' => 50]);
     }
 
     if (count($db->rows('service_prices')) === 0) {
-        $db->insert('service_prices', ['service_name' => 'Service', 'sale_price' => 300, 'expense_cost' => 120, 'is_active' => 1, 'has_dropdown' => 0, 'service_category' => 'Övrigt']);
-        $db->insert('service_prices', ['service_name' => 'Reparation', 'sale_price' => 1000, 'expense_cost' => 500, 'is_active' => 1, 'has_dropdown' => 0, 'service_category' => 'Övrigt']);
     }
 
     if (count($db->rows('layout_settings')) === 0) {
