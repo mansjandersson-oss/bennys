@@ -345,7 +345,7 @@
             <div class="stat-box"><strong>Antal kvitton</strong><span id="statReceipts">0</span></div>
             <div class="stat-box"><strong>Löner</strong><span id="statPayroll">0.00</span><div class="small" id="statPayrollLast">Senaste utbetalning: -</div></div>
           </div>
-          <h3>Bäst presterande mekaniker</h3>
+          <h3>Bäst presterande mekaniker (Top 5)</h3>
           <div id="topMechanicsChart" class="bar-chart"></div>
           <div class="admin-economy">
             <h3>Ekonomi</h3>
@@ -3417,42 +3417,25 @@ function renderDiscountPresets(list){
 function renderTopMechanics(items){
   const chart = document.getElementById('topMechanicsChart');
   if (!chart) return;
-  const list = Array.isArray(items) ? items : [];
+  const list = (Array.isArray(items) ? items : []).slice(0, 5);
   if (list.length === 0) {
     chart.innerHTML = '<div class="small">Ingen data ännu.</div>';
     return;
   }
   const maxSales = Math.max(1, ...list.map(i => Number(i.total_sales || 0)));
-  const maxCount = Math.max(1, ...list.map(i => Number(i.receipt_count || 0)));
-  const ease = (ratio) => {
-    const clamped = Math.max(0, Math.min(1, ratio));
-    return Math.pow(clamped, 1.4);
-  };
   chart.innerHTML = list.map(i => {
     const sales = Number(i.total_sales || 0);
     const count = Number(i.receipt_count || 0);
-    const salesPct = ease(maxSales === 0 ? 0 : (sales / maxSales)) * 100;
-    const countPct = ease(maxCount === 0 ? 0 : (count / maxCount)) * 100;
-    return `<div class="bar-row">
-      <div class="bar-row-header">
+    const salesPct = Math.max(6, Math.min(100, (sales / maxSales) * 100));
+    return `<div class="top-mech-row">
+      <div class="top-mech-header">
         <strong>${esc(i.mechanic_name)}</strong>
-        <div class="bar-row-meta">
-          <span>${count} fakturor</span>
-          <span>${formatCurrency(sales)}</span>
-        </div>
+        <span>${formatCurrency(sales)}</span>
       </div>
-      <div class="bar-columns">
-        <div class="bar-column">
-          <span class="bar-column-label">Fakturor</span>
-          <div class="bar-vertical"><div class="bar-vertical-fill count" style="height:${countPct}%"></div></div>
-          <span class="bar-column-value">${count.toLocaleString('sv-SE')}</span>
-        </div>
-        <div class="bar-column">
-          <span class="bar-column-label">Belopp</span>
-          <div class="bar-vertical"><div class="bar-vertical-fill sales" style="height:${salesPct}%"></div></div>
-          <span class="bar-column-value">${formatCurrency(sales)}</span>
-        </div>
+      <div class="top-mech-bar">
+        <div class="top-mech-bar-fill" style="width:${salesPct}%"></div>
       </div>
+      <div class="top-mech-meta">${count} fakturor</div>
     </div>`;
   }).join('');
 }

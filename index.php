@@ -824,38 +824,6 @@ function maybe_migrate_from_sqlite(JsonDb $db, string $sqlitePath): void
 
 function seed_if_empty(JsonDb $db): void
 {
-    $ranks = $db->rows('ranks');
-    if (count($ranks) === 0) {
-        $db->insert('ranks', ['name' => 'Ägare', 'can_view_admin' => 1, 'can_manage_users' => 1, 'can_manage_prices' => 1, 'can_edit_receipts' => 1, 'can_view_customers' => 1, 'can_view_vehicles' => 1, 'can_view_prices' => 1]);
-        $db->insert('ranks', ['name' => 'Anställd', 'can_view_admin' => 0, 'can_manage_users' => 0, 'can_manage_prices' => 0, 'can_edit_receipts' => 0, 'can_view_customers' => 1, 'can_view_vehicles' => 1, 'can_view_prices' => 1]);
-    }
-
-    $ranks = $db->rows('ranks');
-    $owner = null; $employee = null;
-    foreach ($ranks as $r) {
-        if (($r['name'] ?? '') === 'Ägare') $owner = $r;
-        if (($r['name'] ?? '') === 'Anställd') $employee = $r;
-    }
-
-    ensure_prospect_rank($db);
-
-    $users = $db->rows('users');
-    if (count($users) === 0) {
-        $db->insert('users', ['personnummer' => '19900101-1234', 'full_name' => 'Stefan Örn', 'password' => 'motor123', 'rank_id' => (int) ($owner['id'] ?? 0), 'is_admin' => 1, 'is_approved' => 1]);
-        $db->insert('users', ['personnummer' => '19920202-5678', 'full_name' => 'Garage Anställd', 'password' => 'garage123', 'rank_id' => (int) ($employee['id'] ?? 0), 'is_admin' => 0, 'is_approved' => 1]);
-        $db->insert('users', ['personnummer' => '19950505-9012', 'full_name' => 'Benny Demo', 'password' => 'bennys123', 'rank_id' => (int) ($employee['id'] ?? 0), 'is_admin' => 0, 'is_approved' => 1]);
-    }
-
-    if (count($db->rows('discount_presets')) === 0) {
-        $db->insert('discount_presets', ['name' => 'Familj', 'percent' => 45]);
-        $db->insert('discount_presets', ['name' => 'Anställd', 'percent' => 50]);
-    }
-
-    if (count($db->rows('service_prices')) === 0) {
-        $db->insert('service_prices', ['service_name' => 'Service', 'sale_price' => 300, 'expense_cost' => 120, 'is_active' => 1, 'has_dropdown' => 0, 'service_category' => 'Övrigt']);
-        $db->insert('service_prices', ['service_name' => 'Reparation', 'sale_price' => 1000, 'expense_cost' => 500, 'is_active' => 1, 'has_dropdown' => 0, 'service_category' => 'Övrigt']);
-    }
-
     if (count($db->rows('layout_settings')) === 0) {
         $db->insert('layout_settings', ['layout_key' => 'global_sections', 'config_json' => json_encode(normalize_layout_payload(DEFAULT_GLOBAL_LAYOUT_MAP), JSON_UNESCAPED_UNICODE), 'updated_at' => now_iso()]);
     }
