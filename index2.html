@@ -343,7 +343,7 @@
             <div class="stat-box"><strong>Utgifter</strong><span id="statExpenses">0.00</span></div>
             <div class="stat-box"><strong>Vinst</strong><span id="statProfit">0.00</span></div>
             <div class="stat-box"><strong>Antal kvitton</strong><span id="statReceipts">0</span></div>
-            <div class="stat-box"><strong>Löner</strong><span id="statPayroll">0.00</span><div class="small" id="statPayrollLast">Senaste utbetalning: -</div></div>
+            <div class="stat-box"><strong>Löner</strong><span id="statPayroll">0 kr</span><div class="small" id="statPayrollLast">Senaste utbetalning: -</div></div>
           </div>
           <h3>Bäst presterande mekaniker (Top 5)</h3>
           <div id="topMechanicsChart" class="bar-chart"></div>
@@ -3991,12 +3991,12 @@ async function refresh(){
 
     if (canViewAdmin) {
       const adminData = await api('api_admin_summary');
-      document.getElementById('statSales').textContent = `${Number(adminData.stats.sales).toFixed(2)} SEK`;
-      document.getElementById('statExpenses').textContent = `${Number(adminData.stats.expenses).toFixed(2)} SEK`;
-      document.getElementById('statProfit').textContent = `${Number(adminData.stats.profit).toFixed(2)} SEK`;
+      document.getElementById('statSales').textContent = formatCurrency(adminData.stats.sales);
+      document.getElementById('statExpenses').textContent = formatCurrency(adminData.stats.expenses);
+      document.getElementById('statProfit').textContent = formatCurrency(adminData.stats.profit);
       document.getElementById('statReceipts').textContent = adminData.stats.receipt_count;
       const payrollTotal = Number(adminData.stats.payroll_total || 0);
-      document.getElementById('statPayroll').textContent = `${payrollTotal.toFixed(2)} SEK`;
+      document.getElementById('statPayroll').textContent = formatCurrency(payrollTotal);
       const lastPayDate = adminData.stats.last_payroll_date;
       const lastLabel = lastPayDate ? `Senaste utbetalning: ${formatDateDisplay(lastPayDate)}` : 'Senaste utbetalning: -';
       const payrollLastEl = document.getElementById('statPayrollLast');
