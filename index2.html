@@ -216,7 +216,7 @@
           <h2>Kunder</h2>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Namn</th><th>Telefon</th><th>Rabatt</th><th>Åtgärder</th></tr></thead>
+              <thead><tr><th>Namn</th><th>Telefon</th><th>Rabatt</th><th>Fakturerat</th><th>Åtgärder</th></tr></thead>
               <tbody id="customerBody"></tbody>
             </table>
           </div>
@@ -3250,10 +3250,21 @@ function renderCustomers(items){
   const body = document.getElementById('customerBody');
   if (!body) return;
   const rows = Array.isArray(items) ? items : [];
+  const totalsByCustomer = (allReceipts || []).reduce((acc, receipt) => {
+    const customerName = String(receipt?.customer || '').trim().toLocaleLowerCase('sv-SE');
+    if (!customerName) return acc;
+    const amount = Number(receipt?.amount || 0);
+    if (!Number.isFinite(amount)) return acc;
+    acc[customerName] = Number(acc[customerName] || 0) + amount;
+    return acc;
+  }, {});
   window.customerList = rows;
   window.customerLookup = {};
   body.innerHTML = rows.map(c => {
     const name = (c.customer_name || '').trim();
+    const nameKey = name.toLocaleLowerCase('sv-SE');
+    const billedTotal = Number(totalsByCustomer[nameKey] || 0);
+    const billedLabel = `${billedTotal.toFixed(2)} kr`;
     const percentVal = Number(c.discount_percent || 0);
     const percentLabel = percentVal % 1 === 0 ? percentVal.toFixed(0) : percentVal.toFixed(1);
     const discountLabel = c.discount_name ? `${esc(c.discount_name)} (${percentLabel}%)` : '-';
@@ -3267,7 +3278,7 @@ function renderCustomers(items){
     const actions = Number(c.id) > 0
       ? `<div class="table-actions"><button type="button" class="edit-btn" onclick="editCustomer(${c.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteCustomer(${c.id})">Radera</button></div>`
       : '<span class="small">-</span>';
-    return `<tr><td>${esc(name)}</td><td>${esc(c.phone || '-')}</td><td>${discountLabel}</td><td>${actions}</td></tr>`;
+    return `<tr><td>${esc(name)}</td><td>${esc(c.phone || '-')}</td><td>${discountLabel}</td><td>${billedLabel}</td><td>${actions}</td></tr>`;
   }).join('');
   updateCustomerSuggestions(rows);
   applyCustomerDiscountIfAny();
