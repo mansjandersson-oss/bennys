@@ -335,19 +335,19 @@
         </div>
       </section>
 
-      <section id="adminSection" class="hidden layout-section" data-layout-key="admin" data-layout-label="Admin" data-section-name="admin">
-        <div class="card">
+      <section id="adminSection" class="hidden layout-section admin-redesign" data-layout-key="admin" data-layout-label="Admin" data-section-name="admin">
+        <div class="card admin-overview-card">
           <h2>Adminpanel</h2>
-          <div class="stats">
-            <div class="stat-box"><strong>Försäljning</strong><span id="statSales">0 kr</span></div>
-            <div class="stat-box"><strong>Utgifter</strong><span id="statExpenses">0 kr</span></div>
-            <div class="stat-box"><strong>Vinst</strong><span id="statProfit">0 kr</span></div>
+          <div class="stats admin-stats">
+            <div class="stat-box"><strong>Försäljning</strong><span id="statSales">0.00</span></div>
+            <div class="stat-box"><strong>Utgifter</strong><span id="statExpenses">0.00</span></div>
+            <div class="stat-box"><strong>Vinst</strong><span id="statProfit">0.00</span></div>
             <div class="stat-box"><strong>Antal kvitton</strong><span id="statReceipts">0</span></div>
             <div class="stat-box"><strong>Löner</strong><span id="statPayroll">0 kr</span><div class="small" id="statPayrollLast">Senaste utbetalning: -</div></div>
           </div>
           <h3>Bäst presterande mekaniker (Top 5)</h3>
           <div id="topMechanicsChart" class="bar-chart"></div>
-          <div class="admin-economy">
+          <div class="admin-economy admin-economy-card">
             <h3>Ekonomi</h3>
             <p class="small">Visar hur intäkter, utgifter och vinst utvecklas just nu.</p>
             <div class="economy-chart">
@@ -360,8 +360,8 @@
           </div>
         </div>
 
-        <div class="admin-columns">
-          <div class="card">
+        <div class="admin-columns admin-grid">
+          <div class="card admin-card admin-discount-card">
             <h2>Rabatter</h2>
             <p class="small">Skapa förinställda rabatter som kan kopplas till kunder och kvitton.</p>
             <div class="row">
@@ -382,7 +382,7 @@
             </div>
           </div>
 
-          <div class="card">
+          <div class="card admin-card admin-webhook-card">
             <h2>Discord webhook (Admin)</h2>
             <p class="small">Används för notiser när anställda skapas/uppdateras och för kvitto-webhook.</p>
             <div class="row">
@@ -393,7 +393,7 @@
             <button id="saveDiscordWebhookBtn" type="button">Spara webhook</button>
           </div>
 
-          <div class="card admin-user-card">
+          <div class="card admin-card admin-user-card">
             <h2>Skapa / uppdatera användare</h2>
             <div class="row">
               <label>Personnummer
@@ -422,7 +422,7 @@
             </div>
           </div>
 
-          <div class="card admin-rank-card">
+          <div class="card admin-card admin-rank-card">
             <h2>Ranker</h2>
             <div class="row">
               <label>Ranknamn
