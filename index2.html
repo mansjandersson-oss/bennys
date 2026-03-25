@@ -3250,6 +3250,12 @@ function renderCustomers(items){
   const body = document.getElementById('customerBody');
   if (!body) return;
   const rows = Array.isArray(items) ? items : [];
+  const billedFormatter = new Intl.NumberFormat('sv-SE', {
+    style: 'currency',
+    currency: 'SEK',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
   const totalsByCustomer = (allReceipts || []).reduce((acc, receipt) => {
     const customerName = String(receipt?.customer || '').trim().toLocaleLowerCase('sv-SE');
     if (!customerName) return acc;
@@ -3264,7 +3270,7 @@ function renderCustomers(items){
     const name = (c.customer_name || '').trim();
     const nameKey = name.toLocaleLowerCase('sv-SE');
     const billedTotal = Number(totalsByCustomer[nameKey] || 0);
-    const billedLabel = `${billedTotal.toFixed(2)} kr`;
+    const billedLabel = billedFormatter.format(billedTotal);
     const percentVal = Number(c.discount_percent || 0);
     const percentLabel = percentVal % 1 === 0 ? percentVal.toFixed(0) : percentVal.toFixed(1);
     const discountLabel = c.discount_name ? `${esc(c.discount_name)} (${percentLabel}%)` : '-';
