@@ -214,6 +214,16 @@
         </div>
         <div class="card">
           <h2>Kunder</h2>
+          <div class="row">
+            <label>Sortera efter
+              <select id="customerSortBy">
+                <option value="name">Namn (A-Ö)</option>
+                <option value="discount">Rabatt (högst först)</option>
+                <option value="total">Totalsumma (högst först)</option>
+              </select>
+            </label>
+            <div></div>
+          </div>
           <div class="table-wrap">
             <table>
               <thead><tr><th>Namn</th><th>Telefon</th><th>Rabatt</th><th>Fakturerat</th><th>Åtgärder</th></tr></thead>
@@ -510,6 +520,7 @@ Object.keys(audioConfig).forEach(key => preloadAudioTrack?.(key));
 let currentUser = null;
 let allReceipts = [];
 let allRanks = [];
+let customerSortBy = 'name';
 const rankPermissionMeta = [
   { key: 'can_view_admin', label: 'Visa ägare' },
   { key: 'can_manage_users', label: 'Hantera användare' },
@@ -3250,6 +3261,10 @@ function renderCustomers(items){
   const body = document.getElementById('customerBody');
   if (!body) return;
   const rows = Array.isArray(items) ? items : [];
+  const sortSelect = document.getElementById('customerSortBy');
+  if (sortSelect && sortSelect.value !== customerSortBy) {
+    sortSelect.value = customerSortBy;
+  }
   const billedFormatter = new Intl.NumberFormat('sv-SE', {
     style: 'currency',
     currency: 'SEK',
@@ -3264,9 +3279,26 @@ function renderCustomers(items){
     acc[customerName] = Number(acc[customerName] || 0) + amount;
     return acc;
   }, {});
-  window.customerList = rows;
+  const sortedRows = rows.slice().sort((a, b) => {
+    const aName = String(a?.customer_name || '').trim();
+    const bName = String(b?.customer_name || '').trim();
+    const aDiscount = Number(a?.discount_percent || 0);
+    const bDiscount = Number(b?.discount_percent || 0);
+    const aTotal = Number(totalsByCustomer[aName.toLocaleLowerCase('sv-SE')] || 0);
+    const bTotal = Number(totalsByCustomer[bName.toLocaleLowerCase('sv-SE')] || 0);
+
+    if (customerSortBy === 'discount' && aDiscount !== bDiscount) {
+      return bDiscount - aDiscount;
+    }
+    if (customerSortBy === 'total' && aTotal !== bTotal) {
+      return bTotal - aTotal;
+    }
+    return aName.localeCompare(bName, 'sv');
+  });
+
+  window.customerList = sortedRows;
   window.customerLookup = {};
-  body.innerHTML = rows.map(c => {
+  body.innerHTML = sortedRows.map(c => {
     const name = (c.customer_name || '').trim();
     const nameKey = name.toLocaleLowerCase('sv-SE');
     const billedTotal = Number(totalsByCustomer[nameKey] || 0);
@@ -4189,6 +4221,14 @@ const customerInputEl = document.getElementById('customer');
 if (customerInputEl) {
   customerInputEl.addEventListener('change', applyCustomerDiscountIfAny);
   customerInputEl.addEventListener('blur', applyCustomerDiscountIfAny);
+}
+
+const customerSortByEl = document.getElementById('customerSortBy');
+if (customerSortByEl) {
+  customerSortByEl.addEventListener('change', () => {
+    customerSortBy = customerSortByEl.value || 'name';
+    renderCustomers(window.customerList || []);
+  });
 }
 
 const personnummerInput = document.getElementById('personnummer');
