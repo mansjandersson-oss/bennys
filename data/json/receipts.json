@@ -1,0 +1,22 @@
+{
+    "next_id": 2,
+    "rows": [
+        {
+            "mechanic": "19900101-1234",
+            "work_type": "Service",
+            "styling_parts": "",
+            "performance_parts": "",
+            "amount": 1000,
+            "expense_total": 400,
+            "discount_name": "",
+            "discount_percent": 0,
+            "customer": "Test Kund",
+            "customer_personnummer": "19900101-1111",
+            "plate": "ABC-123",
+            "order_comment": "ref",
+            "created_at": "2026-03-03 23:26:41",
+            "is_sent": 0,
+            "id": 1
+        }
+    ]
+}
