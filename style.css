@@ -1198,9 +1198,144 @@ button:hover{
 /* Admin panels should use full available width on desktop */
 #adminSection .admin-columns{
   width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+#adminSection{
+  --admin-card-radius: 14px;
+  --admin-pad: clamp(10px, 0.9vw, 14px);
+}
+
+#adminSection .card{
+  border-radius: var(--admin-card-radius);
+  border: 1px solid rgba(230,235,245,0.13);
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  box-shadow: 0 10px 26px rgba(0,0,0,0.34);
+  padding: var(--admin-pad) !important;
+  margin-bottom: 10px;
+}
+
+#adminSection h2{
+  margin: 0 0 6px;
+  font-size: clamp(0.98rem, 1.05vw, 1.08rem);
+  letter-spacing: 0.05em;
+}
+
+#adminSection h3{
+  margin: 6px 0 4px;
+  font-size: clamp(0.85rem, 0.95vw, 0.95rem);
+  letter-spacing: 0.04em;
+}
+
+#adminSection p.small{
+  margin: 0 0 6px;
+  font-size: 0.76rem;
+  color: rgba(230,235,245,0.7);
+}
+
+#adminSection .stats{
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+#adminSection .stat-box{
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(230,235,245,0.12);
+}
+
+#adminSection .stat-box strong{
+  font-size: 0.68rem;
+  margin-bottom: 2px;
+}
+
+#adminSection .stat-box span{
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+#adminSection .row{
+  gap: 8px;
+  margin-bottom: 2px;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+}
+
+#adminSection .row label{
+  gap: 2px;
+  font-size: 0.78rem;
+}
+
+#adminSection input,
+#adminSection select,
+#adminSection textarea,
+#adminSection button{
+  width: 100%;
+  margin-top: 2px;
+  margin-bottom: 4px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  min-height: 38px;
+}
+
+#adminSection button{
+  min-height: 32px;
+  height: 32px;
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-weight: 700;
+  border-radius: 9px;
+  box-shadow: 0 8px 16px rgba(224,68,60,0.14);
+}
+
+#adminSection button:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(224,68,60,0.16);
+}
+
+#adminSection .admin-economy{
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 12px;
+}
+
+#adminSection .bar-row{
+  padding: 10px;
+}
+
+#adminSection #topMechanicsChart{
+  gap: 6px;
+}
+
+#adminSection .top-mech-row{
+  padding: 8px 10px;
+}
+
+#adminSection .top-mech-meta{
+  margin-top: 4px;
+  font-size: 0.72rem;
+}
+
+#adminSection .table-wrap{
+  margin-top: 6px !important;
+}
+
+#adminSection table th,
+#adminSection table td{
+  padding: 7px 8px;
+  font-size: 0.8rem;
 }
 
 @media (max-width: 1200px){
+  #adminSection .stats{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   #adminSection .admin-columns{
     grid-template-columns: 1fr;
   }
