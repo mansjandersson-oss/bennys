@@ -1163,22 +1163,63 @@ if ($action === 'api_create_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $customerName = format_customer_name((string) ($d['customer'] ?? ''));
     $customerPersonnummer = normalize_personnummer((string) ($d['customer_personnummer'] ?? ''));
 
-    $inserted = $db->insert('receipts', [
-        'mechanic' => $validMechanic,
-        'work_type' => trim((string) ($d['work_type'] ?? '')),
-        'styling_parts' => ($d['styling_parts'] === '' || $d['styling_parts'] === null) ? '' : (int) $d['styling_parts'],
-        'performance_parts' => ($d['performance_parts'] === '' || $d['performance_parts'] === null) ? '' : (int) $d['performance_parts'],
-        'amount' => (float) ($d['amount'] ?? 0),
-        'expense_total' => (float) ($d['expense_total'] ?? 0),
-        'discount_name' => $discountName,
-        'discount_percent' => (float) ($d['discount_percent'] ?? 0),
-        'customer' => $customerName,
-        'customer_personnummer' => $customerPersonnummer,
-        'plate' => $plate,
-        'order_comment' => trim((string) ($d['order_comment'] ?? '')),
-        'created_at' => now_iso(),
-        'is_sent' => 0,
-    ]);
+    $incomingWorkType = trim((string) ($d['work_type'] ?? ''));
+    $incomingAmount = (float) ($d['amount'] ?? 0);
+    $incomingExpenseTotal = (float) ($d['expense_total'] ?? 0);
+    $incomingOrderComment = trim((string) ($d['order_comment'] ?? ''));
+
+    $existingOpenReceiptIndex = null;
+    $rows = $db->rows('receipts');
+    for ($i = count($rows) - 1; $i >= 0; $i--) {
+        $row = $rows[$i];
+        if ((int) ($row['is_sent'] ?? 0) === 1) continue;
+        $rowCustomer = format_customer_name((string) ($row['customer'] ?? ''));
+        if ($rowCustomer !== '' && mb_strtolower($rowCustomer, 'UTF-8') === mb_strtolower($customerName, 'UTF-8')) {
+            $existingOpenReceiptIndex = $i;
+            break;
+        }
+    }
+
+    if ($existingOpenReceiptIndex !== null) {
+        $existing = $rows[$existingOpenReceiptIndex];
+        $existingWorkType = trim((string) ($existing['work_type'] ?? ''));
+        if ($existingWorkType === '') {
+            $existing['work_type'] = $incomingWorkType;
+        } elseif ($incomingWorkType !== '' && mb_strtolower($existingWorkType, 'UTF-8') !== mb_strtolower($incomingWorkType, 'UTF-8')) {
+            $existing['work_type'] = 'Blandat arbete';
+        }
+        $existing['item_count'] = max(1, (int) ($existing['item_count'] ?? 1)) + 1;
+        $existing['amount'] = (float) ($existing['amount'] ?? 0) + $incomingAmount;
+        $existing['expense_total'] = (float) ($existing['expense_total'] ?? 0) + $incomingExpenseTotal;
+        if ($incomingOrderComment !== '') {
+            $previousComment = trim((string) ($existing['order_comment'] ?? ''));
+            $existing['order_comment'] = $previousComment === '' ? $incomingOrderComment : ($previousComment . ' | ' . $incomingOrderComment);
+        }
+        $existing['plate'] = $plate;
+        $rows[$existingOpenReceiptIndex] = $existing;
+        $db->setRows('receipts', $rows);
+        $inserted = $existing;
+        log_activity($db, $user, 'receipt_merged_open', 'receipt', (int) ($existing['id'] ?? 0), 'Nytt arbete lades till på oskickat kvitto för samma kund.');
+    } else {
+        $inserted = $db->insert('receipts', [
+            'mechanic' => $validMechanic,
+            'work_type' => $incomingWorkType,
+            'item_count' => 1,
+            'styling_parts' => ($d['styling_parts'] === '' || $d['styling_parts'] === null) ? '' : (int) $d['styling_parts'],
+            'performance_parts' => ($d['performance_parts'] === '' || $d['performance_parts'] === null) ? '' : (int) $d['performance_parts'],
+            'amount' => $incomingAmount,
+            'expense_total' => $incomingExpenseTotal,
+            'discount_name' => $discountName,
+            'discount_percent' => (float) ($d['discount_percent'] ?? 0),
+            'customer' => $customerName,
+            'customer_personnummer' => $customerPersonnummer,
+            'plate' => $plate,
+            'order_comment' => $incomingOrderComment,
+            'created_at' => now_iso(),
+            'is_sent' => 0,
+        ]);
+        log_activity($db, $user, 'receipt_created', 'receipt', (int) $inserted['id'], 'Kvitto skapades.');
+    }
 
     $manualDiscountPresetId = find_discount_preset_id_by_name($db, $discountName);
     $autoDiscountPresetId = determine_auto_discount_preset_id($db, $customerName, $customerPersonnummer);
@@ -1186,7 +1227,6 @@ if ($action === 'api_create_receipt' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     upsert_customer_from_receipt($db, $customerName, $customerPersonnummer, $effectiveDiscountPresetId);
     upsert_vehicle_from_receipt($db, $plate);
 
-    log_activity($db, $user, 'receipt_created', 'receipt', (int) $inserted['id'], 'Kvitto skapades.');
     $discordResult = send_receipt_to_discord($db, $inserted, $user);
 
     json_response([
@@ -1243,6 +1283,7 @@ if ($action === 'api_mark_receipt_sent' && $_SERVER['REQUEST_METHOD'] === 'POST'
     foreach ($rows as &$r) {
         if ((int) ($r['id'] ?? 0) === $id) {
             $r['is_sent'] = $isSent;
+            $r['sent_at'] = $isSent === 1 ? now_iso() : '';
             $db->setRows('receipts', $rows);
             log_activity($db, $user, 'receipt_sent_state', 'receipt', $id, $isSent === 1 ? 'Kvitto markerades som skickat.' : 'Kvitto skickad-status återställdes.');
             json_response(['ok' => true]);
