@@ -4361,6 +4361,52 @@ async function editReceipt(id){
   }
 }
 
+async function markReceiptSent(id){
+  const receiptId = Number(id);
+  const row = (allReceipts || []).find(x => Number(x.id) === receiptId);
+  if (row) {
+    row.is_sent = 1;
+    row.sent_at = new Date().toISOString();
+    renderReceipts(allReceipts);
+  }
+  try {
+    await api('api_mark_receipt_sent', 'POST', { id: receiptId, is_sent: 1 });
+    showMessage('Kvitto markerat som skickat.');
+    playReceiptPrintedSound();
+    await refresh();
+  } catch (e) {
+    if (row) {
+      row.is_sent = 0;
+      row.sent_at = '';
+      renderReceipts(allReceipts);
+    }
+    showMessage(e.message);
+  }
+}
+
+async function resetReceiptSent(id){
+  const receiptId = Number(id);
+  if (!confirm('Återställ skickad-status för detta kvitto?')) return;
+  const row = (allReceipts || []).find(x => Number(x.id) === receiptId);
+  if (row) {
+    row.is_sent = 0;
+    row.sent_at = '';
+    renderReceipts(allReceipts);
+  }
+  try {
+    await api('api_mark_receipt_sent', 'POST', { id: receiptId, is_sent: 0 });
+    showMessage('Skickad-status återställd.');
+    await refresh();
+  } catch (e) {
+    if (row) {
+      row.is_sent = 1;
+      row.sent_at = new Date().toISOString();
+      renderReceipts(allReceipts);
+    }
+    showMessage(e.message);
+  }
+}
+
 logoutBtn.onclick = async () => {
   await api('api_logout', 'POST');
   // clear tab login marker so a reload requires login
