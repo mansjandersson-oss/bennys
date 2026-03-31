@@ -4351,28 +4351,6 @@ async function editReceipt(id){
   }
 }
 
-async function markReceiptSent(id){
-  try {
-    await api('api_mark_receipt_sent', 'POST', { id, is_sent: 1 });
-    showMessage('Kvitto markerat som skickat.');
-    playReceiptPrintedSound();
-    await refresh();
-  } catch (e) {
-    showMessage(e.message);
-  }
-}
-
-async function resetReceiptSent(id){
-  if (!confirm('Återställ skickad-status för detta kvitto?')) return;
-  try {
-    await api('api_mark_receipt_sent', 'POST', { id, is_sent: 0 });
-    showMessage('Skickad-status återställd.');
-    await refresh();
-  } catch (e) {
-    showMessage(e.message);
-  }
-}
-
 logoutBtn.onclick = async () => {
   await api('api_logout', 'POST');
   // clear tab login marker so a reload requires login
