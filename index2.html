@@ -3048,12 +3048,13 @@ function renderReceipts(items){
     const isSent = Number(r.is_sent) === 1;
     const rowClass = isSent ? ' class="sent-receipt"' : '';
     const amount = Number(r.amount || 0);
+    const itemCount = Math.max(1, Number(r.item_count || 1));
     const sentControl = isSent
       ? `<div class="sent-controls"><span class="sent-badge">Skickad</span>${canEdit ? `<button type="button" class="secondary" onclick="resetReceiptSent(${r.id})">Återställ</button>` : ''}</div>`
       : `<button type="button" class="secondary" onclick="markReceiptSent(${r.id})">Markera som skickad</button>`;
     return `<tr${rowClass}>
       <td>#${Number(r.id)} · ${esc(r.mechanic_name)}</td>
-      <td>${esc(r.work_type)} x 1</td>
+      <td>${esc(r.work_type)} x ${itemCount}</td>
       <td>${esc(r.customer || "-")}</td>
       <td>${amount.toFixed(2)}</td>
       <td>${sentControl}</td>
