@@ -175,6 +175,7 @@
                   <th>Mekaniker</th>
                   <th>Arbete x antal</th>
                   <th>Kund</th>
+                  <th>Skapad</th>
                   <th>Totalt belopp</th>
                   <th>Skickad</th>
                   <th class="adminOnly">Åtgärder</th>
@@ -3042,20 +3043,28 @@ function renderReceipts(items){
   const canEdit = Number(currentUser?.permissions?.can_edit_receipts || 0) === 1;
   document.querySelectorAll('.adminOnly').forEach(el => el.classList.toggle('hidden', !canEdit));
   const body = document.getElementById('receiptBody');
-  const list = Array.isArray(items) ? items : [];
+  const list = (Array.isArray(items) ? items : []).slice().sort((a, b) => {
+    const sentA = Number(a?.is_sent || 0);
+    const sentB = Number(b?.is_sent || 0);
+    if (sentA !== sentB) return sentA - sentB;
+    return Number(b?.id || 0) - Number(a?.id || 0);
+  });
   body.innerHTML = list.map(r => {
     const editBtns = canEdit ? `<div class="table-actions"><button type="button" class="edit-btn" onclick="editReceipt(${r.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteReceipt(${r.id})">Radera</button></div>` : '';
     const isSent = Number(r.is_sent) === 1;
     const rowClass = isSent ? ' class="sent-receipt"' : '';
     const amount = Number(r.amount || 0);
     const itemCount = Math.max(1, Number(r.item_count || 1));
+    const createdAtLabel = r.created_at ? new Date(r.created_at).toLocaleString('sv-SE') : '-';
+    const sentAtLabel = r.sent_at ? new Date(r.sent_at).toLocaleString('sv-SE') : '';
     const sentControl = isSent
-      ? `<div class="sent-controls"><span class="sent-badge">Skickad</span>${canEdit ? `<button type="button" class="secondary" onclick="resetReceiptSent(${r.id})">Återställ</button>` : ''}</div>`
+      ? `<div class="sent-controls"><span class="sent-badge">Skickad ✓</span>${sentAtLabel ? `<span class="sent-time">${esc(sentAtLabel)}</span>` : ''}${canEdit ? `<button type="button" class="secondary" onclick="resetReceiptSent(${r.id})">Återställ</button>` : ''}</div>`
       : `<button type="button" class="secondary" onclick="markReceiptSent(${r.id})">Markera som skickad</button>`;
     return `<tr${rowClass}>
       <td>#${Number(r.id)} · ${esc(r.mechanic_name)}</td>
       <td>${esc(r.work_type)} x ${itemCount}</td>
       <td>${esc(r.customer || "-")}</td>
+      <td>${esc(createdAtLabel)}</td>
       <td>${amount.toFixed(2)}</td>
       <td>${sentControl}</td>
       ${canEdit ? `<td>${editBtns}</td>` : ''}

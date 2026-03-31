@@ -1283,6 +1283,7 @@ if ($action === 'api_mark_receipt_sent' && $_SERVER['REQUEST_METHOD'] === 'POST'
     foreach ($rows as &$r) {
         if ((int) ($r['id'] ?? 0) === $id) {
             $r['is_sent'] = $isSent;
+            $r['sent_at'] = $isSent === 1 ? now_iso() : '';
             $db->setRows('receipts', $rows);
             log_activity($db, $user, 'receipt_sent_state', 'receipt', $id, $isSent === 1 ? 'Kvitto markerades som skickat.' : 'Kvitto skickad-status återställdes.');
             json_response(['ok' => true]);
