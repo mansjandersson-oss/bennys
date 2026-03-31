@@ -312,29 +312,10 @@ thead th{
 tbody tr{ border-bottom:1px solid rgba(230,235,245,0.06); }
 tbody tr:hover{ background: rgba(224,68,60,0.07); }
 tr.sent-receipt{ opacity:0.82; }
-
-/* Workorder controls */
-.workorder-controls{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  align-items:flex-start;
-  min-width:0;
-}
-.workorder-controls button{
-  width:auto;
-  min-height:40px;
-  padding:8px 16px;
-  font-size:0.95rem;
-  min-width:104px;
-  white-space:nowrap;
-}
-
-/* Sent badge */
+.sent-controls{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
 .sent-badge{
   display:inline-flex;
   align-items:center;
-  gap:6px;
   font-size:0.78rem;
   letter-spacing:0.05em;
   text-transform:uppercase;
@@ -344,7 +325,6 @@ tr.sent-receipt{ opacity:0.82; }
   padding:2px 10px;
   color:#9ef3c1;
 }
-.sent-badge::before{ content:'\2713'; font-size:0.9rem; }
 
 /* ---------- Mobile nav ---------- */
 .toolbar{ display:none; gap:10px; margin:0; flex-wrap:wrap; align-items:center; }
@@ -755,32 +735,6 @@ tr.sent-receipt{ opacity:0.82; }
   box-shadow: 0 4px 10px rgba(20,80,40,0.35);
 }
 .bool-chip-no{ background: rgba(255,255,255,0.02); }
-
-.receipt-toggle-btn{ width:auto; min-width:78px; padding:6px 12px; min-height:36px; }
-.receipt-details-row td{ padding-top:0; }
-.receipt-details-box{
-  border:1px solid rgba(230,235,245,0.10);
-  border-radius: var(--radius);
-  background: rgba(255,255,255,0.02);
-  padding:10px 12px;
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-  gap:10px 14px;
-}
-.receipt-detail-item{ display:flex; flex-direction:column; gap:2px; min-width:0; }
-.receipt-detail-item strong{
-  font-size:0.78rem;
-  text-transform:uppercase;
-  letter-spacing:0.06em;
-  color: rgba(230,235,245,0.70);
-}
-.receipt-detail-item span{
-  font-size:0.9rem;
-  color: var(--text);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
 
 .table-actions{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
 #receiptsSection .table-actions button{ min-height:40px; padding:8px 16px; font-size:0.95rem; }

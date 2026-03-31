@@ -173,11 +173,10 @@
               <thead>
                 <tr>
                   <th>Mekaniker</th>
-                  <th>Arbete</th>
+                  <th>Arbete x antal</th>
                   <th>Kund</th>
-                  <th>Belopp</th>
-                  <th>Detaljer</th>
-                  <th>Arbetsorder</th>
+                  <th>Totalt belopp</th>
+                  <th>Skickad</th>
                   <th class="adminOnly">Åtgärder</th>
                 </tr>
               </thead>
@@ -3009,162 +3008,6 @@ function showSection(sectionName){
   updateServiceCardOrientation();
 }
 
-// Kopiera arbetsorder med fallback och feedback
-async function copyWorkOrder(encodedText, btn, options = {}) {
-  let text = '';
-  try {
-    text = decodeURIComponent(encodedText || '');
-  } catch (e) {
-    text = '';
-  }
-
-  if (!text) {
-    showMessage('Inget att kopiera för detta kvitto.');
-    return false;
-  }
-
-  const successText = options.successText || 'Kvitto kopierat till urklipp.';
-  const failureText = options.failureText || 'Kunde inte kopiera kvittot, försök igen.';
-
-  const markSuccess = () => {
-    btn.textContent = 'Kopierat!';
-    setTimeout(() => { btn.textContent = 'Kopiera'; }, 1500);
-    showMessage(successText);
-  };
-  const markFailure = () => {
-    btn.textContent = 'Misslyckades';
-    setTimeout(() => { btn.textContent = 'Kopiera'; }, 2000);
-    showMessage(failureText);
-  };
-
-  let copied = false;
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      copied = true;
-    } catch (e) {
-      copied = fallbackCopy(text);
-    }
-  } else {
-    copied = fallbackCopy(text);
-  }
-
-  if (copied) {
-    markSuccess();
-    return true;
-  }
-
-  markFailure();
-  return false;
-}
-
-function getRelatedUnsentReceiptsForCopy(receiptId){
-  const selectedReceipt = (allReceipts || []).find(x => Number(x.id) === Number(receiptId));
-  if (!selectedReceipt) return [];
-
-  const customerKey = String(selectedReceipt.customer || '').trim().toLocaleLowerCase('sv-SE');
-  const hasCustomer = customerKey !== '';
-  return (allReceipts || [])
-    .filter(row => {
-      if (Number(row.is_sent || 0) === 1) return false;
-      const rowCustomerKey = String(row.customer || '').trim().toLocaleLowerCase('sv-SE');
-      if (hasCustomer) return rowCustomerKey === customerKey;
-      return Number(row.id) === Number(selectedReceipt.id);
-    })
-    .sort((a, b) => Number(a.id) - Number(b.id));
-}
-
-function buildCustomerInvoiceCopyText(receiptId){
-  const selectedReceipt = (allReceipts || []).find(x => Number(x.id) === Number(receiptId));
-  const relatedReceipts = getRelatedUnsentReceiptsForCopy(receiptId);
-  if (!selectedReceipt || relatedReceipts.length === 0) return '';
-
-  const customerLabel = String(selectedReceipt.customer || '').trim() || '-';
-  const invoiceTitle = relatedReceipts.length > 1
-    ? `📋 Redline Performance Samlingsfaktura (${relatedReceipts.length} kvitton)`
-    : '📋 Redline Performance Arbetsorder';
-
-  const lines = [
-    '━━━━━━━━━━━━━━━━━━━',
-    invoiceTitle,
-    `👤 Kund - ${customerLabel}`,
-    '━━━━━━━━━━━━━━━━━━━',
-  ];
-
-  let grandTotal = 0;
-  if (relatedReceipts.length > 5) {
-    const grouped = new Map();
-    relatedReceipts.forEach(row => {
-      const rowComment = String(row.order_comment || '').trim() || '-';
-      const rowWork = String(row.work_type || '').trim() || '-';
-      const rowPlate = String(row.plate || '').trim() || '-';
-      const key = `${rowComment}||${rowWork}||${rowPlate}`;
-      const prev = grouped.get(key) || { comment: rowComment, work: rowWork, plate: rowPlate, count: 0 };
-      prev.count += 1;
-      grouped.set(key, prev);
-      grandTotal += Number(row.amount || 0);
-    });
-
-    Array.from(grouped.values())
-      .sort((a, b) => b.count - a.count)
-      .forEach(item => {
-        lines.push(`${item.comment} - ${item.work} - ${item.plate} x ${item.count}`);
-      });
-  } else {
-    relatedReceipts.forEach((row, idx) => {
-      const rowAmount = Number(row.amount || 0);
-      grandTotal += rowAmount;
-      const rowComment = String(row.order_comment || '').trim();
-      lines.push(`#${row.id} · ${String(row.work_type || '').trim() || '-'}`);
-      lines.push(`🚗 ${String(row.plate || '').trim() || '-'}`);
-      if (rowComment) {
-        lines.push(`📝 ${rowComment}`);
-      }
-      lines.push(`💰 ${rowAmount.toFixed(2)} kr`);
-      if (idx < relatedReceipts.length - 1) {
-        lines.push('');
-      }
-    });
-  }
-
-  if (relatedReceipts.length > 1) {
-    lines.push('━━━━━━━━━━━━━━━━━━━');
-    lines.push(`Totalsumma: ${grandTotal.toFixed(2)} kr`);
-  }
-
-  lines.push('');
-  lines.push(`👤 Skapad av - ${String(selectedReceipt.mechanic_name || selectedReceipt.mechanic || '').trim() || '-'}`);
-  lines.push('━━━━━━━━━━━━━━━━━━━');
-  return `${lines.join('\n')}\n`;
-}
-
-async function markReceiptsAsSent(ids){
-  const uniqueIds = Array.from(new Set((ids || []).map(id => Number(id)).filter(id => Number.isFinite(id) && id > 0)));
-  if (uniqueIds.length === 0) return;
-  await Promise.all(uniqueIds.map(id => api('api_mark_receipt_sent', 'POST', { id, is_sent: 1 })));
-}
-
-async function copyReceiptWorkOrder(receiptId, btn){
-  const relatedReceipts = getRelatedUnsentReceiptsForCopy(receiptId);
-  const text = buildCustomerInvoiceCopyText(receiptId);
-  if (!text || relatedReceipts.length === 0) {
-    showMessage('Inget att kopiera för detta kvitto.');
-    return;
-  }
-
-  const copied = await copyWorkOrder(encodeURIComponent(text), btn, {
-    successText: 'Kvitto kopierat och markerat som skickat.',
-  });
-  if (!copied) return;
-
-  try {
-    await markReceiptsAsSent(relatedReceipts.map(r => r.id));
-    await refresh();
-  } catch (e) {
-    showMessage('Kopierat, men kunde inte markera skickad-status: ' + (e?.message || 'okänt fel'));
-  }
-}
-
 function fallbackCopy(text) {
   const textarea = document.createElement('textarea');
   textarea.value = text;
@@ -3197,65 +3040,27 @@ function fallbackCopy(text) {
 function renderReceipts(items){
   allReceipts = items;
   const canEdit = Number(currentUser?.permissions?.can_edit_receipts || 0) === 1;
-  const canResetSent = canEdit;
   document.querySelectorAll('.adminOnly').forEach(el => el.classList.toggle('hidden', !canEdit));
   const body = document.getElementById('receiptBody');
   const list = Array.isArray(items) ? items : [];
   body.innerHTML = list.map(r => {
     const editBtns = canEdit ? `<div class="table-actions"><button type="button" class="edit-btn" onclick="editReceipt(${r.id})">Redigera</button><button type="button" class="secondary delete-btn" onclick="deleteReceipt(${r.id})">Radera</button></div>` : '';
-    const stylingText = r.styling_parts === '' ? '0' : r.styling_parts;
-    const performanceText = r.performance_parts === '' ? '0' : r.performance_parts;
     const isSent = Number(r.is_sent) === 1;
-    const copyBtn = isSent
-      ? '<button type="button" class="secondary" disabled>Kopiera</button>'
-      : `<button type="button" onclick="copyReceiptWorkOrder(${r.id}, this)">Kopiera</button>`;
-    const workOrderActions = [copyBtn];
-    if (isSent) {
-      workOrderActions.push('<span class="sent-badge">Skickad</span>');
-      if (canResetSent) {
-        workOrderActions.push(`<button type="button" class="secondary" onclick="resetReceiptSent(${r.id})">Återställ</button>`);
-      }
-    } else {
-      workOrderActions.push(`<button type="button" class="secondary" onclick="markReceiptSent(${r.id})">Markera som skickad</button>`);
-    }
     const rowClass = isSent ? ' class="sent-receipt"' : '';
-    const discountPercent = Number(r.discount_percent || 0);
-    const percentText = Number.isFinite(discountPercent) ? (discountPercent % 1 === 0 ? discountPercent.toFixed(0) : discountPercent.toFixed(1)) : '0';
-    const hasDiscount = (r.discount_name && String(r.discount_name).trim() !== '') || discountPercent > 0;
-    const discountLabel = hasDiscount ? `${r.discount_name ? `${esc(r.discount_name)} ` : ''}(${percentText}%)` : '-';
-    const detailRowId = `receipt-details-${r.id}`;
-    const detailCols = canEdit ? 7 : 6;
+    const amount = Number(r.amount || 0);
+    const itemCount = Math.max(1, Number(r.item_count || 1));
+    const sentControl = isSent
+      ? `<div class="sent-controls"><span class="sent-badge">Skickad</span>${canEdit ? `<button type="button" class="secondary" onclick="resetReceiptSent(${r.id})">Återställ</button>` : ''}</div>`
+      : `<button type="button" class="secondary" onclick="markReceiptSent(${r.id})">Markera som skickad</button>`;
     return `<tr${rowClass}>
       <td>#${Number(r.id)} · ${esc(r.mechanic_name)}</td>
-      <td>${esc(r.work_type)}</td>
+      <td>${esc(r.work_type)} x ${itemCount}</td>
       <td>${esc(r.customer || "-")}</td>
-      <td>${Number(r.amount).toFixed(2)}</td>
-      <td><button type="button" class="secondary receipt-toggle-btn" aria-expanded="false" aria-controls="${detailRowId}" onclick="toggleReceiptDetails(this, ${r.id})">Visa</button></td>
-      <td><div class="workorder-controls">${workOrderActions.join('')}</div></td>
+      <td>${amount.toFixed(2)}</td>
+      <td>${sentControl}</td>
       ${canEdit ? `<td>${editBtns}</td>` : ''}
-    </tr>
-    <tr id="${detailRowId}" class="receipt-details-row hidden${isSent ? ' sent-receipt' : ''}">
-      <td colspan="${detailCols}">
-        <div class="receipt-details-box">
-          <div class="receipt-detail-item"><strong>Styling</strong><span>${stylingText === '0' ? '-' : stylingText}</span></div>
-          <div class="receipt-detail-item"><strong>Prestanda</strong><span>${performanceText === '0' ? '-' : performanceText}</span></div>
-          <div class="receipt-detail-item"><strong>Kund</strong><span>${esc(r.customer)}</span></div>
-          <div class="receipt-detail-item"><strong>Regnummer</strong><span>${esc(r.plate)}</span></div>
-          <div class="receipt-detail-item"><strong>Referens</strong><span>${esc(r.order_comment || '-')}</span></div>
-          <div class="receipt-detail-item"><strong>Rabatt</strong><span>${discountLabel}</span></div>
-        </div>
-      </td>
     </tr>`;
   }).join('');
-}
-
-function toggleReceiptDetails(button, id){
-  const detailRow = document.getElementById(`receipt-details-${id}`);
-  if (!detailRow) return;
-  const willShow = detailRow.classList.contains('hidden');
-  detailRow.classList.toggle('hidden', !willShow);
-  button.textContent = willShow ? 'Dölj' : 'Visa';
-  button.setAttribute('aria-expanded', willShow ? 'true' : 'false');
 }
 function renderCustomers(items){
   const body = document.getElementById('customerBody');
@@ -4580,7 +4385,6 @@ window.deleteReceipt = deleteReceipt;
 window.editReceipt = editReceipt;
 window.markReceiptSent = markReceiptSent;
 window.resetReceiptSent = resetReceiptSent;
-window.toggleReceiptDetails = toggleReceiptDetails;
 window.editAdminUser = editAdminUser;
 window.deleteAdminUser = deleteAdminUser;
 window.editDiscountPreset = editDiscountPreset;
